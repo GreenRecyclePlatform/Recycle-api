@@ -20,7 +20,7 @@ namespace recycle.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            
+            builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(builder);
         }
     }
