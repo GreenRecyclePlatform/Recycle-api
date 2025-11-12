@@ -39,6 +39,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+//=======================Abdelrahman Services======================
+// ===== ADD YOUR SERVICE REGISTRATIONS HERE (BEFORE var app = builder.Build()) =====
+builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
+builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
+// ================================================================================
+
 // Reviews
 builder.Services.AddScoped<IReviewService, ReviewService>();
 

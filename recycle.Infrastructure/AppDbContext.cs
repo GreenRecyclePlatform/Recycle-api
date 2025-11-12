@@ -16,7 +16,6 @@ namespace recycle.Infrastructure
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-
         }
 
         //add dbsets here
@@ -31,6 +30,8 @@ namespace recycle.Infrastructure
         public DbSet<Material> Materials { get; set; }
         public DbSet<RequestMaterial> RequestMaterials { get; set; }
 
+        //add dbsets here
+        public DbSet<PickupRequest> PickupRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
