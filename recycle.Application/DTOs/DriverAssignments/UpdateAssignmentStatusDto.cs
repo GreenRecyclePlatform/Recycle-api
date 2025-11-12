@@ -11,7 +11,7 @@ namespace recycle.Application.DTOs.DriverAssignments
     internal class UpdateAssignmentStatusDto
     {
         [Required]
-        public int AssignmentId { get; set; }
+        public Guid AssignmentId { get; set; }
 
         [Required]
         public AssignmentUpdateStatus Status { get; set; }
