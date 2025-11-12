@@ -13,10 +13,10 @@ namespace recycle.Infrastructure
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
-
         }
-        //add dbsets here
 
+        //add dbsets here
+        public DbSet<PickupRequest> PickupRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
