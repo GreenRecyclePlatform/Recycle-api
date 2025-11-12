@@ -15,17 +15,20 @@ public class PickupRequestConfiguration : IEntityTypeConfiguration<PickupRequest
         builder.Property(pr => pr.UserId)
             .IsRequired();
 
-        builder.Property(pr => pr.PickupAddress)
-            .IsRequired()
-            .HasMaxLength(500);
+        builder.Property(pr => pr.AddressId)
+            .IsRequired();
 
-        builder.Property(pr => pr.City)
-            .IsRequired()
-            .HasMaxLength(100);
+        //builder.Property(pr => pr.PickupAddress)
+            //.IsRequired()
+            //.HasMaxLength(500);
 
-        builder.Property(pr => pr.PostalCode)
-            .IsRequired()
-            .HasMaxLength(20);
+        //builder.Property(pr => pr.City)
+            //.IsRequired()
+            //.HasMaxLength(100);
+
+        //builder.Property(pr => pr.PostalCode)
+            //.IsRequired()
+            //.HasMaxLength(20);
 
         builder.Property(pr => pr.PreferredPickupDate)
             .IsRequired();
@@ -78,6 +81,12 @@ public class PickupRequestConfiguration : IEntityTypeConfiguration<PickupRequest
             .WithOne(r => r.PickupRequest)
             .HasForeignKey<Review>(r => r.RequestId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(pr => pr.Address)
+            .WithMany()
+            .HasForeignKey(pr => pr.AddressId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict); 
 
         // Indexes for performance
         builder.HasIndex(pr => pr.UserId);
