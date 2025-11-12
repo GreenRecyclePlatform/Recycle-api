@@ -17,6 +17,7 @@ namespace recycle.Application.DTOs.Materials
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
     }
+
     public class CreateMaterialDto
     {
         public string Name { get; set; } = string.Empty;
@@ -33,4 +34,6 @@ namespace recycle.Application.DTOs.Materials
         public decimal PricePerKg { get; set; }
         public bool IsActive { get; set; }
     }
+
+
 }

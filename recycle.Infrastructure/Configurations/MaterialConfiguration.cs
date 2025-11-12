@@ -15,7 +15,8 @@ namespace recycle.Infrastructure.Configurations
         {
             builder.ToTable("Materials");
 
-            builder.HasKey(m => m.Id);
+            builder.Property(a => a.Id)
+                .ValueGeneratedNever();
 
             builder.Property(m => m.Name)
                 .IsRequired()
@@ -40,15 +41,13 @@ namespace recycle.Infrastructure.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            // Indexes
             builder.HasIndex(m => m.Name).IsUnique();
             builder.HasIndex(m => m.IsActive);
 
-            // Relationships
             builder.HasMany(m => m.RequestMaterials)
                 .WithOne(rm => rm.Material)
                 .HasForeignKey(rm => rm.MaterialId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deletion if used in requests
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

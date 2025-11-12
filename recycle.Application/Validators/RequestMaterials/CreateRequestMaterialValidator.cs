@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Application.DTOs.RequestMaterials
+namespace recycle.Application.Validators.RequestMaterials
 {
     internal class CreateRequestMaterialValidator
     {

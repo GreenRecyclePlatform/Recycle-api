@@ -15,7 +15,8 @@ namespace recycle.Infrastructure.Configurations
         {
             builder.ToTable("RequestMaterials");
 
-            builder.HasKey(rm => rm.Id);
+            builder.Property(a => a.Id)
+                .ValueGeneratedNever();
 
             builder.Property(rm => rm.EstimatedWeight)
                 .IsRequired()
@@ -42,7 +43,6 @@ namespace recycle.Infrastructure.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            // Constraints
             builder.HasCheckConstraint("CK_RequestMaterials_EstimatedWeight",
                 "EstimatedWeight > 0");
 
@@ -52,21 +52,20 @@ namespace recycle.Infrastructure.Configurations
             builder.HasCheckConstraint("CK_RequestMaterials_PricePerKg",
                 "PricePerKg > 0");
 
-            // Indexes
             builder.HasIndex(rm => rm.RequestId);
             builder.HasIndex(rm => rm.MaterialId);
-            builder.HasIndex(rm => new { rm.RequestId, rm.MaterialId }).IsUnique(); // Prevent duplicate materials per request
+            builder.HasIndex(rm => new { rm.RequestId, rm.MaterialId }).IsUnique();
 
-            // Relationships
             builder.HasOne(rm => rm.PickupRequest)
                 .WithMany(pr => pr.RequestMaterials)
                 .HasForeignKey(rm => rm.RequestId)
-                .OnDelete(DeleteBehavior.Cascade); // Delete when request is deleted
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(rm => rm.Material)
                 .WithMany(m => m.RequestMaterials)
                 .HasForeignKey(rm => rm.MaterialId)
-                .OnDelete(DeleteBehavior.Restrict); // Don't allow material deletion if used
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
+
 }
