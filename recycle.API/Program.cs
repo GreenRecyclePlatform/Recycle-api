@@ -1,3 +1,6 @@
+using recycle.Application.Interfaces;
+using recycle.Application.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+//=======================Abdelrahman Services======================
+// ===== ADD YOUR SERVICE REGISTRATIONS HERE (BEFORE var app = builder.Build()) =====
+builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
+builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
+// ================================================================================
+
 
 var app = builder.Build();
 
