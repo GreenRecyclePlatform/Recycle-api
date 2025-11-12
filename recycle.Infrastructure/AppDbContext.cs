@@ -28,8 +28,6 @@ namespace recycle.Infrastructure
             builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(builder);
 
-            builder.ApplyConfiguration(new ReviewConfiguration()); 
-            builder.ApplyConfiguration(new NotificationConfiguration());
         }
     }
 }
