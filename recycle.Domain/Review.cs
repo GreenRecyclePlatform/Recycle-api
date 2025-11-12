@@ -10,9 +10,9 @@ namespace recycle.Domain
 
         public Guid RequestId { get; set; }
 
-        public Guid ReviewerId { get; set; }
+        public string ReviewerId { get; set; }
 
-        public Guid RevieweeId { get; set; }
+        public string RevieweeId { get; set; }
 
         public int Rating { get; set; }
 
@@ -33,10 +33,10 @@ namespace recycle.Domain
         public bool IsHidden { get; set; } = false;
 
         // Navigation Properties
-        public virtual PickupRequest PickupRequest { get; set; }
+        public PickupRequest PickupRequest { get; set; }
 
-        public virtual ApplicationUser Reviewer { get; set; }
+        public ApplicationUser Reviewer { get; set; }
 
-        public virtual ApplicationUser Reviewee { get; set; }
+        public ApplicationUser Reviewee { get; set; }
     }
 }
