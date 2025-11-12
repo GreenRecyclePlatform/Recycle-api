@@ -54,22 +54,20 @@ namespace recycle.Infrastructure.Configurations
                    .HasDefaultValue(true);
 
             // Relationships 
-            //builder.HasOne(da => da.PickupRequest)
-            //       .WithMany(pr => pr.DriverAssignments)
-            //       .HasForeignKey(da => da.RequestId)
-            //       .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(da => da.PickupRequest)
+                   .WithMany(pr => pr.DriverAssignments)
+                   .HasForeignKey(da => da.RequestId)
+                  .OnDelete(DeleteBehavior.Restrict);
 
-            //builder.HasOne(da => da.Driver)
-            //       .WithMany().IsRequired()
-            //       .HasForeignKey(da => da.DriverId)
-            //       .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(da => da.Driver)
+                   .WithMany().IsRequired()
+                   .HasForeignKey(da => da.DriverId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
-            //builder.HasOne(da => da.AssignedByAdmin)
-            //       .WithMany().IsRequired()
-            //       .HasForeignKey(da => da.AssignedByAdminId)
-            //       .OnDelete(DeleteBehavior.Restrict);
-
-            builder.ToTable("DriverAssignments");
+            builder.HasOne(da => da.AssignedByAdmin)
+                  .WithMany().IsRequired()
+                  .HasForeignKey(da => da.AssignedByAdminId)
+                  .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
