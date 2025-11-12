@@ -1,9 +1,9 @@
-﻿namespace recycle.Domain
+﻿namespace recycle.Domain.Entities
 {
     public class DriverProfile
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public ApplicationUser User { get; set; }
         public string profileImageUrl { get; set; }
         public string idNumber { get; set; }

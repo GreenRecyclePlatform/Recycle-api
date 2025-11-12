@@ -1,9 +1,9 @@
-﻿namespace recycle.Domain;
+﻿namespace recycle.Domain.Entities;
 
 public class PickupRequest
 {
     public Guid RequestId { get; set; } = Guid.NewGuid(); //here is the guid will be generated in app instead of in the database.
-    public string UserId { get; set; }
+    public Guid UserId { get; set; }
     public Guid AddressId { get; set; }
     //public string PickupAddress { get; set; } = string.Empty;
     //public string City { get; set; } = string.Empty;

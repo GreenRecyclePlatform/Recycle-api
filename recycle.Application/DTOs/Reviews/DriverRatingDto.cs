@@ -9,7 +9,7 @@ namespace recycle.Application.DTOs.Reviews
     // Driver Rating Statistics DTO
     public class DriverRatingDto
     {
-        public int DriverId { get; set; }
+        public Guid DriverId { get; set; }
         public string DriverName { get; set; }
         public decimal AverageRating { get; set; }
         public int TotalReviews { get; set; }

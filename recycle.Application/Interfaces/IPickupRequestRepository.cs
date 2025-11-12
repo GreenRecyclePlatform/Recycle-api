@@ -1,4 +1,4 @@
-﻿using recycle.Domain;
+﻿using recycle.Domain.Entities;
 
 namespace recycle.Application.Interfaces;
 

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace recycle.Domain
+namespace recycle.Domain.Entities
 {
     public class Review
     {
@@ -10,9 +10,9 @@ namespace recycle.Domain
 
         public Guid RequestId { get; set; }
 
-        public string ReviewerId { get; set; }
+        public Guid ReviewerId { get; set; }
 
-        public string RevieweeId { get; set; }
+        public Guid RevieweeId { get; set; }
 
         public int Rating { get; set; }
 
@@ -34,9 +34,7 @@ namespace recycle.Domain
 
         // Navigation Properties
         public PickupRequest PickupRequest { get; set; }
-
         public ApplicationUser Reviewer { get; set; }
-
         public ApplicationUser Reviewee { get; set; }
     }
 }

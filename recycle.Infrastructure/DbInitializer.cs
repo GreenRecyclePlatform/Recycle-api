@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using recycle.Domain;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +12,10 @@ namespace recycle.Infrastructure
     public class DbInitializer
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly AppDbContext _db;
 
-        public DbInitializer(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext db)
+        public DbInitializer(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, AppDbContext db)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -35,9 +35,9 @@ namespace recycle.Infrastructure
 
             if (!_roleManager.RoleExistsAsync("Admin").GetAwaiter().GetResult())
             {
-                _roleManager.CreateAsync(new IdentityRole("Admin")).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole("User")).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole("Driver")).GetAwaiter().GetResult();
+                _roleManager.CreateAsync(new IdentityRole<Guid>("Admin")).GetAwaiter().GetResult();
+                _roleManager.CreateAsync(new IdentityRole<Guid>("User")).GetAwaiter().GetResult();
+                _roleManager.CreateAsync(new IdentityRole<Guid>("Driver")).GetAwaiter().GetResult();
 
                 var result = _userManager.CreateAsync(new ApplicationUser
                 {

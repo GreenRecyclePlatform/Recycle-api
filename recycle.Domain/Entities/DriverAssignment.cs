@@ -6,14 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Domain
+namespace recycle.Domain.Entities
 {
     public class DriverAssignment
     {
         public Guid AssignmentId { get; set; } = Guid.NewGuid();
         public Guid RequestId { get; set; }
-        public string DriverId { get; set; }
-        public string AssignedByAdminId { get; set; }
+        public Guid DriverId { get; set; }
+        public Guid AssignedByAdminId { get; set; }
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
         public AssignmentStatus Status { get; set; }
         public string? DriverNotes { get; set; }

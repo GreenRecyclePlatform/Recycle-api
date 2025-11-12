@@ -12,7 +12,7 @@ namespace recycle.Application.DTOs.DriverAssignments
         public Guid AssignmentId { get; set; }
         public Guid RequestId { get; set; }
         public string PickupAddress { get; set; }//from another table PickupRequests
-        public string DriverId { get; set; } 
+        public Guid DriverId { get; set; } 
         public string DriverName { get; set; }
         public string AdminName { get; set; }
         public AssignmentStatus Status { get; set; }

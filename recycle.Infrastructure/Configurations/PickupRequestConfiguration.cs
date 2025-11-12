@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using recycle.Domain;
+using recycle.Domain.Entities;
 namespace recycle.Infrastructure.Configurations;
 
 public class PickupRequestConfiguration : IEntityTypeConfiguration<PickupRequest>

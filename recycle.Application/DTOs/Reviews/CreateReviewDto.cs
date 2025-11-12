@@ -10,7 +10,7 @@ namespace recycle.Application.DTOs.Reviews
     public class CreateReviewDto
     {
         [Required(ErrorMessage = "RequestId is required")]
-        public int RequestId { get; set; }
+        public Guid RequestId { get; set; }
 
         [Required(ErrorMessage = "Rating is required")]
         [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5 stars")]

@@ -1,4 +1,4 @@
-﻿namespace recycle.Domain
+﻿namespace recycle.Domain.Enums
 {
     public static class PaymentStatuses
     {

@@ -13,6 +13,6 @@ namespace recycle.Application.DTOs.DriverAssignments
         public Guid RequestId { get; set; }
 
         [Required(ErrorMessage = "Driver ID is required")]
-        public string DriverId { get; set; }
+        public Guid DriverId { get; set; }
     }
 }

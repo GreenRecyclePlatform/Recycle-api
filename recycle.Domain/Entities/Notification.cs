@@ -8,7 +8,7 @@ namespace recycle.Domain.Entities
     {
         public Guid NotificationId { get; set; } = Guid.NewGuid();
 
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
 
         public string NotificationType { get; set; }
 

@@ -1,12 +1,14 @@
-﻿namespace recycle.Domain
+﻿using recycle.Domain.Enums;
+
+namespace recycle.Domain.Entities
 {
     public class Payment
     {
         public Guid ID { get; set; } = Guid.NewGuid();
 
-        public int RequestID { get; set; }
+        public Guid RequestId { get; set; }
 
-        public int RecipientUserID { get; set; }
+        public Guid RecipientUserID { get; set; }
 
         public string RecipientType { get; set; } = string.Empty;
 
@@ -32,9 +34,8 @@
 
         public string? FailureReason { get; set; }
 
-
-        //public Request Request { get; set; } 
-        //public User? RecipientUser { get; set; } 
-        //public User? ApprovedByAdmin { get; set; } 
+        public PickupRequest PickupRequest { get; set; }
+        public ApplicationUser? RecipientUser { get; set; }
+        //public ApplicationUser? ApprovedByAdmin { get; set; }
     }
 }

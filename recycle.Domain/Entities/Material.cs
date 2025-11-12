@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Domain
+namespace recycle.Domain.Entities
 {
     public class Material
     {

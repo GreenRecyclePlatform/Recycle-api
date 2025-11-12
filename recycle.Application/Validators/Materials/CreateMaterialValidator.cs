@@ -1,4 +1,5 @@
-﻿using recycle.Application.DTOs.Materials;
+﻿using FluentValidation;
+using recycle.Application.DTOs.Materials;
 using System;
 using System.Collections.Generic;
 using System.Linq;

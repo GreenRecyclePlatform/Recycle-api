@@ -1,6 +1,5 @@
 using recycle.Application.Interfaces;
 using recycle.Application.Services;
-using recycle.Domain;
 using recycle.Domain.Entities;
 using recycle.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -11,14 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-// Register Specific Repositories (for UnitOfWork)
-builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
-builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
-builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
-builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
-builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
+//// Register Specific Repositories (for UnitOfWork)
+//builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
+//builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
+//builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
+//builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
+//builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
 
 builder.Services.AddControllers();
 builder.Services.AddApplication();
@@ -27,7 +26,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = true;
@@ -41,17 +40,21 @@ builder.Services.AddOpenApi();
 
 //=======================Abdelrahman Services======================
 // ===== ADD YOUR SERVICE REGISTRATIONS HERE (BEFORE var app = builder.Build()) =====
-builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
-builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
-// ================================================================================
+//builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
+//builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
+//// ================================================================================
 
-// Reviews
-builder.Services.AddScoped<IReviewService, ReviewService>();
+//// Reviews
+//builder.Services.AddScoped<IReviewService, ReviewService>();
 
-// Notifications
-builder.Services.AddScoped<INotificationService, NotificationService>();
+//// Notifications
+//builder.Services.AddScoped<INotificationService, NotificationService>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -62,7 +65,9 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    //app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseStaticFiles();

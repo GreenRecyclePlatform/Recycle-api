@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using recycle.Domain;
+using recycle.Domain.Entities;
 using recycle.Domain.Enums;
 using System;
 using System.Collections.Generic;

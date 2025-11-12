@@ -9,11 +9,11 @@ namespace recycle.Application.DTOs.Reviews
     // Review Response DTO
     public class ReviewDto
     {
-        public int ReviewId { get; set; }
-        public int RequestId { get; set; }
-        public int ReviewerId { get; set; }
+        public Guid ReviewId { get; set; }
+        public Guid RequestId { get; set; }
+        public Guid ReviewerId { get; set; }
         public string ReviewerName { get; set; }
-        public int RevieweeId { get; set; }
+        public Guid RevieweeId { get; set; }
         public string RevieweeName { get; set; }
         public int Rating { get; set; }
         public string Comment { get; set; }
