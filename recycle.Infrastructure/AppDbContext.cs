@@ -16,6 +16,7 @@ namespace recycle.Infrastructure
 
         }
         //add dbsets here
+        public DbSet<Payment> Payments { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<DriverProfile> DriverProfiles { get; set; }
 
