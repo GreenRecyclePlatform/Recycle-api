@@ -12,26 +12,22 @@ namespace recycle.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
-        public IRepository<Review> Reviews { get; }
+        //add repositorys here
+        public IRepository<Address> Addresses { get; private set; }
+         public IRepository<Review> Reviews { get; }
         public IRepository<Notification> Notifications { get; }
-        public IRepository<ApplicationUser> Users { get; }
-        public IRepository<PickupRequest> PickupRequests { get; }
-        public IRepository<DriverAssignment> DriverAssignments { get; }
-
+         
         public UnitOfWork(AppDbContext context,
-            IRepository<Review> reviews,
-            IRepository<Notification> notifications,
-            IRepository<ApplicationUser> users,
-            IRepository<PickupRequest> pickupRequests,
-            IRepository<DriverAssignment> driverAssignments
+            //add repository parameters here
+            IRepository<Address> addresses, IRepository<Review> reviews,
+            IRepository<Notification> notifications
             )
         {
             _context = context;
+            //initialize repositories here
+            Addresses = addresses;
             Reviews = reviews;
             Notifications = notifications;
-            Users = users;
-            PickupRequests = pickupRequests;
-            DriverAssignments = driverAssignments;
 
         }
         public async Task SaveChangesAsync()
