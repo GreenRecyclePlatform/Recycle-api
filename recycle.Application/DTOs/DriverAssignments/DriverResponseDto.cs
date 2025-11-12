@@ -12,7 +12,7 @@ namespace recycle.Application.DTOs.DriverAssignments
     {
        
             [Required]
-            public int AssignmentId { get; set; }
+            public Guid AssignmentId { get; set; }
 
             [Required]
             public DriverAction Action { get; set; } // "Accept" or "Reject"
