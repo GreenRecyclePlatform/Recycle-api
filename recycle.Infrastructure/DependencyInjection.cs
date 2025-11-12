@@ -18,7 +18,7 @@ namespace recycle.Infrastructure
             AddPersistence(services, configuration);
 
 
-      
+            //for external services
             //services.AddScoped<IPaymentService, PaymentService>();
             //services.AddScoped<ITokenService, TokenService>();
             //services.AddScoped<IAuthService, AuthService>();
@@ -37,6 +37,7 @@ namespace recycle.Infrastructure
             services.AddScoped<DbInitializer>();
         
 
+            //for example
             //services.AddScoped<IUserRepository, UserRepository>();
             //services.AddScoped<IProductRepository, ProductRepository>();
             //services.AddScoped<ICartRepository, CartRepository>();
