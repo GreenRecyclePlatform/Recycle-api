@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace recycle.Application.DTOs.DriverAssignments
 {
-    internal class CreateDriverAssignmentDto
+    public class CreateDriverAssignmentDto
     {
         [Required(ErrorMessage = "Request ID is required")]
-        public int RequestId { get; set; }
+        public Guid RequestId { get; set; }
 
         [Required(ErrorMessage = "Driver ID is required")]
-        public int DriverId { get; set; }
+        public string DriverId { get; set; }
     }
 }
