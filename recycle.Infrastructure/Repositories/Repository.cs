@@ -13,6 +13,10 @@ namespace recycle.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
         private readonly DbSet<T> dbSet;
+
+        //public async Task<T> GetByIdAsync(int id);
+        //public async Task<int> CountAsync(Expression<Func<T, bool>>? filter = null);
+        //public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
         public Repository(AppDbContext context)
         {
             _context = context;
@@ -91,5 +95,7 @@ namespace recycle.Infrastructure.Repositories
             dbSet.Update(entity);
             await Task.CompletedTask;
         }
+
+
     }
 }
