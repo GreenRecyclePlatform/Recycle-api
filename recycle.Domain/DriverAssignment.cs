@@ -11,9 +11,9 @@ namespace recycle.Domain
     public class DriverAssignment
     {
         public Guid AssignmentId { get; set; } = Guid.NewGuid();
-        public int RequestId { get; set; }
-        public int DriverId { get; set; }
-        public int AssignedByAdminId { get; set; }
+        public Guid RequestId { get; set; }
+        public string DriverId { get; set; }
+        public string AssignedByAdminId { get; set; }
         public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
         public AssignmentStatus Status { get; set; }
         public string? DriverNotes { get; set; }
@@ -24,9 +24,9 @@ namespace recycle.Domain
         public bool IsActive { get; set; } = true;
 
         // Navigation Properties
-        //public PickupRequest PickupRequest { get; set; }
-        //public DriverProfile Driver { get; set; }
-        //public ApplicationUser AssignedByAdmin { get; set; }
+        public PickupRequest PickupRequest { get; set; }
+        public DriverProfile Driver { get; set; }
+        public ApplicationUser AssignedByAdmin { get; set; }
     }
 
 
