@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using recycle.Domain;
+using recycle.Domain.Entities;
 using recycle.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,8 @@ namespace recycle.Infrastructure
         }
 
         //add dbsets here
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<DriverAssignment> DriverAssignments { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Address> Addresses { get; set; }
