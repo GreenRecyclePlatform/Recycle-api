@@ -13,7 +13,7 @@ namespace recycle.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<RequestMaterial> builder)
         {
-            builder.ToTable("RequestMaterials");
+            builder.HasKey(a => a.Id)
 
             builder.Property(a => a.Id)
                 .ValueGeneratedNever();
