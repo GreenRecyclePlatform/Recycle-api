@@ -2,7 +2,7 @@
 {
     public class Payment
     {
-        public Guid ID { get; set; } = new Guid();
+        public Guid ID { get; set; } = Guid.NewGuid();
 
         public int RequestID { get; set; }
 

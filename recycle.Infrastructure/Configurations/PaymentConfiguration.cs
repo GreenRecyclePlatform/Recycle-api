@@ -10,6 +10,8 @@ namespace recycle.Infrastructure.Configurations
         {
             builder.HasKey(p => p.ID);
 
+            builder.Property(p => p.ID).ValueGeneratedNever();
+
             builder.Property(p => p.Amount)
                    .HasColumnType("decimal(10,2)")
                    .IsRequired();

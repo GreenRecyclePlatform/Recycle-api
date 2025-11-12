@@ -16,6 +16,7 @@ namespace recycle.Infrastructure
 
         }
         //add dbsets here
+        public DbSet<Payment> Payments { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
