@@ -14,9 +14,9 @@ namespace recycle.Infrastructure.Configurations
             // Primary Key
             builder.HasKey(n => n.NotificationId);
 
-            // Properties Configuration
+            // Properties
             builder.Property(n => n.NotificationId)
-                .ValueGeneratedOnAdd();
+                .ValueGeneratedNever(); 
 
             builder.Property(n => n.UserId)
                 .IsRequired();
@@ -60,15 +60,13 @@ namespace recycle.Infrastructure.Configurations
                 .IsRequired(false);
 
             // Relationships
-
-            // Notification -> User (Many-to-One)
             builder.HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Notifications_Users");
 
-            // Indexes for Performance
+            // Indexes
             builder.HasIndex(n => n.UserId)
                 .HasDatabaseName("IX_Notifications_UserId");
 
@@ -85,7 +83,7 @@ namespace recycle.Infrastructure.Configurations
             builder.HasIndex(n => n.NotificationType)
                 .HasDatabaseName("IX_Notifications_NotificationType");
 
-            // Check Constraints
+            // Check Constraint for Priority
             builder.HasCheckConstraint(
                 "CHK_Notifications_Priority",
                 "[Priority] IN ('Low', 'Normal', 'High', 'Urgent')"

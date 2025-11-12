@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using recycle.Domain;
+using recycle.Domain.Entities;
 using recycle.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
@@ -13,13 +14,13 @@ namespace recycle.Infrastructure
 {
     public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
-        public DbSet<Review> Reviews { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
 
         }
         //add dbsets here
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder builder)
