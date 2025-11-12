@@ -9,10 +9,10 @@ namespace recycle.Application.DTOs.DriverAssignments
 {
     public class DriverAssignmentResponseDto
     {
-        public int AssignmentId { get; set; }
-        public int RequestId { get; set; }
+        public Guid AssignmentId { get; set; }
+        public Guid RequestId { get; set; }
         public string PickupAddress { get; set; }//from another table PickupRequests
-        public int DriverId { get; set; } 
+        public string DriverId { get; set; } 
         public string DriverName { get; set; }
         public string AdminName { get; set; }
         public AssignmentStatus Status { get; set; }
