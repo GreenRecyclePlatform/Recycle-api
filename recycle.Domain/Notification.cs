@@ -8,7 +8,7 @@ namespace recycle.Domain.Entities
     {
         public Guid NotificationId { get; set; } = Guid.NewGuid();
 
-        public Guid UserId { get; set; }
+        public string UserId { get; set; }
 
         public string NotificationType { get; set; }
 
@@ -29,7 +29,7 @@ namespace recycle.Domain.Entities
         public DateTime? ReadAt { get; set; }
 
         // Navigation Property
-        public virtual ApplicationUser User { get; set; }
+        public ApplicationUser User { get; set; }
     }
 
 
