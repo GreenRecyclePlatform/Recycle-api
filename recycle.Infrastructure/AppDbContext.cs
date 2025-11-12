@@ -19,6 +19,10 @@ namespace recycle.Infrastructure
         }
 
         //add dbsets here
+        public DbSet<DriverAssignment> DriverAssignments { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Address> Addresses { get; set; }
+        public DbSet<DriverProfile> DriverProfiles { get; set; }
 
         // DbSets for Materials and RequestMaterials
         public DbSet<Material> Materials { get; set; }
@@ -27,12 +31,9 @@ namespace recycle.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+
             builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(builder);
-            // matrials  configurations
-            builder.ApplyConfiguration(new MaterialConfiguration());
-            builder.ApplyConfiguration(new RequestMaterialConfiguration());
-
 
         }
     }
