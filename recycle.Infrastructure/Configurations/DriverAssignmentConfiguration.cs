@@ -14,23 +14,32 @@ namespace recycle.Infrastructure.Configurations
     {
         public void Configure(EntityTypeBuilder<DriverAssignment> builder)
         {
+            // Primary Key
             builder.HasKey(a => a.AssignmentId);
             builder.Property(a => a.AssignmentId)
-                .ValueGeneratedNever();
+                   .ValueGeneratedNever(); 
 
-
+            // Index
             builder.HasIndex(da => new { da.RequestId, da.IsActive })
-                   .IsUnique()
+                   .IsUnique()           
+
+
                    .HasFilter("[IsActive] = 1")
                    .HasDatabaseName("IX_DriverAssignments_RequestId_IsActive");
 
-            // Convert enum to string in DB
+            // Fields
+
+
+            builder.Property(da => da.RequestId).IsRequired();
+            builder.Property(da => da.DriverId).IsRequired();
+            builder.Property(da => da.AssignedByAdminId).IsRequired();
+
             builder.Property(da => da.Status)
                    .IsRequired()
                    .HasMaxLength(50)
                    .HasConversion(
-                       v => v.ToString(), // Enum -> string in DB
-                       v => (AssignmentStatus)Enum.Parse(typeof(AssignmentStatus), v) // string -> Enum
+                       v => v.ToString(),
+                       v => (AssignmentStatus)Enum.Parse(typeof(AssignmentStatus), v)
                    );
 
             builder.Property(da => da.DriverNotes)
@@ -44,24 +53,21 @@ namespace recycle.Infrastructure.Configurations
                    .IsRequired()
                    .HasDefaultValue(true);
 
-            // Relationships
+            // Relationships 
             //builder.HasOne(da => da.PickupRequest)
             //       .WithMany(pr => pr.DriverAssignments)
             //       .HasForeignKey(da => da.RequestId)
-            //       .OnDelete(DeleteBehavior.Restrict)
-            //       .HasConstraintName("FK_DriverAssignments_PickupRequests");
+            //       .OnDelete(DeleteBehavior.Restrict);
 
             //builder.HasOne(da => da.Driver)
-            //       .WithMany()
+            //       .WithMany().IsRequired()
             //       .HasForeignKey(da => da.DriverId)
-            //       .OnDelete(DeleteBehavior.Restrict)
-            //       .HasConstraintName("FK_DriverAssignments_Driver");
+            //       .OnDelete(DeleteBehavior.Restrict);
 
             //builder.HasOne(da => da.AssignedByAdmin)
-            //       .WithMany()
+            //       .WithMany().IsRequired()
             //       .HasForeignKey(da => da.AssignedByAdminId)
-            //       .OnDelete(DeleteBehavior.Restrict)
-            //       .HasConstraintName("FK_DriverAssignments_Admin");
+            //       .OnDelete(DeleteBehavior.Restrict);
 
             builder.ToTable("DriverAssignments");
         }
