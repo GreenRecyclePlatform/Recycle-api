@@ -17,6 +17,7 @@ namespace recycle.Infrastructure
         }
         //add dbsets here
 
+        public DbSet<DriverAssignment> DriverAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
