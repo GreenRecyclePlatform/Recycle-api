@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Infrastructure.Configurations
+namespace recycle.Domain
 {
-    public class entityConfiguration
+    public class DriverAssignment
     {
     }
 }

@@ -1,4 +1,6 @@
 ﻿using recycle.Application.Interfaces;
+using recycle.Domain;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,15 +12,27 @@ namespace recycle.Infrastructure.Repositories
     public class UnitOfWork : IUnitOfWork
     {
         private readonly AppDbContext _context;
-        //add repositorys here
-        
-        public UnitOfWork(AppDbContext context
-            //add repository parameters here
+        public IRepository<Review> Reviews { get; }
+        public IRepository<Notification> Notifications { get; }
+        public IRepository<ApplicationUser> Users { get; }
+        public IRepository<PickupRequest> PickupRequests { get; }
+        public IRepository<DriverAssignment> DriverAssignments { get; }
+
+        public UnitOfWork(AppDbContext context,
+            IRepository<Review> reviews,
+            IRepository<Notification> notifications,
+            IRepository<ApplicationUser> users,
+            IRepository<PickupRequest> pickupRequests,
+            IRepository<DriverAssignment> driverAssignments
             )
         {
             _context = context;
-            //initialize repositories here
-            
+            Reviews = reviews;
+            Notifications = notifications;
+            Users = users;
+            PickupRequests = pickupRequests;
+            DriverAssignments = driverAssignments;
+
         }
         public async Task SaveChangesAsync()
         {

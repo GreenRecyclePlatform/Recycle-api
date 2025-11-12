@@ -1,4 +1,6 @@
-﻿using System;
+﻿using recycle.Domain;
+using recycle.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +10,12 @@ namespace recycle.Application.Interfaces
 {
     public interface IUnitOfWork
     {
-        //add repository interfaces here
-
-
+        IRepository<Review> Reviews { get; }
+        IRepository<Notification> Notifications { get; }
+        IRepository<ApplicationUser> Users { get; }
+        IRepository<PickupRequest> PickupRequests { get; }
+        IRepository<DriverAssignment> DriverAssignments { get; }
+        
         Task SaveChangesAsync();
     }
 }
