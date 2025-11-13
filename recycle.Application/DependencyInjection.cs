@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace recycle.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // In your application layer DI setup (e.g., AddApplication method)
-            //services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+            //In your application layer DI setup(e.g., AddApplication method)
+            services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
             //services.AddScoped<AddressService>();
             //services.AddScoped<OrderService>();

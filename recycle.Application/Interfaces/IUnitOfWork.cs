@@ -10,8 +10,8 @@ namespace recycle.Application.Interfaces
     public interface IUnitOfWork
     {
         IRepository<Review> Reviews { get; }
-        IRepository<Notification> Notifications { get; }        
-        //add repository interfaces here
+        IRepository<Notification> Notifications { get; }
+        IUserRepository Users { get; }
         IRepository<Address> Addresses { get; }
 
         Task SaveChangesAsync();
