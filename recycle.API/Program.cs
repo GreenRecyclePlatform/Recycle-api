@@ -87,11 +87,11 @@ app.MapHub<NotificationHub>("/notificationHub");
 
 
 // Add a root endpoint
-app.MapGet("/", () => Results.Ok(new
-{
-    message = "Recycle API is running!",
-    swagger = "/swagger",
-    signalrHub = "/notificationHub"
-}));
+//app.MapGet("/", () => Results.Ok(new
+//{
+//    message = "Recycle API is running!",
+//    swagger = "/swagger",
+//    signalrHub = "/notificationHub"
+//}));
 
 app.Run();
