@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using recycle.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,8 @@ namespace recycle.Infrastructure
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<DbInitializer>();
-        
+
+            services.AddScoped<IDriverAssignmentRepository, DriverAssignmentRepository>();
 
             //for example
             //services.AddScoped<IUserRepository, UserRepository>();

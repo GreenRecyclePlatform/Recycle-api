@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using recycle.Application.DTOs.Notifications;
 
-namespace recycle.Application.Interfaces
+namespace recycle.Application.Interfaces.IService
 {
     public interface INotificationService
     {

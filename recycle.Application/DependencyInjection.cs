@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using recycle.Application.Interfaces.IService;
+using recycle.Application.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace recycle.Application
         {
             // In your application layer DI setup (e.g., AddApplication method)
             //services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+            services.AddScoped<IDriverAssignmentService, DriverAssignmentService>();
 
             //services.AddScoped<AddressService>();
             //services.AddScoped<OrderService>();

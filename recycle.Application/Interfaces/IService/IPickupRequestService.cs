@@ -1,6 +1,6 @@
 ﻿using recycle.Application.DTOs.PickupRequest;
 
-namespace recycle.Application.Interfaces;
+namespace recycle.Application.Interfaces.IService;
 
 public interface IPickupRequestService
 {

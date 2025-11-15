@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;

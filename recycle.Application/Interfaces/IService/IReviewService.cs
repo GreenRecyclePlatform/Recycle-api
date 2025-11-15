@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using recycle.Application.DTOs.Reviews;
 
-namespace recycle.Application.Interfaces
+namespace recycle.Application.Interfaces.IService
 {
     public interface IReviewService
     {

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.Reviews;
-using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IService;
 
 namespace recycle.API.Controllers
 {

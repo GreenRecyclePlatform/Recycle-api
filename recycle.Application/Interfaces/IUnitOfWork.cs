@@ -1,4 +1,5 @@
-﻿using recycle.Domain.Entities;
+﻿using recycle.Application.Interfaces.IRepository;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,10 @@ namespace recycle.Application.Interfaces
         IRepository<Notification> Notifications { get; }        
         //add repository interfaces here
         IRepository<Address> Addresses { get; }
+        IDriverAssignmentRepository DriverAssignments { get; }
+
+        IRepository<ApplicationUser> Users { get; }
+        IRepository<PickupRequest> PickupRequests { get; }
 
         Task SaveChangesAsync();
     }

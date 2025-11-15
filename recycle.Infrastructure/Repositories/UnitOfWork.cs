@@ -1,4 +1,5 @@
 ﻿using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -15,11 +16,21 @@ namespace recycle.Infrastructure.Repositories
         public IRepository<Address> Addresses { get; private set; }
          public IRepository<Review> Reviews { get; }
         public IRepository<Notification> Notifications { get; }
-         
+
+        public IDriverAssignmentRepository DriverAssignments { get; private set; }
+
+        public IRepository<ApplicationUser> Users { get; private set; }
+        public IRepository<PickupRequest> PickupRequests { get; private set; }
+
+
         public UnitOfWork(AppDbContext context,
             //add repository parameters here
             IRepository<Address> addresses, IRepository<Review> reviews,
-            IRepository<Notification> notifications
+            IRepository<Notification> notifications,
+            IDriverAssignmentRepository driverAssignments,
+             IRepository<ApplicationUser> users,
+            IRepository<PickupRequest> pickupRequests
+
             )
         {
             _context = context;
@@ -27,6 +38,9 @@ namespace recycle.Infrastructure.Repositories
             Addresses = addresses;
             Reviews = reviews;
             Notifications = notifications;
+            DriverAssignments = driverAssignments; 
+            Users = users;
+            PickupRequests = pickupRequests;
 
         }
         public async Task SaveChangesAsync()
