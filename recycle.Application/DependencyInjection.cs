@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
+using recycle.Application.Services;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IService;
 using recycle.Application.Services;
@@ -14,12 +16,10 @@ namespace recycle.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            // In your application layer DI setup (e.g., AddApplication method)
-            //services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
+            //In your application layer DI setup(e.g., AddApplication method)
+            services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
-            //services.AddScoped<AddressService>();
-            //services.AddScoped<OrderService>();
-            //services.AddScoped<ReviewService>();
+            services.AddScoped<AddressService>();
 
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IReviewService, ReviewService>();

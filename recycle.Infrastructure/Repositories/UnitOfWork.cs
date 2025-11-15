@@ -13,12 +13,11 @@ namespace recycle.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
         //add repositorys here
+        public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
-         public IReviewRepository Reviews { get; }
-        public INotificationRepository Notifications { get; }
-        public IRepository<ApplicationUser> Users { get; }
-        public IRepository<PickupRequest> PickupRequests { get; }
-        public IRepository<DriverAssignment> DriverAssignments { get; }
+         public IRepository<Review> Reviews { get; }
+        public IRepository<Notification> Notifications { get; }
+         
         public UnitOfWork(AppDbContext context,
             //add repository parameters here
             IReviewRepository reviews,
@@ -27,6 +26,8 @@ namespace recycle.Infrastructure.Repositories
             IRepository<ApplicationUser> users,
             IRepository<PickupRequest> pickupRequests,
             IRepository<DriverAssignment> driverAssignments
+            IRepository<Address> addresses, IRepository<Review> reviews,
+            IRepository<Notification> notifications, IUserRepository users
             )
         {
             _context = context;
@@ -37,6 +38,7 @@ namespace recycle.Infrastructure.Repositories
             Users = users;
             PickupRequests = pickupRequests;
             DriverAssignments = driverAssignments;
+            Users = users;
 
         }
         public async Task SaveChangesAsync()

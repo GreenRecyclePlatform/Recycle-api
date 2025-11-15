@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
+using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
 using System;
 using System.Collections.Generic;
@@ -20,11 +21,10 @@ namespace recycle.Infrastructure
 
 
             //for external services
-      
-            //services.AddScoped<IPaymentService, PaymentService>();
-            //services.AddScoped<ITokenService, TokenService>();
-            //services.AddScoped<IAuthService, AuthService>();
-            //services.AddTransient<IEmailService, EmailService>();
+
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthService, AuthService>();
+            
 
             return services;
         }
@@ -35,19 +35,12 @@ namespace recycle.Infrastructure
                 options.UseSqlServer(configuration.GetConnectionString("Database")));
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
 
             services.AddScoped<DbInitializer>();
-        
-
-            //for example
-            //services.AddScoped<IUserRepository, UserRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<ICartRepository, CartRepository>();
-            //services.AddScoped<IReviewRepository, ReviewRepository>();
-            //services.AddScoped<IWishlistRepository, WishlistRepository>();
 
 
         }

@@ -1,14 +1,18 @@
-﻿using Microsoft.AspNetCore.Identity;
-using recycle.Application;
-using recycle.Application.Interfaces;
+﻿using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Application.Interfaces.IService;
 using recycle.Application.Services;
 using recycle.Domain.Entities;
-using recycle.Infrastructure;
-using recycle.Infrastructure.Hubs;
 using recycle.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
+using recycle.Application;
+using recycle.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using recycle.Infrastructure.Services;
+using Microsoft.OpenApi.Models;
+using recycle.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +43,28 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
 
+var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = true;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(key)),
+        ValidateIssuer = true,
+        ValidIssuer = "recycle.API",
+        ValidateAudience = false,
+        //ValidAudience = "TechHubClient",
+        ClockSkew = TimeSpan.Zero,
+    };
+});
+
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -56,7 +82,40 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "recycle.API",
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Description = "Please enter into field the word 'Bearer' followed by a space and the JWT value",
+        BearerFormat = "JWT",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+   
+});
 
 var app = builder.Build();
 
