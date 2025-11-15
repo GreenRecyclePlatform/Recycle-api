@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
+using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
 using System;
@@ -20,7 +21,7 @@ namespace recycle.Infrastructure
 
 
             //for external services
-
+            services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
             
