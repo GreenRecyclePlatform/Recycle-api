@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Infrastructure.Configurations
+namespace recycle.Domain.Enums
 {
-    public class entityConfiguration
+    public enum DriverAction
     {
+        Accept = 1,
+        Reject = 2
     }
 }

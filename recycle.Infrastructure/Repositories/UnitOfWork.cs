@@ -1,4 +1,5 @@
 ﻿using recycle.Application.Interfaces;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,14 +12,24 @@ namespace recycle.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
         //add repositorys here
-        
-        public UnitOfWork(AppDbContext context
+        public IUserRepository Users { get; private set; }
+        public IRepository<Address> Addresses { get; private set; }
+         public IRepository<Review> Reviews { get; }
+        public IRepository<Notification> Notifications { get; }
+         
+        public UnitOfWork(AppDbContext context,
             //add repository parameters here
+            IRepository<Address> addresses, IRepository<Review> reviews,
+            IRepository<Notification> notifications, IUserRepository users
             )
         {
             _context = context;
             //initialize repositories here
-            
+            Addresses = addresses;
+            Reviews = reviews;
+            Notifications = notifications;
+            Users = users;
+
         }
         public async Task SaveChangesAsync()
         {
