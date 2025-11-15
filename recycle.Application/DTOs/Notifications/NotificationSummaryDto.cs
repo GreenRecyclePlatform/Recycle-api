@@ -12,5 +12,4 @@ namespace recycle.Application.DTOs.Notifications
         public int TotalCount { get; set; }
         public NotificationDto LatestNotification { get; set; }
     }
-
 }

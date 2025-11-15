@@ -1,4 +1,5 @@
 ﻿using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -13,20 +14,29 @@ namespace recycle.Infrastructure.Repositories
         private readonly AppDbContext _context;
         //add repositorys here
         public IRepository<Address> Addresses { get; private set; }
-         public IRepository<Review> Reviews { get; }
-        public IRepository<Notification> Notifications { get; }
-         
+         public IReviewRepository Reviews { get; }
+        public INotificationRepository Notifications { get; }
+        public IRepository<ApplicationUser> Users { get; }
+        public IRepository<PickupRequest> PickupRequests { get; }
+        public IRepository<DriverAssignment> DriverAssignments { get; }
         public UnitOfWork(AppDbContext context,
             //add repository parameters here
-            IRepository<Address> addresses, IRepository<Review> reviews,
-            IRepository<Notification> notifications
+            IReviewRepository reviews,
+            IRepository<Address> addresses, 
+            INotificationRepository notifications,
+            IRepository<ApplicationUser> users,
+            IRepository<PickupRequest> pickupRequests,
+            IRepository<DriverAssignment> driverAssignments
             )
         {
             _context = context;
             //initialize repositories here
             Addresses = addresses;
-            Reviews = reviews;
+            Reviews = (IReviewRepository?)reviews;
             Notifications = notifications;
+            Users = users;
+            PickupRequests = pickupRequests;
+            DriverAssignments = driverAssignments;
 
         }
         public async Task SaveChangesAsync()

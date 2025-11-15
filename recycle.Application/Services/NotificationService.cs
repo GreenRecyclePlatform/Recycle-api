@@ -1,253 +1,242 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using recycle.Application.DTOs.Notifications;
+﻿using recycle.Application.DTOs.Notifications;
 using recycle.Application.Interfaces;
 using recycle.Domain.Entities;
 
 namespace recycle.Application.Services
 {
-    //public class NotificationService : INotificationService
-    //{
-    //    private readonly IUnitOfWork _unitOfWork;
+    public class NotificationService : INotificationService
+    {
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationHubService _hubService;  // <-- Use interface instead
 
-    //    public NotificationService(IUnitOfWork unitOfWork)
-    //    {
-    //        _unitOfWork = unitOfWork;
-    //    }
+        public NotificationService(
+            INotificationRepository notificationRepository,
+            IUnitOfWork unitOfWork,
+            INotificationHubService hubService)
+        {
+            _notificationRepository = notificationRepository;
+            _unitOfWork = unitOfWork;
+            _hubService = hubService;
+        }
 
-    //    public async Task<NotificationDto> SendNotificationAsync(
-    //        string userId,
-    //        string notificationType,
-    //        string title,
-    //        string message,
-    //        string relatedEntityType = null,
-    //        int? relatedEntityId = null,
-    //        string priority = "Normal")
-    //    {
-    //        var notification = new Notification
-    //        {
-    //            UserId = userId,
-    //            NotificationType = notificationType,
-    //            Title = title,
-    //            Message = message,
-    //            RelatedEntityType = relatedEntityType,
-    //            RelatedEntityId = relatedEntityId,
-    //            Priority = priority,
-    //            IsRead = false,
-    //            CreatedAt = DateTime.UtcNow
-    //        };
+        public async Task<NotificationDto> SendNotificationAsync(
+            Guid userId,
+            string notificationType,
+            string title,
+            string message,
+            string relatedEntityType = null,
+            Guid? relatedEntityId = null,
+            string priority = "Normal")
+        {
+            var notification = new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                UserId = userId,
+                NotificationType = notificationType,
+                Title = title,
+                Message = message,
+                RelatedEntityType = relatedEntityType,
+                RelatedEntityId = relatedEntityId,
+                Priority = priority,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
 
-    //        await _unitOfWork.Notifications.AddAsync(notification);
-    //        await _unitOfWork.SaveChangesAsync();
+            await _notificationRepository.AddAsync(notification);
+            await _unitOfWork.SaveChangesAsync();
 
-    //        return MapToDto(notification);
-    //    }
+            var dto = MapToDto(notification);
 
-    //    public async Task<NotificationDto> GetNotificationByIdAsync(string userId, Guid notificationId)
-    //    {
-    //        var notification = await _unitOfWork.Notifications.GetAsync(
-    //            filter: n => n.NotificationId == notificationId && n.UserId == userId);
+            // 🔥 Send via real-time SignalR through interface
+            await _hubService.SendNotificationToUserAsync(userId, dto);
 
-    //        if (notification == null)
-    //            return null;
+            return dto;
+        }
 
-    //        return MapToDto(notification);
-    //    }
+        public async Task<NotificationDto> GetNotificationByIdAsync(Guid userId, Guid notificationId)
+        {
+            var belongsToUser = await _notificationRepository.NotificationBelongsToUserAsync(
+                notificationId, userId);
 
-    //    public async Task<List<NotificationDto>> GetUserNotificationsAsync(
-    //        int userId,
-    //        int page = 1,
-    //        int pageSize = 20,
-    //        bool unreadOnly = false)
-    //    {
-    //        var notifications = await _unitOfWork.Notifications.GetAll(
-    //            filter: n => n.UserId == userId && (!unreadOnly || !n.IsRead),
-    //            orderBy: q => q.OrderByDescending(n => n.CreatedAt),
-    //            pageSize: pageSize,
-    //            pageNumber: page);
+            if (!belongsToUser)
+                return null;
 
-    //        return notifications.Select(MapToDto).ToList();
-    //    }
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
 
-    //    public async Task<int> GetUnreadCountAsync(string userId)
-    //    {
-    //        return await _unitOfWork.Notifications.CountAsync(
-    //            filter: n => n.UserId == userId && !n.IsRead);
-    //    }
+            return notification != null ? MapToDto(notification) : null;
+        }
 
-    //    public async Task<NotificationSummaryDto> GetNotificationSummaryAsync(int userId)
-    //    {
-    //        var unreadCount = await GetUnreadCountAsync(userId);
-    //        var totalCount = await _unitOfWork.Notifications.CountAsync(
-    //            filter: n => n.UserId == userId);
+        public async Task<List<NotificationDto>> GetUserNotificationsAsync(
+            Guid userId,
+            int page = 1,
+            int pageSize = 20,
+            bool unreadOnly = false)
+        {
+            var notifications = await _notificationRepository.GetUserNotificationsAsync(
+                userId, page, pageSize, unreadOnly);
 
-    //        var latestNotifications = await _unitOfWork.Notifications.GetAll(
-    //            filter: n => n.UserId == userId,
-    //            orderBy: q => q.OrderByDescending(n => n.CreatedAt),
-    //            pageSize: 1,
-    //            pageNumber: 1);
+            return notifications.Select(MapToDto).ToList();
+        }
 
-    //        var latestNotification = latestNotifications.FirstOrDefault();
+        public async Task<int> GetUnreadCountAsync(Guid userId)
+        {
+            return await _notificationRepository.GetUnreadCountAsync(userId);
+        }
 
-    //        return new NotificationSummaryDto
-    //        {
-    //            UnreadCount = unreadCount,
-    //            TotalCount = totalCount,
-    //            LatestNotification = latestNotification != null
-    //                ? MapToDto(latestNotification)
-    //                : null
-    //        };
-    //    }
+        public async Task<NotificationSummaryDto> GetNotificationSummaryAsync(Guid userId)
+        {
+            var unreadCount = await _notificationRepository.GetUnreadCountAsync(userId);
 
-    //    public async Task<bool> MarkAsReadAsync(int userId, int notificationId)
-    //    {
-    //        var notification = await _unitOfWork.Notifications.GetAsync(
-    //            filter: n => n.NotificationId == notificationId && n.UserId == userId);
+            var allNotifications = await _notificationRepository.GetAll(n => n.UserId == userId);
+            var totalCount = allNotifications.Count();
 
-    //        if (notification == null)
-    //            return false;
+            var latestNotification = await _notificationRepository.GetLatestNotificationAsync(userId);
 
-    //        notification.IsRead = true;
-    //        notification.ReadAt = DateTime.UtcNow;
+            return new NotificationSummaryDto
+            {
+                UnreadCount = unreadCount,
+                TotalCount = totalCount,
+                LatestNotification = latestNotification != null
+                    ? MapToDto(latestNotification)
+                    : null
+            };
+        }
 
-    //        await _unitOfWork.Notifications.UpdateAsync(notification);
-    //        await _unitOfWork.SaveChangesAsync();
+        public async Task<bool> MarkAsReadAsync(Guid userId, Guid notificationId)
+        {
+            var result = await _notificationRepository.MarkAsReadAsync(notificationId, userId);
 
-    //        return true;
-    //    }
+            if (result)
+            {
+                await _hubService.NotifyNotificationMarkedAsReadAsync(userId, notificationId);
+            }
 
-    //    public async Task<int> MarkMultipleAsReadAsync(int userId, int[] notificationIds)
-    //    {
-    //        var notifications = await _unitOfWork.Notifications.GetAll(
-    //            filter: n => n.UserId == userId && notificationIds.Contains(n.NotificationId));
+            return result;
+        }
 
-    //        var count = 0;
-    //        foreach (var notification in notifications)
-    //        {
-    //            if (!notification.IsRead)
-    //            {
-    //                notification.IsRead = true;
-    //                notification.ReadAt = DateTime.UtcNow;
-    //                await _unitOfWork.Notifications.UpdateAsync(notification);
-    //                count++;
-    //            }
-    //        }
+        public async Task<int> MarkMultipleAsReadAsync(Guid userId, Guid[] notificationIds)
+        {
+            var count = await _notificationRepository.MarkMultipleAsReadAsync(notificationIds, userId);
 
-    //        await _unitOfWork.SaveChangesAsync();
-    //        return count;
-    //    }
+            if (count > 0)
+            {
+                await _hubService.NotifyNotificationBatchReadAsync(userId, notificationIds);
+            }
 
-    //    public async Task<int> MarkAllAsReadAsync(int userId)
-    //    {
-    //        var unreadNotifications = await _unitOfWork.Notifications.GetAll(
-    //            filter: n => n.UserId == userId && !n.IsRead);
+            return count;
+        }
 
-    //        var count = 0;
-    //        foreach (var notification in unreadNotifications)
-    //        {
-    //            notification.IsRead = true;
-    //            notification.ReadAt = DateTime.UtcNow;
-    //            await _unitOfWork.Notifications.UpdateAsync(notification);
-    //            count++;
-    //        }
+        public async Task<int> MarkAllAsReadAsync(Guid userId)
+        {
+            var count = await _notificationRepository.MarkAllAsReadAsync(userId);
 
-    //        await _unitOfWork.SaveChangesAsync();
-    //        return count;
-    //    }
+            if (count > 0)
+            {
+                await _hubService.NotifyAllNotificationsReadAsync(userId);
+            }
 
-    //    public async Task<bool> DeleteNotificationAsync(int userId, int notificationId)
-    //    {
-    //        var notification = await _unitOfWork.Notifications.GetAsync(
-    //            filter: n => n.NotificationId == notificationId && n.UserId == userId);
+            return count;
+        }
 
-    //        if (notification == null)
-    //            return false;
+        public async Task<bool> DeleteNotificationAsync(Guid userId, Guid notificationId)
+        {
+            var belongsToUser = await _notificationRepository.NotificationBelongsToUserAsync(
+                notificationId, userId);
 
-    //        await _unitOfWork.Notifications.RemoveAsync(notification);
-    //        await _unitOfWork.SaveChangesAsync();
+            if (!belongsToUser)
+                return false;
 
-    //        return true;
-    //    }
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+            if (notification == null)
+                return false;
 
-    //    public async Task<int> DeleteAllNotificationsAsync(int userId)
-    //    {
-    //        var notifications = await _unitOfWork.Notifications.GetAll(
-    //            filter: n => n.UserId == userId);
+            await _notificationRepository.RemoveAsync(notification);
+            await _unitOfWork.SaveChangesAsync();
 
-    //        var count = notifications.Count();
-    //        foreach (var notification in notifications)
-    //        {
-    //            await _unitOfWork.Notifications.RemoveAsync(notification);
-    //        }
+            await _hubService.NotifyNotificationDeletedAsync(userId, notificationId);
 
-    //        await _unitOfWork.SaveChangesAsync();
-    //        return count;
-    //    }
+            return true;
+        }
 
-    //    public async Task SendBulkNotificationsAsync(
-    //        int[] userIds,
-    //        string notificationType,
-    //        string title,
-    //        string message)
-    //    {
-    //        foreach (var userId in userIds)
-    //        {
-    //            var notification = new Notification
-    //            {
-    //                UserId = userId,
-    //                NotificationType = notificationType,
-    //                Title = title,
-    //                Message = message,
-    //                Priority = "Normal",
-    //                IsRead = false,
-    //                CreatedAt = DateTime.UtcNow
-    //            };
+        public async Task<int> DeleteAllNotificationsAsync(Guid userId)
+        {
+            var count = await _notificationRepository.DeleteUserNotificationsAsync(userId);
 
-    //            await _unitOfWork.Notifications.AddAsync(notification);
-    //        }
+            if (count > 0)
+            {
+                await _hubService.NotifyAllNotificationsDeletedAsync(userId);
+            }
 
-    //        await _unitOfWork.SaveChangesAsync();
-    //    }
+            return count;
+        }
 
-    //    private NotificationDto MapToDto(Notification notification)
-    //    {
-    //        return new NotificationDto
-    //        {
-    //            NotificationId = notification.NotificationId,
-    //            UserId = notification.UserId,
-    //            NotificationType = notification.NotificationType,
-    //            Title = notification.Title,
-    //            Message = notification.Message,
-    //            RelatedEntityType = notification.RelatedEntityType,
-    //            RelatedEntityId = notification.RelatedEntityId,
-    //            IsRead = notification.IsRead,
-    //            Priority = notification.Priority,
-    //            CreatedAt = notification.CreatedAt,
-    //            ReadAt = notification.ReadAt,
-    //            TimeAgo = GetTimeAgo(notification.CreatedAt)
-    //        };
-    //    }
+        public async Task SendBulkNotificationsAsync(
+            Guid[] userIds,
+            string notificationType,
+            string title,
+            string message)
+        {
+            foreach (var userId in userIds)
+            {
+                var notification = new Notification
+                {
+                    NotificationId = Guid.NewGuid(),
+                    UserId = userId,
+                    NotificationType = notificationType,
+                    Title = title,
+                    Message = message,
+                    Priority = "Normal",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
 
-    //    private string GetTimeAgo(DateTime dateTime)
-    //    {
-    //        var timeSpan = DateTime.UtcNow - dateTime;
+                await _notificationRepository.AddAsync(notification);
 
-    //        if (timeSpan.TotalMinutes < 1)
-    //            return "Just now";
-    //        if (timeSpan.TotalMinutes < 60)
-    //            return $"{(int)timeSpan.TotalMinutes} minute{((int)timeSpan.TotalMinutes > 1 ? "s" : "")} ago";
-    //        if (timeSpan.TotalHours < 24)
-    //            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours > 1 ? "s" : "")} ago";
-    //        if (timeSpan.TotalDays < 7)
-    //            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays > 1 ? "s" : "")} ago";
-    //        if (timeSpan.TotalDays < 30)
-    //            return $"{(int)(timeSpan.TotalDays / 7)} week{((int)(timeSpan.TotalDays / 7) > 1 ? "s" : "")} ago";
-    //        if (timeSpan.TotalDays < 365)
-    //            return $"{(int)(timeSpan.TotalDays / 30)} month{((int)(timeSpan.TotalDays / 30) > 1 ? "s" : "")} ago";
+                // 🔥 Real-time broadcasting
+                await _hubService.SendNotificationToUserAsync(userId, MapToDto(notification));
+            }
 
-    //        return $"{(int)(timeSpan.TotalDays / 365)} year{((int)(timeSpan.TotalDays / 365) > 1 ? "s" : "")} ago";
-    //    }
-    //}
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        private NotificationDto MapToDto(Notification notification)
+        {
+            return new NotificationDto
+            {
+                NotificationId = notification.NotificationId,
+                UserId = notification.UserId,
+                NotificationType = notification.NotificationType,
+                Title = notification.Title,
+                Message = notification.Message,
+                RelatedEntityType = notification.RelatedEntityType,
+                RelatedEntityId = notification.RelatedEntityId,
+                IsRead = notification.IsRead,
+                Priority = notification.Priority,
+                CreatedAt = notification.CreatedAt,
+                ReadAt = notification.ReadAt,
+                TimeAgo = GetTimeAgo(notification.CreatedAt)
+            };
+        }
+
+        private string GetTimeAgo(DateTime dateTime)
+        {
+            var timeSpan = DateTime.UtcNow - dateTime;
+
+            if (timeSpan.TotalMinutes < 1)
+                return "Just now";
+            if (timeSpan.TotalMinutes < 60)
+                return $"{(int)timeSpan.TotalMinutes} minutes ago";
+            if (timeSpan.TotalHours < 24)
+                return $"{(int)timeSpan.TotalHours} hours ago";
+            if (timeSpan.TotalDays < 7)
+                return $"{(int)timeSpan.TotalDays} days ago";
+            if (timeSpan.TotalDays < 30)
+                return $"{(int)(timeSpan.TotalDays / 7)} weeks ago";
+            if (timeSpan.TotalDays < 365)
+                return $"{(int)(timeSpan.TotalDays / 30)} months ago";
+
+            return $"{(int)(timeSpan.TotalDays / 365)} years ago";
+        }
+    }
 }

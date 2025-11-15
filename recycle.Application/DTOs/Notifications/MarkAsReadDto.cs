@@ -11,6 +11,6 @@ namespace recycle.Application.DTOs.Notifications
     {
         [Required(ErrorMessage = "At least one notification ID is required")]
         [MinLength(1, ErrorMessage = "At least one notification ID is required")]
-        public int[] NotificationIds { get; set; }
+        public Guid[] NotificationIds { get; set; }
     }
 }

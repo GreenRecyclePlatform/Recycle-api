@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IService;
+using recycle.Application.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +20,10 @@ namespace recycle.Application
             //services.AddScoped<AddressService>();
             //services.AddScoped<OrderService>();
             //services.AddScoped<ReviewService>();
+
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IReviewService, ReviewService>();
+            //services.AddScoped<IPickupRequestService, PickupRequestService>();
 
             return services;
         }

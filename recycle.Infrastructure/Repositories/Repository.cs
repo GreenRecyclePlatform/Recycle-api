@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,7 @@ namespace recycle.Infrastructure.Repositories
 
         public async Task RemoveAsync(T entity)
         {
-           
+
             dbSet.Remove(entity);
             await Task.CompletedTask;
         }
@@ -96,6 +97,24 @@ namespace recycle.Infrastructure.Repositories
             await Task.CompletedTask;
         }
 
+        //===========================
+
+        public async Task<T> GetByIdAsync(Guid id)
+        {
+            return await dbSet.FindAsync(id);
+        }
+
+        public async Task<int> CountAsync(Expression<Func<T, bool>> filter = null)
+        {
+            return filter == null
+                ? await dbSet.CountAsync()
+                : await dbSet.CountAsync(filter);
+        }
+
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter)
+        {
+            return await dbSet.AnyAsync(filter);
+        }
 
     }
 }

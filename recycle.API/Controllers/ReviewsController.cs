@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.Reviews;
-using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IService;
 
 namespace recycle.API.Controllers
 {
@@ -20,13 +20,13 @@ namespace recycle.API.Controllers
             _reviewService = reviewService;
         }
 
-        private int GetCurrentUserId()
+        private Guid GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim))
                 throw new UnauthorizedAccessException("User ID not found in token");
 
-            return int.Parse(userIdClaim);
+            return Guid.Parse(userIdClaim);
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace recycle.API.Controllers
         [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(ApiResponse<ReviewDto>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
-        public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] UpdateReviewDto dto)
+        public async Task<IActionResult> UpdateReview(Guid reviewId, [FromBody] UpdateReviewDto dto)
         {
             try
             {
@@ -112,7 +112,7 @@ namespace recycle.API.Controllers
         [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(ApiResponse<object>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 404)]
-        public async Task<IActionResult> DeleteReview(int reviewId)
+        public async Task<IActionResult> DeleteReview(Guid reviewId)
         {
             var userId = GetCurrentUserId();
             var result = await _reviewService.DeleteReviewAsync(userId, reviewId);
@@ -141,7 +141,7 @@ namespace recycle.API.Controllers
         [AllowAnonymous]
         [ProducesResponseType(typeof(PaginatedResponse<ReviewDto>), 200)]
         public async Task<IActionResult> GetDriverReviews(
-            int driverId,
+            Guid driverId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
@@ -164,7 +164,7 @@ namespace recycle.API.Controllers
         [HttpGet("driver/{driverId}/stats")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<DriverRatingDto>), 200)]
-        public async Task<IActionResult> GetDriverRatingStats(int driverId)
+        public async Task<IActionResult> GetDriverRatingStats(Guid driverId)
         {
             var stats = await _reviewService.GetDriverRatingStatsAsync(driverId);
 
@@ -208,7 +208,7 @@ namespace recycle.API.Controllers
         [HttpGet("request/{requestId}/can-review")]
         [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(CanReviewResponse), 200)]
-        public async Task<IActionResult> CanReviewRequest(int requestId)
+        public async Task<IActionResult> CanReviewRequest(Guid requestId)
         {
             var userId = GetCurrentUserId();
             var validation = await _reviewService.CanUserReviewRequestAsync(userId, requestId);
@@ -250,7 +250,7 @@ namespace recycle.API.Controllers
         [HttpPost("{reviewId}/flag")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<object>), 200)]
-        public async Task<IActionResult> FlagReview(int reviewId, [FromBody] FlagReviewRequest request)
+        public async Task<IActionResult> FlagReview(Guid reviewId, [FromBody] FlagReviewRequest request)
         {
             var result = await _reviewService.FlagReviewAsync(reviewId, request.Reason);
 
@@ -273,7 +273,7 @@ namespace recycle.API.Controllers
         /// </summary>
         [HttpGet("{reviewId}")]
         [ProducesResponseType(typeof(ApiResponse<ReviewDto>), 200)]
-        public async Task<IActionResult> GetReviewById(int reviewId)
+        public async Task<IActionResult> GetReviewById(Guid reviewId)
         {
             var review = await _reviewService.GetReviewByIdAsync(reviewId);
 

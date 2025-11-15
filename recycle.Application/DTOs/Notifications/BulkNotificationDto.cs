@@ -11,7 +11,7 @@ namespace recycle.Application.DTOs.Notifications
     {
         [Required(ErrorMessage = "User IDs are required")]
         [MinLength(1, ErrorMessage = "At least one user ID is required")]
-        public int[] UserIds { get; set; }
+        public Guid[] UserIds { get; set; }
 
         [Required(ErrorMessage = "Notification type is required")]
         [MaxLength(50)]

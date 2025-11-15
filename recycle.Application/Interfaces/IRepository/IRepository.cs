@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace recycle.Application.Interfaces
+namespace recycle.Application.Interfaces.IRepository
 {
     public interface IRepository<T> where T : class
     {
@@ -21,6 +21,10 @@ namespace recycle.Application.Interfaces
         Task AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task RemoveAsync(T entity);
+
+        Task<T> GetByIdAsync(Guid id);
+        Task<int> CountAsync(Expression<Func<T, bool>> filter = null);
+        Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
 
 
     }

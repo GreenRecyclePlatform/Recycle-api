@@ -1,10 +1,14 @@
+﻿using Microsoft.AspNetCore.Identity;
+using recycle.Application;
 using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
+using recycle.Application.Interfaces.IService;
 using recycle.Application.Services;
 using recycle.Domain.Entities;
-using recycle.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Identity;
-using recycle.Application;
 using recycle.Infrastructure;
+using recycle.Infrastructure.Hubs;
+using recycle.Infrastructure.Repositories;
+using recycle.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 //// Register Specific Repositories (for UnitOfWork)
-//builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
-//builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
+builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IRepository<Notification>, Repository<Notification>>();
 //builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
 //builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
 //builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
@@ -24,7 +28,7 @@ builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
-
+builder.Services.AddSignalR();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
@@ -45,10 +49,11 @@ builder.Services.AddOpenApi();
 //// ================================================================================
 
 //// Reviews
-//builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 //// Notifications
-//builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -78,5 +83,15 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/notificationHub");
+
+
+// Add a root endpoint
+app.MapGet("/", () => Results.Ok(new
+{
+    message = "Recycle API is running!",
+    swagger = "/swagger",
+    signalrHub = "/notificationHub"
+}));
 
 app.Run();

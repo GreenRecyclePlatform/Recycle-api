@@ -1,6 +1,6 @@
 ﻿using recycle.Domain.Entities;
 
-namespace recycle.Application.Interfaces;
+namespace recycle.Application.Interfaces.IRepository;
 
 public interface IPickupRequestRepository
 {
