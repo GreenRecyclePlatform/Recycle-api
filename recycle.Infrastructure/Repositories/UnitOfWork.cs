@@ -15,8 +15,8 @@ namespace recycle.Infrastructure.Repositories
         //add repositorys here
         public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
-         public IRepository<Review> Reviews { get; }
-        public IRepository<Notification> Notifications { get; }
+         public IReviewRepository Reviews { get; }
+        public INotificationRepository Notifications { get; }
         public IRepository<PickupRequest> PickupRequests { get; }
         public IRepository<DriverAssignment> DriverAssignments { get; }
 
@@ -33,7 +33,7 @@ namespace recycle.Infrastructure.Repositories
             _context = context;
             //initialize repositories here
             Addresses = addresses;
-            Reviews = (IRepository<Review>?)reviews;
+            Reviews = reviews;
             Notifications = notifications;
             Users = users;
             PickupRequests = pickupRequests;

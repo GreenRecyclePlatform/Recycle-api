@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
+using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
+using recycle.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +26,9 @@ namespace recycle.Infrastructure
 
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IAuthService, AuthService>();
-            
+            services.AddScoped<INotificationHubService, NotificationHubService>();
+            services.AddSignalR();
+
 
             return services;
         }
@@ -41,7 +45,6 @@ namespace recycle.Infrastructure
             services.AddScoped<IReviewRepository, ReviewRepository>();
 
             services.AddScoped<DbInitializer>();
-
 
         }
     }

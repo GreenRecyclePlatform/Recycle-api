@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using recycle.Application.DTOs.Reviews;
+using recycle.Domain.Entities;
 
 namespace recycle.Application.Interfaces.IService
 {
@@ -9,88 +10,90 @@ namespace recycle.Application.Interfaces.IService
     /// </summary>
     public interface IReviewService
     {
-        // ==================== CREATE ====================
+        Task<Review> CreateReview(Guid requestId,Guid driverId,CreateReviewDto dto);
 
-        /// <summary>
-        /// Create a new review for a completed pickup request
-        /// </summary>
-        Task<ReviewDto> CreateReviewAsync(Guid userId, CreateReviewDto dto);
+        //// ==================== CREATE ====================
 
-        // ==================== READ ====================
+        ///// <summary>
+        ///// Create a new review for a completed pickup request
+        ///// </summary>
+        //Task<ReviewDto> CreateReviewAsync(Guid userId, CreateReviewDto dto);
 
-        /// <summary>
-        /// Get review by ID
-        /// </summary>
-        Task<ReviewDto> GetReviewByIdAsync(Guid reviewId);
+        //// ==================== READ ====================
 
-        /// <summary>
-        /// Get review by request ID
-        /// </summary>
-        Task<ReviewDto> GetReviewByRequestIdAsync(Guid requestId);
+        ///// <summary>
+        ///// Get review by ID
+        ///// </summary>
+        //Task<ReviewDto> GetReviewByIdAsync(Guid reviewId);
 
-        /// <summary>
-        /// Get all reviews for a specific driver (paginated)
-        /// </summary>
-        Task<List<ReviewDto>> GetReviewsForDriverAsync(Guid driverId, int page = 1, int pageSize = 20);
+        ///// <summary>
+        ///// Get review by request ID
+        ///// </summary>
+        //Task<ReviewDto> GetReviewByRequestIdAsync(Guid requestId);
 
-        /// <summary>
-        /// Get all reviews by a specific user (paginated)
-        /// </summary>
-        Task<List<ReviewDto>> GetReviewsByUserAsync(Guid userId, int page = 1, int pageSize = 20);
+        ///// <summary>
+        ///// Get all reviews for a specific driver (paginated)
+        ///// </summary>
+        //Task<List<ReviewDto>> GetReviewsForDriverAsync(Guid driverId, int page = 1, int pageSize = 20);
 
-        /// <summary>
-        /// Get pending reviews for a user (completed pickups without reviews)
-        /// </summary>
-        Task<List<PendingReviewDto>> GetPendingReviewsForUserAsync(Guid userId);
+        ///// <summary>
+        ///// Get all reviews by a specific user (paginated)
+        ///// </summary>
+        //Task<List<ReviewDto>> GetReviewsByUserAsync(Guid userId, int page = 1, int pageSize = 20);
 
-        // ==================== UPDATE ====================
+        ///// <summary>
+        ///// Get pending reviews for a user (completed pickups without reviews)
+        ///// </summary>
+        //Task<List<PendingReviewDto>> GetPendingReviewsForUserAsync(Guid userId);
 
-        /// <summary>
-        /// Update an existing review (within 7 days)
-        /// </summary>
-        Task<ReviewDto> UpdateReviewAsync(Guid userId, Guid reviewId, UpdateReviewDto dto);
+        //// ==================== UPDATE ====================
 
-        // ==================== DELETE ====================
+        ///// <summary>
+        ///// Update an existing review (within 7 days)
+        ///// </summary>
+        //Task<ReviewDto> UpdateReviewAsync(Guid userId, Guid reviewId, UpdateReviewDto dto);
 
-        /// <summary>
-        /// Delete a review
-        /// </summary>
-        Task<bool> DeleteReviewAsync(Guid userId, Guid reviewId);
+        //// ==================== DELETE ====================
 
-        // ==================== VALIDATION ====================
+        ///// <summary>
+        ///// Delete a review
+        ///// </summary>
+        //Task<bool> DeleteReviewAsync(Guid userId, Guid reviewId);
 
-        /// <summary>
-        /// Check if user can review a specific request
-        /// </summary>
-        Task<ValidationResult> CanUserReviewRequestAsync(Guid userId, Guid requestId);
+        //// ==================== VALIDATION ====================
 
-        // ==================== DRIVER RATING ====================
+        ///// <summary>
+        ///// Check if user can review a specific request
+        ///// </summary>
+        //Task<ValidationResult> CanUserReviewRequestAsync(Guid userId, Guid requestId);
 
-        /// <summary>
-        /// Update driver's average rating based on reviews
-        /// </summary>
-        Task UpdateDriverRatingAsync(Guid driverId);
+        //// ==================== DRIVER RATING ====================
 
-        /// <summary>
-        /// Get driver rating statistics
-        /// </summary>
-        Task<DriverRatingDto> GetDriverRatingStatsAsync(Guid driverId);
+        ///// <summary>
+        ///// Update driver's average rating based on reviews
+        ///// </summary>
+        //Task UpdateDriverRatingAsync(Guid driverId);
 
-        // ==================== ADMIN OPERATIONS ====================
+        ///// <summary>
+        ///// Get driver rating statistics
+        ///// </summary>
+        //Task<DriverRatingDto> GetDriverRatingStatsAsync(Guid driverId);
 
-        /// <summary>
-        /// Flag a review as inappropriate (Admin only)
-        /// </summary>
-        Task<bool> FlagReviewAsync(Guid reviewId, string reason);
+        //// ==================== ADMIN OPERATIONS ====================
 
-        /// <summary>
-        /// Hide or unhide a review (Admin only)
-        /// </summary>
-        Task<bool> HideReviewAsync(Guid reviewId, bool hide);
+        ///// <summary>
+        ///// Flag a review as inappropriate (Admin only)
+        ///// </summary>
+        //Task<bool> FlagReviewAsync(Guid reviewId, string reason);
 
-        /// <summary>
-        /// Get all flagged reviews (Admin only)
-        /// </summary>
-        Task<List<ReviewDto>> GetFlaggedReviewsAsync();
+        ///// <summary>
+        ///// Hide or unhide a review (Admin only)
+        ///// </summary>
+        //Task<bool> HideReviewAsync(Guid reviewId, bool hide);
+
+        ///// <summary>
+        ///// Get all flagged reviews (Admin only)
+        ///// </summary>
+        //Task<List<ReviewDto>> GetFlaggedReviewsAsync();
     }
 }

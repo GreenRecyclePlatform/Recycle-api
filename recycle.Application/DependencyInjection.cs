@@ -20,9 +20,9 @@ namespace recycle.Application
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
             services.AddScoped<AddressService>();
-
-            services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IReviewService, ReviewService>();
+
+            
             //services.AddScoped<IPickupRequestService, PickupRequestService>();
 
             return services;
