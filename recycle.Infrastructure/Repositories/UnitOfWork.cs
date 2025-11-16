@@ -14,21 +14,29 @@ namespace recycle.Infrastructure.Repositories
         //add repositorys here
         public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
-         public IRepository<Review> Reviews { get; }
-        public IRepository<Notification> Notifications { get; }
-         
+        // public IReviewRepository Reviews { get; }
+        //public INotificationRepository Notifications { get; }
+        public IRepository<PickupRequest> PickupRequests { get; }
+        public IRepository<DriverAssignment> DriverAssignments { get; }
+
         public UnitOfWork(AppDbContext context,
             //add repository parameters here
-            IRepository<Address> addresses, IRepository<Review> reviews,
-            IRepository<Notification> notifications, IUserRepository users
+            //IReviewRepository reviews,
+            IRepository<Address> addresses, 
+            //INotificationRepository notifications,
+            IRepository<PickupRequest> pickupRequests,
+            IRepository<DriverAssignment> driverAssignments,
+            IUserRepository users
             )
         {
             _context = context;
             //initialize repositories here
             Addresses = addresses;
-            Reviews = reviews;
-            Notifications = notifications;
+            //Reviews = reviews;
+            //Notifications = notifications;
             Users = users;
+            PickupRequests = pickupRequests;
+            DriverAssignments = driverAssignments;
 
         }
         public async Task SaveChangesAsync()

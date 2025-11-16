@@ -37,6 +37,7 @@ namespace recycle.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<DbInitializer>();
+            services.AddScoped<IMaterialRepository, MaterialRepository>();
 
 
         }

@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using recycle.Application.Interfaces;
 using recycle.Application.Services;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace recycle.Application
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
             services.AddScoped<AddressService>();
+            services.AddScoped<IMaterialService,MaterialService>();
 
             return services;
         }
