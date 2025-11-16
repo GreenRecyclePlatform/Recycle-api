@@ -10,6 +10,8 @@ namespace recycle.Application.Interfaces
         INotificationRepository Notifications { get; }
         IUserRepository Users { get; }
         IRepository<Address> Addresses { get; }
+        IPaymentRepository Payments { get; }
+        //IRepository<Payment> Payments { get; }        //the old
         IRepository<PickupRequest> PickupRequests { get; }
 
         IDriverAssignmentRepository DriverAssignments { get; }

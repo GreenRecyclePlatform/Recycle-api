@@ -10,6 +10,10 @@ namespace recycle.Infrastructure.Repositories
 
         public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
+       
+        public IPaymentRepository Payments { get; }
+      
+     
         public IReviewRepository Reviews { get; private set; }
         public INotificationRepository Notifications { get; private set; }
         public IRepository<PickupRequest> PickupRequests { get; private set; }
@@ -36,6 +40,7 @@ namespace recycle.Infrastructure.Repositories
             Reviews = reviews;
             Notifications = notifications;
             Users = users;
+            Payments = payments;
             PickupRequests = pickupRequests;
 
             DriverAssignments = driverAssignments;
