@@ -10,9 +10,11 @@ namespace recycle.Application.Interfaces
 {
     public interface IUnitOfWork
     {
-        IRepository<Review> Reviews { get; }
-        IRepository<Notification> Notifications { get; }        
-        //add repository interfaces here
+        IReviewRepository Reviews { get; }
+        INotificationRepository Notifications { get; }
+        IRepository<PickupRequest> PickupRequests { get; }
+        IRepository<DriverAssignment> DriverAssignments { get; }
+        IUserRepository Users { get; }
         IRepository<Address> Addresses { get; }
         IDriverAssignmentRepository DriverAssignments { get; }
 

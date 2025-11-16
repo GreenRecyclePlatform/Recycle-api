@@ -35,9 +35,9 @@ namespace recycle.Infrastructure
 
             if (!_roleManager.RoleExistsAsync("Admin").GetAwaiter().GetResult())
             {
-                _roleManager.CreateAsync(new IdentityRole<Guid>("Admin")).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole<Guid>("User")).GetAwaiter().GetResult();
-                _roleManager.CreateAsync(new IdentityRole<Guid>("Driver")).GetAwaiter().GetResult();
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("Admin"));
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("User"));
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("Driver"));
 
                 var result = _userManager.CreateAsync(new ApplicationUser
                 {

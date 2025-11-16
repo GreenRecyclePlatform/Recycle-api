@@ -22,6 +22,10 @@ namespace recycle.Application.Interfaces.IRepository
         Task UpdateAsync(T entity);
         Task RemoveAsync(T entity);
 
+        Task<T> GetByIdAsync(Guid id);
+        Task<int> CountAsync(Expression<Func<T, bool>> filter = null);
+        Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
+
 
     }
 }

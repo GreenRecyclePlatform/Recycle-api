@@ -3,7 +3,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
+<<<<<<< HEAD
+=======
+using recycle.Application.Services;
+using recycle.Infrastructure.ExternalServices;
+>>>>>>> origin/dev
 using recycle.Infrastructure.Repositories;
+using recycle.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +26,12 @@ namespace recycle.Infrastructure
 
 
             //for external services
-      
-            //services.AddScoped<IPaymentService, PaymentService>();
-            //services.AddScoped<ITokenService, TokenService>();
-            //services.AddScoped<IAuthService, AuthService>();
-            //services.AddTransient<IEmailService, EmailService>();
+
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<INotificationHubService, NotificationHubService>();
+            services.AddSignalR();
+
 
             return services;
         }
@@ -35,8 +42,13 @@ namespace recycle.Infrastructure
                 options.UseSqlServer(configuration.GetConnectionString("Database")));
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
+
             services.AddScoped<DbInitializer>();
+<<<<<<< HEAD
 
             services.AddScoped<IDriverAssignmentRepository, DriverAssignmentRepository>();
 
@@ -47,6 +59,8 @@ namespace recycle.Infrastructure
             //services.AddScoped<IReviewRepository, ReviewRepository>();
             //services.AddScoped<IWishlistRepository, WishlistRepository>();
 
+=======
+>>>>>>> origin/dev
 
         }
     }

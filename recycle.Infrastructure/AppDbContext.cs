@@ -35,6 +35,10 @@ namespace recycle.Infrastructure
             builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(builder);
 
+            builder.Entity<DriverProfile>()
+                .Property(d => d.Rating)
+                .HasPrecision(18, 2);
+
         }
     }
 }
