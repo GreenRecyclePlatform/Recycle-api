@@ -21,8 +21,10 @@ namespace recycle.Application
 
             services.AddScoped<AddressService>();
             services.AddScoped<IReviewService, ReviewService>();
+            services.AddScoped<IMaterialService, MaterialService>();
+            services.AddScoped<IRequestMaterialService, RequestMaterialService>();
 
-            
+
             //services.AddScoped<IPickupRequestService, PickupRequestService>();
 
             return services;

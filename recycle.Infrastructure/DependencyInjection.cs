@@ -43,6 +43,8 @@ namespace recycle.Infrastructure
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
+            services.AddScoped<IMaterialRepository, MaterialRepository>();
+            services.AddScoped<IRequestMaterialRepository, RequestMaterialRepository>();
 
             services.AddScoped<DbInitializer>();
 
