@@ -1,4 +1,5 @@
-﻿using recycle.Domain.Entities;
+﻿using recycle.Application.Interfaces.IRepository;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace recycle.Application.Interfaces
 {
-    public interface IUserRepository
+    public interface IUserRepository : IRepository<ApplicationUser>
     {
         Task<bool> IsUniqueAsync(string email, string userName);
         Task<ApplicationUser> GetByEmailAsync(string email);

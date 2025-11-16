@@ -9,13 +9,18 @@ using System.Threading.Tasks;
 
 namespace recycle.Infrastructure.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : Repository<ApplicationUser>, IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AppDbContext _context;
 
-        public UserRepository(UserManager<ApplicationUser> userManager)
+        public UserRepository(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager) 
+            : base(context)
         {
             _userManager = userManager;
+             _context = context;
         }
         public async Task<ApplicationUser> AddUser(ApplicationUser user, string password)
         {
