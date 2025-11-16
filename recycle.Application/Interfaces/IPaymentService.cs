@@ -11,7 +11,8 @@ namespace recycle.Application.Interfaces
     {
         Task<PaymentDto> CreatePaymentAsync(PaymentDto dto);
         Task<IEnumerable<PaymentDto>> GetPaymentsAsync(string? status);
-        Task<PaymentDto?> GetPaymentByIdAsync(Guid paymentId);
+        Task<PaymentDto?> GetPaymentByIdAsync(Guid id);
         Task<bool> UpdatePaymentStatusAsync(Guid paymentId, string newStatus, int adminId, string? adminNotes = null, string? failureReason = null);
+        
     }
 }

@@ -14,13 +14,15 @@ namespace recycle.Infrastructure.Repositories
         //add repositorys here
         public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
-         public IRepository<Review> Reviews { get; }
+        public IRepository<Review> Reviews { get; }
         public IRepository<Notification> Notifications { get; }
-         
+        public IPaymentRepository Payments { get; }
+        //public IRepository<Payment> Payments { get; }         //the old
+
         public UnitOfWork(AppDbContext context,
             //add repository parameters here
             IRepository<Address> addresses, IRepository<Review> reviews,
-            IRepository<Notification> notifications, IUserRepository users
+            IRepository<Notification> notifications, IUserRepository users, IRepository<Payment> payments
             )
         {
             _context = context;
@@ -29,7 +31,7 @@ namespace recycle.Infrastructure.Repositories
             Reviews = reviews;
             Notifications = notifications;
             Users = users;
-
+            Payments = payments;
         }
         public async Task SaveChangesAsync()
         {

@@ -13,6 +13,8 @@ namespace recycle.Application.Interfaces
         IRepository<Notification> Notifications { get; }
         IUserRepository Users { get; }
         IRepository<Address> Addresses { get; }
+        IPaymentRepository Payments { get; }
+        //IRepository<Payment> Payments { get; }        //the old
 
         Task SaveChangesAsync();
     }

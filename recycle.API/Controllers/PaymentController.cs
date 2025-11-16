@@ -16,27 +16,26 @@ namespace Recycle.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePayment([FromBody] PaymentDto dto)
+        public async Task<IActionResult> CreatePayment(PaymentDto dto)
         {
-            var created = await _paymentService.CreatePaymentAsync(dto);
-            return Ok(created);
+            var result = await _paymentService.CreatePaymentAsync(dto);
+            return Ok(result);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetPayments([FromQuery] string? status)
         {
-            var payments = await _paymentService.GetPaymentsAsync(status);
-            return Ok(payments);
+            var result = await _paymentService.GetPaymentsAsync(status);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetPaymentById(Guid id)
+        public async Task<IActionResult> GetPayment(Guid id)
         {
-            var payment = await _paymentService.GetPaymentByIdAsync(id);
-            if (payment == null)
-                return NotFound();
+            var result = await _paymentService.GetPaymentByIdAsync(id);
+            if (result == null) return NotFound();
 
-            return Ok(payment);
+            return Ok(result);
         }
 
         [HttpPut("{id:guid}/status")]
@@ -44,11 +43,9 @@ namespace Recycle.Api.Controllers
                                                       [FromQuery] string? notes, [FromQuery] string? failureReason)
         {
             var updated = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);
+            if (!updated) return NotFound("Payment not found");
 
-            if (!updated)
-                return NotFound("Payment not found");
-
-            return Ok("Payment status updated");
+            return Ok("Status updated successfully");
         }
     }
 }

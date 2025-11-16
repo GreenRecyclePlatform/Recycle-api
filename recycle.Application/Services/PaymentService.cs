@@ -7,11 +7,11 @@ namespace recycle.Application.Services
 {
     public class PaymentService : IPaymentService
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentService(AppDbContext context)
+        public PaymentService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<PaymentDto> CreatePaymentAsync(PaymentDto dto)
@@ -19,7 +19,7 @@ namespace recycle.Application.Services
             var payment = new Payment
             {
                 ID = Guid.NewGuid(),
-                RequestId = dto.PaymentId,
+                RequestId = dto.RequestId,
                 RecipientUserID = dto.RecipientUserId,
                 RecipientType = dto.RecipientType,
                 Amount = dto.Amount,
@@ -29,8 +29,8 @@ namespace recycle.Application.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _context.Payments.AddAsync(payment);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.Payments.AddAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
 
             return new PaymentDto
             {
@@ -47,18 +47,13 @@ namespace recycle.Application.Services
 
         public async Task<IEnumerable<PaymentDto>> GetPaymentsAsync(string? status)
         {
-            var query = _context.Payments.AsQueryable();
-
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(p => p.PaymentStatus == status);
-
-            var payments = await query.ToListAsync();
+            var payments = await _unitOfWork.Payments.GetAllAsync(status);
 
             return payments.Select(p => new PaymentDto
             {
-                PaymentId = p.PaymentId,
+                PaymentId = p.ID,
                 RequestId = p.RequestId,
-                RecipientUserId = p.RecipientUserId,
+                RecipientUserId = p.RecipientUserID,
                 RecipientType = p.RecipientType,
                 Amount = p.Amount,
                 PaymentMethod = p.PaymentMethod,
@@ -69,16 +64,16 @@ namespace recycle.Application.Services
             });
         }
 
-        public async Task<PaymentDto?> GetPaymentByIdAsync(Guid paymentId)
+        public async Task<PaymentDto?> GetPaymentByIdAsync(Guid id)
         {
-            var p = await _context.Payments.FirstOrDefaultAsync(x => x.PaymentId == paymentId);
+            var p = await _unitOfWork.Payments.GetByIdAsync(id);
             if (p == null) return null;
 
             return new PaymentDto
             {
-                PaymentId = p.PaymentId,
+                PaymentId = p.ID,
                 RequestId = p.RequestId,
-                RecipientUserId = p.RecipientUserId,
+                RecipientUserId = p.RecipientUserID,
                 RecipientType = p.RecipientType,
                 Amount = p.Amount,
                 PaymentMethod = p.PaymentMethod,
@@ -91,26 +86,24 @@ namespace recycle.Application.Services
 
         public async Task<bool> UpdatePaymentStatusAsync(Guid paymentId, string newStatus, int adminId, string? adminNotes = null, string? failureReason = null)
         {
-            var payment = await _context.Payments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
-            if (payment == null)
-                return false;
+            var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+            if (payment == null) return false;
 
             payment.PaymentStatus = newStatus;
-            payment.ApprovedByAdminId = adminId;
+            payment.ApprovedByAdminID = adminId;
             payment.ApprovedAt = DateTime.UtcNow;
+            payment.AdminNotes = adminNotes;
+            payment.FailureReason = failureReason;
 
             if (newStatus == "Paid")
                 payment.PaidAt = DateTime.UtcNow;
 
             if (newStatus == "Failed")
-            {
                 payment.FailedAt = DateTime.UtcNow;
-                payment.FailureReason = failureReason;
-            }
 
-            payment.AdminNotes = adminNotes;
+            _unitOfWork.Payments.Update(payment);
+            await _unitOfWork.SaveChangesAsync();
 
-            await _context.SaveChangesAsync();
             return true;
         }
     }
