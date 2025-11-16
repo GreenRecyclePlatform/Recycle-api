@@ -47,6 +47,15 @@ namespace recycle.Infrastructure.Repositories
             
             return applicationUser;
         }
+        public async Task<ApplicationUser> GetByUserNameAsync(string userName)
+        {
+            var applicationUser = await _userManager.FindByNameAsync(userName);
+            if (applicationUser == null)
+            {
+                return null;
+            }
+            return applicationUser;
+        }
 
         public async Task<ApplicationUser> GetByIdAsync(Guid id)
         {

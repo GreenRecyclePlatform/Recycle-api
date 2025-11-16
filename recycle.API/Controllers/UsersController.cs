@@ -78,7 +78,7 @@ namespace recycle.API.Controllers
             if (jwtToken == null || string.IsNullOrEmpty(jwtToken))
             {
                
-                return BadRequest("Username or password is incorrect");
+                return BadRequest("Username or Email or password is incorrect");
             }
 
            

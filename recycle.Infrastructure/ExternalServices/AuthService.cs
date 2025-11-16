@@ -27,7 +27,17 @@ namespace recycle.Infrastructure.ExternalServices
 
         public async Task<string> Login(LoginRequest request)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
+            ApplicationUser user = null;
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                user = await _userRepository.GetByUserNameAsync(request.UserName);
+                
+            }
+            else
+            {
+                 user = await _userRepository.GetByEmailAsync(request.Email);
+               
+            }
             if (user == null)
             {
                 return string.Empty;
