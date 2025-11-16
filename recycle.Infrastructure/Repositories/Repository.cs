@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-<<<<<<< HEAD
-=======
 using recycle.Application.Interfaces;
->>>>>>> origin/dev
 using recycle.Application.Interfaces.IRepository;
 using System;
 using System.Collections.Generic;

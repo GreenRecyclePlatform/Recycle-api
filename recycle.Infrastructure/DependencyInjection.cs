@@ -3,11 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
-<<<<<<< HEAD
-=======
 using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
->>>>>>> origin/dev
 using recycle.Infrastructure.Repositories;
 using recycle.Infrastructure.Services;
 using System;
@@ -48,19 +45,10 @@ namespace recycle.Infrastructure
             services.AddScoped<IReviewRepository, ReviewRepository>();
 
             services.AddScoped<DbInitializer>();
-<<<<<<< HEAD
 
             services.AddScoped<IDriverAssignmentRepository, DriverAssignmentRepository>();
 
-            //for example
-            //services.AddScoped<IUserRepository, UserRepository>();
-            //services.AddScoped<IProductRepository, ProductRepository>();
-            //services.AddScoped<ICartRepository, CartRepository>();
-            //services.AddScoped<IReviewRepository, ReviewRepository>();
-            //services.AddScoped<IWishlistRepository, WishlistRepository>();
 
-=======
->>>>>>> origin/dev
 
         }
     }
