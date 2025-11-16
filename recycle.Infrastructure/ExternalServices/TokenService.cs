@@ -37,6 +37,7 @@ namespace recycle.Infrastructure.ExternalServices
                 Subject = new ClaimsIdentity(new Claim[]{
                     new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Id.ToString()),
                     new Claim(ClaimTypes.Name, applicationUser.UserName),
+                    new Claim(ClaimTypes.NameIdentifier, applicationUser.Id.ToString()),
                     new Claim(ClaimTypes.Email, applicationUser.Email),
                     new Claim(ClaimTypes.Role, roles.FirstOrDefault()),
                     new Claim(JwtRegisteredClaimNames.Jti, jwtTokenId),
