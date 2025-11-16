@@ -48,6 +48,10 @@ namespace recycle.Infrastructure
 
             services.AddScoped<DbInitializer>();
 
+            services.AddScoped<IDriverAssignmentRepository, DriverAssignmentRepository>();
+
+
+
         }
     }
 }

@@ -1,9 +1,5 @@
 ﻿using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace recycle.Application.Interfaces
@@ -12,10 +8,13 @@ namespace recycle.Application.Interfaces
     {
         IReviewRepository Reviews { get; }
         INotificationRepository Notifications { get; }
-        IRepository<PickupRequest> PickupRequests { get; }
-        IRepository<DriverAssignment> DriverAssignments { get; }
         IUserRepository Users { get; }
         IRepository<Address> Addresses { get; }
+        IRepository<PickupRequest> PickupRequests { get; }
+
+        IDriverAssignmentRepository DriverAssignments { get; }
+        IRepository<ApplicationUser> ApplicationUsers { get; }
+
 
         Task SaveChangesAsync();
     }

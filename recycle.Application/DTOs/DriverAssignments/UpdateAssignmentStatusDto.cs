@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace recycle.Application.DTOs.DriverAssignments
 {
-    internal class UpdateAssignmentStatusDto
+    public class UpdateAssignmentStatusDto
     {
         [Required]
         public Guid AssignmentId { get; set; }

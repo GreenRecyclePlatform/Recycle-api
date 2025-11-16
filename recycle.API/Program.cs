@@ -28,6 +28,10 @@ builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
 //builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
 
 builder.Services.AddControllers();
+
+
+
+
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -143,6 +147,18 @@ builder.Services.AddCors(options =>
 });
 
 
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+
 var app = builder.Build();
 
 
@@ -151,7 +167,8 @@ using (var scope = app.Services.CreateScope())
     var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
     await dbInitializer.InitializeAsync();
 }
-
+// Use CORS
+app.UseCors("AllowAll");
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -171,5 +188,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
+
+
+app.UseStaticFiles();
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 
 app.Run();

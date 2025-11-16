@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace recycle.Application.DTOs.DriverAssignments
 {
-    internal class DriverResponseDto
+    public class DriverResponseDto
     {
        
             [Required]
