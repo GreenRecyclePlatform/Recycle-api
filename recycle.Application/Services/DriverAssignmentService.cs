@@ -39,7 +39,7 @@ namespace recycle.Application.Services
                 throw new Exception($"Cannot assign driver. Request status is: {request.Status}");
 
             // 3. Validate driver exists - use--> GetAsync & include
-            var driver = await _unitOfWork.ApplicationUsers.GetAsync(
+            var driver = await _unitOfWork.Users.GetAsync(
                 filter: u => u.Id == dto.DriverId,
                 includes: query => query.Include(u => u.DriverProfile)
             );
@@ -184,7 +184,7 @@ namespace recycle.Application.Services
                 }
 
                 // Update driver's total trips
-                var driver = await _unitOfWork.ApplicationUsers.GetAsync(
+                var driver = await _unitOfWork.Users.GetAsync(
                     filter: u => u.Id == assignment.DriverId,
                     includes: query => query.Include(u => u.DriverProfile)
                 );
@@ -192,7 +192,7 @@ namespace recycle.Application.Services
                 if (driver?.DriverProfile != null)
                 {
                     driver.DriverProfile.TotalTrips++;
-                    await _unitOfWork.ApplicationUsers.UpdateAsync(driver);
+                    await _unitOfWork.Users.UpdateAsync(driver);
                 }
             }
 
@@ -210,7 +210,7 @@ namespace recycle.Application.Services
                 throw new Exception("Assignment not found");
 
             // Validate new driver
-            var newDriver = await _unitOfWork.ApplicationUsers.GetAsync(
+            var newDriver = await _unitOfWork.Users.GetAsync(
                 filter: u => u.Id == newDriverId,
                 includes: query => query.Include(u => u.DriverProfile)
             );

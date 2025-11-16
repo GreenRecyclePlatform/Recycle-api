@@ -9,11 +9,14 @@ using System.Threading.Tasks;
 
 namespace recycle.Infrastructure.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : Repository<ApplicationUser>, IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public UserRepository(UserManager<ApplicationUser> userManager)
+        public UserRepository(
+            AppDbContext context,
+            UserManager<ApplicationUser> userManager) 
+            : base(context)
         {
             _userManager = userManager;
         }

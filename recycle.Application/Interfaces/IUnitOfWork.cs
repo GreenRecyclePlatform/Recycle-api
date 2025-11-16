@@ -15,7 +15,6 @@ namespace recycle.Application.Interfaces
         IRepository<PickupRequest> PickupRequests { get; }
 
         IDriverAssignmentRepository DriverAssignments { get; }
-        IRepository<ApplicationUser> ApplicationUsers { get; }
 
 
         Task SaveChangesAsync();
