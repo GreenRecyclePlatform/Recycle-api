@@ -30,7 +30,8 @@ namespace recycle.Infrastructure.Repositories
             IRepository<PickupRequest> pickupRequests,
             IUserRepository users,
             IDriverAssignmentRepository driverAssignments,
-                    IRepository<ApplicationUser> applicationUsers  
+                    IRepository<ApplicationUser> applicationUsers,  
+            IPaymentRepository payments
 
         )
         {
