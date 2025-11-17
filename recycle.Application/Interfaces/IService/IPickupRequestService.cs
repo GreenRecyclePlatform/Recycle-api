@@ -1,6 +1,6 @@
 ﻿using recycle.Application.DTOs.PickupRequest;
 
-namespace recycle.Application.Interfaces.IService;
+namespace recycle.Application.Interfaces;
 
 public interface IPickupRequestService
 {
@@ -13,5 +13,5 @@ public interface IPickupRequestService
     Task<PickupRequestResponseDto?> UpdateAsync(Guid requestId, UpdatePickupRequestDto updateDto);
     Task<bool> DeleteAsync(Guid requestId);
     Task<bool> UpdateStatusAsync(Guid requestId, string newStatus);
-    Task<bool> CanChangeStatus(string currentStatus, string newStatus);
+    bool CanChangeStatus(string currentStatus, string newStatus);
 }
