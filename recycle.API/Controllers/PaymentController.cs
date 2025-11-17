@@ -45,7 +45,7 @@ namespace Recycle.Api.Controllers
         }
 
         [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] int adminId,
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] Guid adminId,
                                                       [FromQuery] string? notes, [FromQuery] string? failureReason)
         {
             var updated = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);
@@ -105,7 +105,7 @@ namespace Recycle.Api.Controllers
                     if (transfer?.Metadata != null && transfer.Metadata.ContainsKey("ID"))
                     {
                         Guid pid = Guid.Parse(transfer.Metadata["ID"]);
-                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Paid, 0, "Stripe transfer.paid webhook");
+                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Paid, pid, "Stripe transfer.paid webhook");
                     }
                     break;
 
@@ -114,7 +114,7 @@ namespace Recycle.Api.Controllers
                     if (t2?.Metadata != null && t2.Metadata.ContainsKey("ID"))
                     {
                         Guid pid = Guid.Parse(t2.Metadata["ID"]);
-                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Failed, 0, "Stripe transfer.failed webhook", "Stripe failure");
+                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Failed, pid, "Stripe transfer.failed webhook", "Stripe failure");
                     }
                     break;
             }
