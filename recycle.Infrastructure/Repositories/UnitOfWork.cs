@@ -10,7 +10,7 @@ namespace recycle.Infrastructure.Repositories
 
         public IUserRepository Users { get; private set; }
         public IRepository<Address> Addresses { get; private set; }
-       
+        public IRepository<DriverProfile> DriverProfiles { get; private set; }
         public IPaymentRepository Payments { get; }
       
      
@@ -26,6 +26,7 @@ namespace recycle.Infrastructure.Repositories
             AppDbContext context,
             IReviewRepository reviews,
             IRepository<Address> addresses,
+            IRepository<DriverProfile> driverProfiles,
             INotificationRepository notifications,
             IRepository<PickupRequest> pickupRequests,
             IUserRepository users,
@@ -38,6 +39,7 @@ namespace recycle.Infrastructure.Repositories
             _context = context;
 
             Addresses = addresses;
+            DriverProfiles = driverProfiles;
             Reviews = reviews;
             Notifications = notifications;
             Users = users;
