@@ -11,7 +11,7 @@ namespace recycle.Application.Interfaces.IService
     /// </summary>
     public interface IReviewService
     {
-        Task<Review> CreateReview(Guid requestId,Guid driverId,CreateReviewDto dto);
+        Task<Review> CreateReview(Guid userId, CreateReviewDto dto);
 
         //// ==================== CREATE ====================
 
