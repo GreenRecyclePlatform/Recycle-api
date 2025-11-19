@@ -5,9 +5,9 @@ public class PickupRequest
     public Guid RequestId { get; set; } = Guid.NewGuid(); //here is the guid will be generated in app instead of in the database.
     public Guid UserId { get; set; }
     public Guid AddressId { get; set; }
-    //public string PickupAddress { get; set; } = string.Empty;
-    //public string City { get; set; } = string.Empty;
-    //public string PostalCode { get; set; } = string.Empty;
+    public string PickupAddress { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string PostalCode { get; set; } = string.Empty;
     public DateTime PreferredPickupDate { get; set; }
     public string Status { get; set; } = "Pending"; // Pending/Assigned/PickedUp/Completed/Cancelled
     public string? Notes { get; set; }

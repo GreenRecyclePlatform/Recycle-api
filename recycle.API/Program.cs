@@ -98,6 +98,9 @@ builder.Services.AddOpenApi();
 //builder.Services.AddScoped<INotificationService, NotificationService>();
 //builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
 
+//Reviews Service 
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

@@ -10,11 +10,11 @@
 
             public Guid RequestId { get; set; }
 
-            public Guid ReviewerId { get; set; }
+            public Guid ReviewerId { get; set; }    // CustomerId
 
-            public Guid RevieweeId { get; set; }
+            public Guid RevieweeId { get; set; }  // DriverId
 
-            public int Rating { get; set; }
+             public int Rating { get; set; }
 
             public string Comment { get; set; }
 
@@ -26,9 +26,9 @@
 
             public bool IsFlagged { get; set; } = false;
 
-            public string FlagReason { get; set; }
+        public string FlagReason { get; set; } = "";
 
-            public DateTime? FlaggedAt { get; set; }
+        public DateTime? FlaggedAt { get; set; }
 
             public bool IsHidden { get; set; } = false;
 
