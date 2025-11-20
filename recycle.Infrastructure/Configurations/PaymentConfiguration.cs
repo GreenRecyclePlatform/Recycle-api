@@ -35,7 +35,7 @@ namespace recycle.Infrastructure.Configurations
                    .HasMaxLength(500);
 
             builder.Property(p => p.FailureReason)
-                   .HasMaxLength(200);
+                   .HasMaxLength(500);
 
             builder.Property(p => p.CreatedAt)
                    .HasDefaultValueSql("GETUTCDATE()");
