@@ -71,7 +71,7 @@ namespace recycle.Infrastructure.ExternalServices
                 }),
                 Issuer = "recycle.API",
                 //Audience = "recycle.web",
-                Expires = DateTime.Now.AddMinutes(5),
+                Expires = DateTime.Now.AddMinutes(60),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)), SecurityAlgorithms.HmacSha256Signature)
             };
 
