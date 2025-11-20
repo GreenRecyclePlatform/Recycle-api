@@ -219,6 +219,10 @@ namespace recycle.Application.Services
         //    {
         //        // ignore and continue to driver repo
         //    }
+        //public async Task<bool> UpdatePaymentStatusAsync(Guid paymentId, string newStatus, Guid adminId, string? adminNotes = null, string? failureReason = null)
+        //{
+          //  var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+           // if (payment == null) return false;
 
         //    // try DriverProfile repo if exists
         //    try

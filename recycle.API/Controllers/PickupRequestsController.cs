@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.PickupRequest;
-using recycle.Application.Interfaces.IService;
+using recycle.Application.Interfaces;
 using System.Security.Claims;
 
 namespace recycle.API.Controllers;

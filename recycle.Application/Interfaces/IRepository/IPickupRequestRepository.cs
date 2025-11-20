@@ -1,6 +1,6 @@
 ﻿using recycle.Domain.Entities;
 
-namespace recycle.Application.Interfaces.IRepository;
+namespace recycle.Application.Interfaces;
 
 public interface IPickupRequestRepository
 {
@@ -14,7 +14,7 @@ public interface IPickupRequestRepository
         Guid? userId = null,
         DateTime? fromDate = null,
         DateTime? toDate = null,
-        string? city = null,
+        string? governorate = null,
         int pageNumber = 1,
         int pageSize = 10);
     Task<int> GetTotalCountAsync(
@@ -22,7 +22,7 @@ public interface IPickupRequestRepository
         Guid? userId = null,
         DateTime? fromDate = null,
         DateTime? toDate = null,
-        string? city = null);
+        string? governorate = null);
     Task<PickupRequest> CreateAsync(PickupRequest pickupRequest);
     Task<PickupRequest> UpdateAsync(PickupRequest pickupRequest);
     Task<bool> DeleteAsync(Guid requestId);

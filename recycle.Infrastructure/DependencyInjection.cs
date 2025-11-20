@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
+using recycle.Application.Interfaces.IService;
 using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
@@ -61,6 +62,10 @@ namespace recycle.Infrastructure
             services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<IMaterialRepository, MaterialRepository>();
             services.AddScoped<IRequestMaterialRepository, RequestMaterialRepository>();
+
+            //=====================Abdelrahman Service injections============
+            services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
+            services.AddScoped<IPickupRequestService, PickupRequestService>();
 
             services.AddScoped<DbInitializer>();
 

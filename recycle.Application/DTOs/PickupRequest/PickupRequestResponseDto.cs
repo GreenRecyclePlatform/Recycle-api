@@ -5,9 +5,8 @@ public class PickupRequestResponseDto
     public Guid RequestId { get; set; }
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
-    public string PickupAddress { get; set; } = string.Empty;
-    public string City { get; set; } = string.Empty;
-    public string PostalCode { get; set; } = string.Empty;
+    public Guid AddressId { get; set; }
+    public string FullAddress { get; set; } = string.Empty;
     public DateTime PreferredPickupDate { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Notes { get; set; }
