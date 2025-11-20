@@ -26,9 +26,9 @@
 
             public bool IsFlagged { get; set; } = false;
 
-        public string FlagReason { get; set; } = "";
+            public string FlagReason { get; set; } = "";
 
-        public DateTime? FlaggedAt { get; set; }
+            public DateTime? FlaggedAt { get; set; }
 
             public bool IsHidden { get; set; } = false;
 
