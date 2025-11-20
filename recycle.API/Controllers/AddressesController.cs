@@ -24,7 +24,7 @@ namespace recycle.API.Controllers
         private Guid GetUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.Parse(userIdClaim);
+            return Guid.Parse(userIdClaim!);
         }
 
         [HttpGet]
