@@ -12,6 +12,5 @@
         public bool IsAvailable { get; set; }
         public int TotalTrips { get; set; }
         public DateTime CreatedAt { get; set; }
-        public string? StripeAccountId { get; set; }
     }
 }
