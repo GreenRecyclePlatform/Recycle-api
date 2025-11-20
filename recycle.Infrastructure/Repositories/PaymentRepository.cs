@@ -30,7 +30,7 @@ namespace recycle.Infrastructure.Repositories
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(p => p.PaymentStatus == status);
 
-            return await query.ToListAsync();
+            return await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
         }
 
         public async Task<Payment?> GetByIdAsync(Guid id)

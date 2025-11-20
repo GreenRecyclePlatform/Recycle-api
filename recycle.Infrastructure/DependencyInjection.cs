@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Application.Interfaces.IService;
@@ -8,11 +9,14 @@ using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
 using recycle.Infrastructure.Services;
+using recycle.Application.Options;
+using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace recycle.Infrastructure
 {
@@ -27,11 +31,21 @@ namespace recycle.Infrastructure
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITokenService, ExternalServices.TokenService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<INotificationHubService, NotificationHubService>();
+            services.AddScoped<IStripeAdapter, StripeAdapter>();
             services.AddSignalR();
-
+            services.Configure<StripeOptions>(options =>
+            {
+                options.SecretKey = configuration["Stripe:SecretKey"] ?? string.Empty;
+                options.WebhookSecret = configuration["Stripe:WebhookSecret"] ?? string.Empty;
+            });
+            var stripeSecretKey = configuration["Stripe:SecretKey"];
+            if (!string.IsNullOrEmpty(stripeSecretKey))
+            {
+                StripeConfiguration.ApiKey = stripeSecretKey;
+            }
 
             return services;
         }

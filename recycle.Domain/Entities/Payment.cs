@@ -20,7 +20,7 @@ namespace recycle.Domain.Entities
 
         public string? TransactionReference { get; set; }
 
-        public Guid ApprovedByAdminID { get; set; }
+        public Guid? ApprovedByAdminID { get; set; }
 
         public DateTime ApprovedAt { get; set; }
 

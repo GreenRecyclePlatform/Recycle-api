@@ -344,6 +344,9 @@ namespace recycle.Infrastructure.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("StripeAccountId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TotalTrips")
                         .HasColumnType("int");
 
@@ -517,7 +520,7 @@ namespace recycle.Infrastructure.Migrations
                     b.Property<DateTime>("ApprovedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("ApprovedByAdminID")
+                    b.Property<Guid?>("ApprovedByAdminID")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
