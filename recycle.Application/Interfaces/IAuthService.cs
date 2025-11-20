@@ -11,6 +11,6 @@ namespace recycle.Application.Interfaces
     public interface IAuthService
     {
         Task<ApplicationUser> Register(RegisterationRequest request);
-        Task<string> Login(LoginRequest request);
+        Task<Tokens> Login(LoginRequest request);
     }
 }

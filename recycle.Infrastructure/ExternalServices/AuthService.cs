@@ -25,7 +25,7 @@ namespace recycle.Infrastructure.ExternalServices
             _roleManager = roleManager;
         }
 
-        public async Task<string> Login(LoginRequest request)
+        public async Task<Tokens> Login(LoginRequest request)
         {
             ApplicationUser user = null;
             if (string.IsNullOrWhiteSpace(request.Email))
@@ -40,17 +40,24 @@ namespace recycle.Infrastructure.ExternalServices
             }
             if (user == null)
             {
-                return string.Empty;
+                return new Tokens();
             }
             var isValid = await _userRepository.CheckPasswordAsync(user, request.Password);
             if (!isValid)
             {
-                return string.Empty;
+                return new Tokens();
             }
             var jwtTokenId = Guid.NewGuid().ToString();
             var accessToken = await _tokenService.GetAccessToken(user, jwtTokenId);
+            var refreshToken = await _tokenService.CreateNewRefreshToken(user.Id, jwtTokenId);
 
-           return accessToken;
+            Tokens tokens = new Tokens
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+
+            return tokens;
 
         }
 
