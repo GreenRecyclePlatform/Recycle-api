@@ -2,6 +2,7 @@
 using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
 using recycle.Domain.Enums;
+using recycle.Infrastructure.Repositories;
 using Stripe;
 
 namespace Recycle.Api.Controllers
@@ -13,16 +14,18 @@ namespace Recycle.Api.Controllers
         private readonly IPaymentService _paymentService;
         private readonly IStripeAdapter _stripeAdapter;
         private readonly IConfiguration _configuration;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentController(IPaymentService paymentService, IStripeAdapter stripeAdapter, IConfiguration configuration)
+        public PaymentController(IPaymentService paymentService, IStripeAdapter stripeAdapter, IConfiguration configuration, IUnitOfWork unitOfWork)
         {
             _paymentService = paymentService;
             _stripeAdapter = stripeAdapter;
             _configuration = configuration;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreatePayment(PaymentDto dto)
+        public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto dto)
         {
             var result = await _paymentService.CreatePaymentAsync(dto);
             return Ok(result);
@@ -31,27 +34,24 @@ namespace Recycle.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPayments([FromQuery] string? status)
         {
-            var result = await _paymentService.GetPaymentsAsync(status);
-            return Ok(result);
+            var list = await _paymentService.GetPaymentsAsync(status);
+            return Ok(list);
         }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetPayment(Guid id)
         {
-            var result = await _paymentService.GetPaymentByIdAsync(id);
-            if (result == null) return NotFound();
-
-            return Ok(result);
+            var p = await _paymentService.GetPaymentByIdAsync(id);
+            if (p == null) return NotFound();
+            return Ok(p);
         }
 
         [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] Guid adminId,
-                                                      [FromQuery] string? notes, [FromQuery] string? failureReason)
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] Guid adminId, [FromQuery] string? notes, [FromQuery] string? failureReason)
         {
-            var updated = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);
-            if (!updated) return NotFound("Payment not found");
-
-            return Ok("Status updated successfully");
+            var ok = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);
+            if (!ok) return NotFound();
+            return Ok("Status updated");
         }
 
         [HttpPost("onboard-driver")]
@@ -65,8 +65,19 @@ namespace Recycle.Api.Controllers
             // user.StripeAccountId = stripeAccountId; _unitOfWork.Users.Update(user); await _unitOfWork.SaveAsync();
             // For now just return account id and account link
 
+            // 2. SAVE StripeAccountId to the user in DB (REQUIRED)
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+                return NotFound("User not found.");
+
+            user.StripeAccountId = stripeAccountId;
+            _unitOfWork.Users?.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            // 3. Generate Stripe onboarding link
             var accountLink = await _stripeAdapter.CreateAccountLinkAsync(stripeAccountId, refreshUrl, returnUrl);
 
+            // 4. Return info to frontend
             return Ok(new { stripeAccountId, accountLink });
         }
 
@@ -91,7 +102,7 @@ namespace Recycle.Api.Controllers
 
             try
             {
-                stripeEvent = _stripeAdapter.VerifyAndConstructEvent(json, signature);
+                stripeEvent = _stripeAdapter.VerifyAndConstructEvent(json, signature!);
             }
             catch
             {
@@ -119,6 +130,42 @@ namespace Recycle.Api.Controllers
                     break;
             }
 
+            return Ok();
+        }
+
+        // DEV only: create test charge in platform to add funds (remove in production)
+        [HttpPost("stripe/test-charge")]
+        public async Task<IActionResult> CreateTestCharge([FromQuery] long amountInCents, [FromQuery] string currency = "usd")
+        {
+            try
+            {
+                var charge = await _stripeAdapter.CreateTestChargeAsync(amountInCents, currency);
+                return Ok(new { success = true, chargeId = charge.Id, status = charge.Status });
+            }
+            catch (StripeException ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+
+
+        //Will be added later with the front
+        [HttpGet("stripe/login")]
+        public async Task<IActionResult> GetStripeDashboardLoginLink([FromQuery] Guid userId)
+        {
+            return Ok();
+        }
+
+        [HttpGet("account/status")]
+        public async Task<IActionResult> GetStripeAccountStatus([FromQuery] Guid userId)
+        {
+            return Ok();
+        }
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetUserPayments(Guid userId)
+        {
             return Ok();
         }
     }

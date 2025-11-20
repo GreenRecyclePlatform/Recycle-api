@@ -1,14 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
 using recycle.Application.Options;
 using Stripe;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace recycle.Infrastructure.ExternalServices
 {
@@ -19,6 +13,10 @@ namespace recycle.Infrastructure.ExternalServices
         public StripeAdapter(IOptions<StripeOptions> options)
         {
             _options = options.Value;
+            if (!string.IsNullOrWhiteSpace(_options.SecretKey))
+            {
+                StripeConfiguration.ApiKey = _options.SecretKey;
+            }
         }
 
         public async Task<string> CreateExpressAccountAsync(Guid userId, string email)
@@ -54,12 +52,7 @@ namespace recycle.Infrastructure.ExternalServices
             return link.Url!;
         }
 
-        public async Task<StripeTransferResult> CreateTransferToConnectedAccountAsync(
-            Guid paymentId,
-            string stripeAccountId,
-            long amountInCents,
-            string currency = "usd",
-            string? description = null)
+        public async Task<StripeTransferResult> CreateTransferToConnectedAccountAsync(Guid paymentId, string stripeAccountId, long amountInCents, string currency = "usd", string? description = null)
         {
             var transferService = new TransferService();
 
@@ -69,17 +62,14 @@ namespace recycle.Infrastructure.ExternalServices
                 Currency = currency,
                 Destination = stripeAccountId,
                 Description = description,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "paymentId", paymentId.ToString() }
-                }
+                Metadata = new Dictionary<string, string>{{ "paymentId", paymentId.ToString() }}
             });
 
             return new StripeTransferResult
             {
                 TransferId = transfer.Id,
-                Status = "created",
-                PayoutId = transfer.DestinationPayment.ToString()
+                Status = "paid", // Stripe provides "paid", "pending", etc.
+                PayoutId = transfer.DestinationPayment?.ToString()
             };
         }
 
@@ -90,6 +80,20 @@ namespace recycle.Infrastructure.ExternalServices
                 signatureHeader,
                 _options.WebhookSecret
             );
+        }
+
+        public async Task<Charge> CreateTestChargeAsync(long amountInCents, string currency = "usd")
+        {
+            var chargeService = new ChargeService();
+            var charge = await chargeService.CreateAsync(new ChargeCreateOptions
+            {
+                Amount = amountInCents,
+                Currency = currency,
+                Source = "tok_visa", // generic test token; for available balance test use special card as guidance
+                Description = "Test charge for adding balance to platform"
+            });
+
+            return charge;
         }
     }
 }

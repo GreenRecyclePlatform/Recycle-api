@@ -12,8 +12,8 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251117210335_ayhaga")]
-    partial class ayhaga
+    [Migration("20251119015049_ExpandFailureReasonColumn")]
+    partial class ExpandFailureReasonColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

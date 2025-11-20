@@ -3,6 +3,7 @@ using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
 using recycle.Domain.Entities;
 using recycle.Domain.Enums;
+using Stripe;
 
 
 namespace recycle.Application.Services
@@ -20,7 +21,7 @@ namespace recycle.Application.Services
             _logger = logger;
         }
 
-        public async Task<PaymentDto> CreatePaymentAsync(PaymentDto dto)
+        public async Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto)
         {
             if (dto == null) throw new ArgumentNullException(nameof(dto));
 
@@ -29,14 +30,12 @@ namespace recycle.Application.Services
                 ID = Guid.NewGuid(),
                 RequestId = dto.RequestId,
                 RecipientUserID = dto.RecipientUserId,
-                RecipientType = string.IsNullOrWhiteSpace(dto.RecipientType) ? "User" : dto.RecipientType,
+                RecipientType = "User",
                 Amount = dto.Amount,
-                PaymentMethod = string.IsNullOrWhiteSpace(dto.PaymentMethod) ? PaymentMethods.Cash : dto.PaymentMethod,
-                TransactionReference = dto.TransactionReference,
+                PaymentMethod = dto.PaymentMethod,
                 PaymentStatus = PaymentStatuses.Pending,
                 CreatedAt = DateTime.UtcNow,
-                AdminNotes = dto.AdminNotes,
-                FailureReason = dto.FailureReason
+                AdminNotes = dto.AdminNotes
             };
 
             await _unitOfWork.Payments.AddAsync(payment);
@@ -64,20 +63,21 @@ namespace recycle.Application.Services
             if (payment == null) return false;
 
             payment.PaymentStatus = newStatus;
-            payment.ApprovedByAdminID = adminId;
-            payment.ApprovedAt = DateTime.UtcNow;
-            payment.AdminNotes = adminNotes;
-            payment.FailureReason = failureReason;
-
+            if (adminId != Guid.Empty) payment.ApprovedByAdminID = adminId;
+            if (newStatus == PaymentStatuses.Approved)
+                payment.ApprovedAt = DateTime.UtcNow;
             if (newStatus == PaymentStatuses.Paid)
                 payment.PaidAt = DateTime.UtcNow;
-
             if (newStatus == PaymentStatuses.Failed)
+            {
                 payment.FailedAt = DateTime.UtcNow;
+                payment.FailureReason = failureReason;
+            }
+            if (!string.IsNullOrWhiteSpace(adminNotes))
+                payment.AdminNotes = adminNotes;
 
             _unitOfWork.Payments.Update(payment);
             await _unitOfWork.SaveChangesAsync();
-
             return true;
         }
 
@@ -92,17 +92,17 @@ namespace recycle.Application.Services
 
             // 1. Find recipient (user or driver). We try Users first.
             // This assumes IUnitOfWork exposes Users repository with GetByIdAsync(Guid).
-            var recipient = await TryGetUserOrDriverAsync(recipientUserId);
-            if (recipient == null)
+            var user = await _unitOfWork.Users.GetByIdAsync(recipientUserId);
+            if (user == null)
             {
                 _logger.LogWarning("RequestPayoutAsync: recipient not found: {RecipientId}", recipientUserId);
                 return null;
             }
 
             // 2. Check stripe account id on recipient
-            var stripe = recipient.Value;
-            var stripeAccountId = stripe.StripeAccountId;
-            var isDriver = stripe.IsDriver;
+            var stripeAccountId = user.StripeAccountId;
+            //var stripe = user;
+            //var isDriver = stripe.IsDriver;
             if (string.IsNullOrWhiteSpace(stripeAccountId))
             {
                 throw new InvalidOperationException("Recipient is not onboarded to Stripe.");
@@ -114,7 +114,7 @@ namespace recycle.Application.Services
                 ID = Guid.NewGuid(),
                 RequestId = requestId,
                 RecipientUserID = recipientUserId,
-                RecipientType = isDriver ? "Driver" : "User",
+                RecipientType = "User",
                 Amount = amount,
                 PaymentMethod = PaymentMethods.BankTransfer,
                 PaymentStatus = PaymentStatuses.Pending,
@@ -139,18 +139,28 @@ namespace recycle.Application.Services
 
                 return MapToDto(payment);
             }
-            catch (Exception ex)
+            catch (StripeException sEx)
             {
-                _logger.LogError(ex, "Stripe transfer failed for paymentId {PaymentId}", payment.ID);
+                _logger.LogError(sEx, "Stripe transfer failed for paymentId {PaymentId}", payment.ID);
 
                 // Update payment as failed
                 payment.PaymentStatus = PaymentStatuses.Failed;
-                payment.FailureReason = ex.Message;
+                payment.FailureReason = sEx.Message;
                 payment.FailedAt = DateTime.UtcNow;
                 _unitOfWork.Payments.Update(payment);
                 await _unitOfWork.SaveChangesAsync();
 
                 throw; // bubble for controller to return 500 or handle as needed
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error on payout {PaymentId}", payment.ID);
+                payment.PaymentStatus = PaymentStatuses.Failed;
+                payment.FailureReason = ex.Message;
+                payment.FailedAt = DateTime.UtcNow;
+                _unitOfWork.Payments.Update(payment);
+                await _unitOfWork.SaveChangesAsync();
+                throw;
             }
         }
 
@@ -188,68 +198,68 @@ namespace recycle.Application.Services
         ///   - bool IsDriver
         /// If your project has concrete types, replace this with strongly-typed repos and types.
         /// </summary>
-        private async Task<(string? StripeAccountId, bool IsDriver)?> TryGetUserOrDriverAsync(Guid userId)
-        {
-            // try Users repo
-            try
-            {
-                var usersRepo = _unitOfWork as dynamic;
-                if (usersRepo?.Users != null)
-                {
-                    var user = await usersRepo.Users.GetByIdAsync(userId);
-                    if (user != null)
-                    {
-                        // user may have StripeAccountId property
-                        var stripeAccountId = (string?)(user.StripeAccountId ?? user?.StripeAccountId);
-                        return (stripeAccountId, IsDriver: false);
-                    }
-                }
-            }
-            catch
-            {
-                // ignore and continue to driver repo
-            }
+        //private async Task<(string? StripeAccountId, bool IsDriver)?> TryGetUserOrDriverAsync(Guid userId)
+        //{
+        //    // try Users repo
+        //    try
+        //    {
+        //        var usersRepo = _unitOfWork as dynamic;
+        //        if (usersRepo?.Users != null)
+        //        {
+        //            var user = await usersRepo.Users.GetByIdAsync(userId);
+        //            if (user != null)
+        //            {
+        //                // user may have StripeAccountId property
+        //                var stripeAccountId = (string?)(user.StripeAccountId ?? user?.StripeAccountId);
+        //                return (stripeAccountId, IsDriver: false);
+        //            }
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        // ignore and continue to driver repo
+        //    }
 
-            // try DriverProfile repo if exists
-            try
-            {
-                var unit = _unitOfWork as dynamic;
-                if (unit?.DriverProfiles != null)
-                {
-                    var driver = await unit.DriverProfiles.GetByIdAsync(userId);
-                    if (driver != null)
-                    {
-                        var stripeAccountId = (string?)(driver.StripeAccountId ?? driver?.StripeAccountId);
-                        return (stripeAccountId, IsDriver: true);
-                    }
-                }
-            }
-            catch
-            {
-                // ignore if not present
-            }
+        //    // try DriverProfile repo if exists
+        //    try
+        //    {
+        //        var unit = _unitOfWork as dynamic;
+        //        if (unit?.DriverProfiles != null)
+        //        {
+        //            var driver = await unit.DriverProfiles.GetByIdAsync(userId);
+        //            if (driver != null)
+        //            {
+        //                var stripeAccountId = (string?)(driver.StripeAccountId ?? driver?.StripeAccountId);
+        //                return (stripeAccountId, IsDriver: true);
+        //            }
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        // ignore if not present
+        //    }
 
-            // If neither repository exists, try a general Users repository name used in many projects
-            try
-            {
-                var unit = _unitOfWork as dynamic;
-                if (unit?.UserRepository != null)
-                {
-                    var user = await unit.UserRepository.GetByIdAsync(userId);
-                    if (user != null)
-                    {
-                        var stripeAccountId = (string?)(user.StripeAccountId ?? user?.StripeAccountId);
-                        return (stripeAccountId, IsDriver: false);
-                    }
-                }
-            }
-            catch
-            {
-                // final fallback
-            }
+        //    // If neither repository exists, try a general Users repository name used in many projects
+        //    try
+        //    {
+        //        var unit = _unitOfWork as dynamic;
+        //        if (unit?.UserRepository != null)
+        //        {
+        //            var user = await unit.UserRepository.GetByIdAsync(userId);
+        //            if (user != null)
+        //            {
+        //                var stripeAccountId = (string?)(user.StripeAccountId ?? user?.StripeAccountId);
+        //                return (stripeAccountId, IsDriver: false);
+        //            }
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        // final fallback
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         #endregion
 

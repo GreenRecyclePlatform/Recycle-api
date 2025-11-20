@@ -9,7 +9,7 @@ namespace recycle.Application.Interfaces
 {
     public interface IPaymentService
     {
-        Task<PaymentDto> CreatePaymentAsync(PaymentDto dto);
+        Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto);
         Task<IEnumerable<PaymentDto>> GetPaymentsAsync(string? status);
         Task<PaymentDto?> GetPaymentByIdAsync(Guid id);
         Task<bool> UpdatePaymentStatusAsync(Guid paymentId, string newStatus, Guid adminId, string? adminNotes = null, string? failureReason = null);
