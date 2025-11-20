@@ -32,21 +32,7 @@ namespace recycle.API.Controllers
             // return Guid.Parse(userIdClaim);
         }
 
-        /// <summary>
-        /// Create a new review for a completed pickup request
-        /// </summary>
-        /// <param name="dto">Review details</param>
-        /// <returns>Created review</returns>
-        [HttpPost]
-        //   [Authorize(Roles = "User")]
-        //public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto dto)
-        //{
-        //    var userId = GetCurrentUserId();
-
-        //    var review = await _reviewService.CreateReview(userId,dto);
-        //    return CreatedAtAction(nameof(CreateReview), new { id = review.ReviewId }, review);
-
-        //}
+       
 
         [HttpPost]
         //[Authorize(Roles = "User")]  // ❌ اعملي comment
