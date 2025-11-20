@@ -16,5 +16,10 @@ namespace recycle.Application.Interfaces
         Task<ApplicationUser> GetByIdAsync(Guid id);
         Task<bool> CheckPasswordAsync(ApplicationUser user, string password);
         Task<ApplicationUser> AddUser(ApplicationUser user, string password);
+        Task SavePasswordResetTokenAsync(PasswordResetToken token);
+        Task<PasswordResetToken> GetPasswordResetTokenAsync(string token);
+        Task<bool> MarkTokenAsUsedAsync(Guid userId);
+        Task<bool> UpdatePasswordAsync(Guid userId, string hashedPassword);
+
     }
 }

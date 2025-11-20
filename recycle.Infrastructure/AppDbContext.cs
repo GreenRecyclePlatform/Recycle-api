@@ -29,6 +29,7 @@ namespace recycle.Infrastructure
         public DbSet<RequestMaterial> RequestMaterials { get; set; }
         public DbSet<PickupRequest> PickupRequests { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

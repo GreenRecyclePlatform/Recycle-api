@@ -34,6 +34,7 @@ namespace recycle.Infrastructure
             services.AddScoped<ITokenService, ExternalServices.TokenService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<INotificationHubService, NotificationHubService>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IStripeAdapter, StripeAdapter>();
             services.AddSignalR();
             services.Configure<StripeOptions>(options =>
