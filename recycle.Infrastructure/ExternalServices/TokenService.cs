@@ -28,6 +28,31 @@ namespace recycle.Infrastructure.ExternalServices
             secretKey = configuration["ApiSettings:Secret"];
             _context = context;
         }
+
+        public async Task<string> GeneratePasswordResetToken(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+            {
+                return null;
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            return token;
+        }
+
+        public async Task<Guid?> ValidatePasswordResetTokenAsync(string token)
+        {
+            var resetToken = await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(t => t.Token == token && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow);
+            
+            if(resetToken == null || resetToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return null;
+            }
+            return resetToken.UserId;
+        }
+
+
         public async Task<string> GetAccessToken(ApplicationUser user, string jwtTokenId)
         {
             var applicationUser = await _userManager.FindByIdAsync(user.Id.ToString());

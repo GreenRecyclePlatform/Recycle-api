@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using recycle.Application.Interfaces;
 using recycle.Domain.Entities;
 using System;
@@ -22,6 +23,51 @@ namespace recycle.Infrastructure.Repositories
             _userManager = userManager;
              _context = context;
         }
+
+        public async Task SavePasswordResetTokenAsync(PasswordResetToken token)
+        {
+            var existingTokens = _context.PasswordResetTokens
+                .Where(t => t.UserId == token.UserId && !t.IsUsed && t.ExpiresAt > DateTime.UtcNow);
+            _context.PasswordResetTokens.RemoveRange(existingTokens);
+
+            _context.PasswordResetTokens.Add(token);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<PasswordResetToken> GetPasswordResetTokenAsync(string token)
+        {
+            return await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(t => t.Token == token);
+        }
+        public async Task<bool> UpdatePasswordAsync(Guid userId,string hashedPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user != null)
+            {
+                user.PasswordHash = hashedPassword;
+         
+                await _userManager.UpdateAsync(user);
+
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<bool> MarkTokenAsUsedAsync(Guid userId)
+        {
+            var resetToken = await _context.PasswordResetTokens
+                .FirstOrDefaultAsync(t => t.UserId == userId && t.IsUsed == false);
+            if (resetToken != null)
+            {
+                resetToken.IsUsed = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
+
+
+
         public async Task<ApplicationUser> AddUser(ApplicationUser user, string password)
         {
           

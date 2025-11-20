@@ -15,15 +15,82 @@ namespace recycle.Infrastructure.ExternalServices
     {
         private readonly IUserRepository _userRepository;
         private readonly ITokenService _tokenService;
+        private readonly IEmailService _emailService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
+        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
             _userManager = userManager;
             _roleManager = roleManager;
+            _emailService = emailService;
         }
+
+        public async Task<bool> InitiatePasswordResetAsync(string email)
+        {
+            var user = await _userRepository.GetByEmailAsync(email);
+            if (user == null)
+            {
+                return false;
+                
+            }
+            var token = await _tokenService.GeneratePasswordResetToken(user.Id);
+            var resetToken = new PasswordResetToken
+            {
+                UserId = user.Id,
+                Token = token,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+                IsUsed = false
+            };
+            await _userRepository.SavePasswordResetTokenAsync(resetToken);
+
+            //Here you would typically send the token to the user's email.
+            var resetLink = $"https://yourapp.com/reset-password?token={token}";
+
+            await _emailService.SendEmail(user.Email, "Password Reset", $"Click the link to reset your password: {resetLink}");
+
+            return true;
+           
+        }
+
+        public async Task<bool> ResetPasswordAsync(string token,string newPassword)
+        {
+           var userId = await _tokenService.ValidatePasswordResetTokenAsync(token);
+            if (userId == null)
+            {
+                return false;
+            }
+
+
+            var user = await _userRepository.GetByIdAsync(userId.Value);
+            if (user == null)
+            {
+                return false;
+            }
+
+            var hashedNewPassword = _userManager.PasswordHasher.HashPassword(user, newPassword);
+
+            var result = await _userRepository.UpdatePasswordAsync(user.Id, hashedNewPassword);
+            if (result)
+            {             
+
+                await _userRepository.MarkTokenAsUsedAsync(user.Id);
+            }
+            return result;
+        }
+
+        public async Task<bool> ValidateResetTokenAsync(string token)
+        {
+            var resetToken = await _userRepository.GetPasswordResetTokenAsync(token);
+            if (resetToken == null || resetToken.IsUsed || resetToken.ExpiresAt < DateTime.UtcNow)
+            {
+                return false;
+            }
+            return true;
+        }
+
+
 
         public async Task<Tokens> Login(LoginRequest request)
         {
