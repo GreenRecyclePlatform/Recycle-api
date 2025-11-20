@@ -12,6 +12,7 @@ namespace recycle.Application.Interfaces
     {
         Task<bool> IsUniqueAsync(string email, string userName);
         Task<ApplicationUser> GetByEmailAsync(string email);
+        Task<ApplicationUser> GetByUserNameAsync(string userName);
         Task<ApplicationUser> GetByIdAsync(Guid id);
         Task<bool> CheckPasswordAsync(ApplicationUser user, string password);
         Task<ApplicationUser> AddUser(ApplicationUser user, string password);

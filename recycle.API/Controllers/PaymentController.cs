@@ -39,7 +39,7 @@ namespace Recycle.Api.Controllers
         }
 
         [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] int adminId,
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] Guid adminId,
                                                       [FromQuery] string? notes, [FromQuery] string? failureReason)
         {
             var updated = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);

@@ -12,6 +12,7 @@ namespace recycle.Infrastructure.Repositories
     public class UserRepository : Repository<ApplicationUser>, IUserRepository
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly AppDbContext _context;
 
         public UserRepository(
             AppDbContext context,
@@ -19,6 +20,7 @@ namespace recycle.Infrastructure.Repositories
             : base(context)
         {
             _userManager = userManager;
+             _context = context;
         }
         public async Task<ApplicationUser> AddUser(ApplicationUser user, string password)
         {
@@ -48,6 +50,15 @@ namespace recycle.Infrastructure.Repositories
                 return null;
             }
             
+            return applicationUser;
+        }
+        public async Task<ApplicationUser> GetByUserNameAsync(string userName)
+        {
+            var applicationUser = await _userManager.FindByNameAsync(userName);
+            if (applicationUser == null)
+            {
+                return null;
+            }
             return applicationUser;
         }
 

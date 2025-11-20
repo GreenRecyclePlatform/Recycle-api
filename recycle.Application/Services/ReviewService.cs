@@ -23,18 +23,21 @@ namespace recycle.Application.Services
 
 
 
-        public async Task<Review> CreateReview(Guid requestId,Guid driverId, CreateReviewDto dto)
+        public async Task<Review> CreateReview(Guid userId,CreateReviewDto dto)
         {
+          
+            
             var review = new Review
             {
                 ReviewId = Guid.NewGuid(),
-                RequestId = requestId,
-                ReviewerId = dto.RequestId,
-                RevieweeId = driverId,
+                RequestId = dto.RequestId,
+                ReviewerId = userId,
+                RevieweeId = dto.DriverId,
                 Rating = dto.Rating,
                 Comment = dto.Comment,
                 CreatedAt = DateTime.UtcNow,
-                IsEdited = false
+                IsEdited = false,
+                FlagReason = "dssd"
             };
             await _unitOfWork.Reviews.AddAsync(review);
             await _unitOfWork.SaveChangesAsync();

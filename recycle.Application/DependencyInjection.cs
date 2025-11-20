@@ -25,6 +25,7 @@ namespace recycle.Application
             services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<IMaterialService, MaterialService>();
             services.AddScoped<IRequestMaterialService, RequestMaterialService>();
+            services.AddScoped<DriverProfileService>();
 
 
             //services.AddScoped<IPickupRequestService, PickupRequestService>();

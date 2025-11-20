@@ -47,7 +47,7 @@ namespace recycle.API.Controllers
             if (!ifUserNameUnique)
             {
                 
-                return BadRequest("Username already exists");
+                return BadRequest("Username or Email already exists");
             }
 
             var user = await _authService.Register(model);
@@ -78,7 +78,7 @@ namespace recycle.API.Controllers
             if (jwtToken == null || string.IsNullOrEmpty(jwtToken))
             {
                
-                return BadRequest("Username or password is incorrect");
+                return BadRequest("Username or Email or password is incorrect");
             }
 
            

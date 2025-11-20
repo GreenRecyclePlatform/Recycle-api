@@ -36,9 +36,11 @@ namespace recycle.API.Controllers
         /// <returns>Created review</returns>
         [HttpPost]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> CreateReview(Guid requestId,Guid driverId,[FromBody] CreateReviewDto dto)
+        public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto dto)
         {
-            var review = await _reviewService.CreateReview(requestId,driverId,dto);
+            var userId = GetCurrentUserId();
+
+            var review = await _reviewService.CreateReview(userId,dto);
             return CreatedAtAction(nameof(CreateReview), new { id = review.ReviewId }, review);
 
         }
