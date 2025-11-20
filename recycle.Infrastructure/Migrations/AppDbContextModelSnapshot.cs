@@ -185,7 +185,7 @@ namespace recycle.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.ApplicationUser", b =>
@@ -326,7 +326,7 @@ namespace recycle.Infrastructure.Migrations
                         .HasDatabaseName("IX_DriverAssignments_RequestId_IsActive")
                         .HasFilter("[IsActive] = 1");
 
-                    b.ToTable("DriverAssignments", (string)null);
+                    b.ToTable("DriverAssignments");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.DriverProfile", b =>
@@ -369,7 +369,7 @@ namespace recycle.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("DriverProfiles", (string)null);
+                    b.ToTable("DriverProfiles");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.Material", b =>
@@ -415,7 +415,7 @@ namespace recycle.Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Materials", (string)null);
+                    b.ToTable("Materials");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.Notification", b =>
@@ -569,7 +569,7 @@ namespace recycle.Infrastructure.Migrations
 
                     b.HasIndex("RequestId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.PickupRequest", b =>
@@ -632,7 +632,7 @@ namespace recycle.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PickupRequests", (string)null);
+                    b.ToTable("PickupRequests");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.RequestMaterial", b =>
@@ -684,7 +684,7 @@ namespace recycle.Infrastructure.Migrations
                     b.HasIndex("RequestId", "MaterialId")
                         .IsUnique();
 
-                    b.ToTable("RequestMaterials", null, t =>
+                    b.ToTable("RequestMaterials", t =>
                         {
                             t.HasCheckConstraint("CK_RequestMaterials_ActualWeight", "ActualWeight IS NULL OR ActualWeight >= 0");
 
