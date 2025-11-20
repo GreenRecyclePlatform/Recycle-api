@@ -30,6 +30,41 @@ namespace recycle.API.Controllers
             _loginValidator = loginValidator;
         }
 
+
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ForgotPassword([FromBody] string email)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _authService.InitiatePasswordResetAsync(email);
+                if (!result)
+                {
+                    return BadRequest("Error while processing forgot password request");
+                }
+                return Ok("Password reset link has been sent to your email, if the email exists");
+            }
+            else
+            {
+                return BadRequest("Invalid request");
+            }
+
+        }
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword([FromBody] string token,string newPassword)
+        {
+           
+            var result = await _authService.ResetPasswordAsync(token,newPassword);
+            if (!result)
+            {
+                return BadRequest("Error while resetting password. The token may be invalid or expired.");
+            }
+            return Ok("Password has been reset successfully");
+        }
+
         [HttpPost("Register")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

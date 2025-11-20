@@ -12,5 +12,8 @@ namespace recycle.Application.Interfaces
     {
         Task<ApplicationUser> Register(RegisterationRequest request);
         Task<Tokens> Login(LoginRequest request);
+        Task<bool> InitiatePasswordResetAsync(string email);
+        Task<bool> ResetPasswordAsync(string token,string newPassword);
+        Task<bool> ValidateResetTokenAsync(string token);
     }
 }

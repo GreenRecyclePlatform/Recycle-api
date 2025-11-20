@@ -13,5 +13,7 @@ namespace recycle.Application.Interfaces
         Task<string> CreateNewRefreshToken(Guid userId, string jwtTokenId);
         Task<Tokens> RefreshAccessToken(Tokens tokens);
         Task<bool> RevokeRefreshToken(Tokens model);
+        Task<string> GeneratePasswordResetToken(Guid userId);
+        Task<Guid?> ValidatePasswordResetTokenAsync(string token);
     }
 }
