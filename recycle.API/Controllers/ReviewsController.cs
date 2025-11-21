@@ -101,7 +101,7 @@ namespace recycle.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), 404)]
         public async Task<IActionResult> DeleteReview(Guid reviewId)
         {
-            var userId = Guid.Parse("8b2a4d3a-b286-4031-d7de-08de2457cb91");
+            var userId =  GetCurrentUserId();
             var result = await _reviewService.DeleteReviewAsync(userId, reviewId);
 
             if (!result)
@@ -177,9 +177,9 @@ namespace recycle.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<PendingReviewDto[]>), 200)]
         public async Task<IActionResult> GetPendingReviews()
         {
-            var userId = Guid.Parse("8b2a4d3a-b286-4031-d7de-08de2457cb91"); // ✅
+           
 
-            //   var userId = GetCurrentUserId();
+               var userId = GetCurrentUserId();
             var pendingReviews = await _reviewService.GetPendingReviewsForUserAsync(userId);
 
             return Ok(new ApiResponse<PendingReviewDto[]>
@@ -195,13 +195,13 @@ namespace recycle.API.Controllers
         /// </summary>
         /// <param name="requestId">Request ID</param>
         [HttpGet("request/{requestId}/can-review")]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(CanReviewResponse), 200)]
         public async Task<IActionResult> CanReviewRequest(Guid requestId)
         {
-            var userId = Guid.Parse("8b2a4d3a-b286-4031-d7de-08de2457cb91"); // ✅
+           
 
-            // var userId = GetCurrentUserId();
+             var userId = GetCurrentUserId();
             var validation = await _reviewService.CanUserReviewRequestAsync(userId, requestId);
 
             return Ok(new CanReviewResponse
@@ -221,9 +221,9 @@ namespace recycle.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var userId = Guid.Parse("8b2a4d3a-b286-4031-d7de-08de2457cb91"); // ✅
+            
 
-            //var userId = GetCurrentUserId();
+            var userId = GetCurrentUserId();
             var reviews = await _reviewService.GetReviewsByUserAsync(userId, page, pageSize);
 
             return Ok(new PaginatedResponse<ReviewDto>
@@ -232,7 +232,7 @@ namespace recycle.API.Controllers
                 Data = reviews,
                 Page = page,
                 PageSize = pageSize,
-                TotalCount = reviews.Count  // ✅ كان 0، صلحيه
+                TotalCount = reviews.Count  
 
             });
         }
