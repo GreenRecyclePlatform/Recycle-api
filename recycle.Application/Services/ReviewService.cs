@@ -256,6 +256,15 @@ public class ReviewService : IReviewService
 
             // Update driver profile rating if you have a DriverProfile entity
             // This is optional - implement based on your domain model
+
+            var driver = await _unitOfWork.DriverProfiles.GetAsync(p => p.UserId == driverId);
+            if (driver != null)
+            {
+                driver.Rating = Math.Round((decimal)averageRating, 2);
+                driver.ratingCount = driverReviews.Count;
+                await _unitOfWork.DriverProfiles.UpdateAsync(driver);
+                await _unitOfWork.SaveChangesAsync();
+            }
         }
     }
 

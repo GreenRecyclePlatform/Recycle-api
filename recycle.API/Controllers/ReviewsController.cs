@@ -23,26 +23,20 @@ namespace recycle.API.Controllers
 
         private Guid GetCurrentUserId()
         {
-            // للتجربة فقط - احذفيني بعدين!
-            return Guid.Parse("8B2A4D3A-B286-4031-D7DE-08DE2457CB91");
 
-            // كومنت مؤقت
-            // var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            // if (string.IsNullOrEmpty(userIdClaim))
-            //     throw new UnauthorizedAccessException("User ID not found in token");
-            // return Guid.Parse(userIdClaim);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new UnauthorizedAccessException("User ID not found in token");
+            return Guid.Parse(userIdClaim);
         }
 
 
 
         [HttpPost]
-        //[Authorize(Roles = "User")]  // ❌ اعملي comment
-        [AllowAnonymous]  // ✅ ضيفي ده مؤقتاً
+        [Authorize(Roles = "User")]  
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto dto)
         {
-            // للتجربة استخدمي userId ثابت
-            var userId = Guid.Parse("8b2a4d3a-b286-4031-d7de-08de2457cb91");
-
+           var userId = GetCurrentUserId();
             try
             {
                 var reviewDto = await _reviewService.CreateReviewAsync(userId, dto);
