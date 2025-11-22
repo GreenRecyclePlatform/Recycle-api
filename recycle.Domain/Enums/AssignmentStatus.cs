@@ -9,9 +9,9 @@ namespace recycle.Domain.Enums
     public enum AssignmentStatus
     {
         Assigned = 1,
-        Accepted = 2,
-        Rejected = 3,
-        InProgress = 4,
-        Completed = 5
+       // Accepted = 2,
+        Rejected = 2,
+        InProgress = 3,
+        Completed = 4
     }
 }
