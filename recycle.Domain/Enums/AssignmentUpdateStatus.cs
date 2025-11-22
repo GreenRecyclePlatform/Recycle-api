@@ -8,7 +8,7 @@ namespace recycle.Domain.Enums
 {
     public enum AssignmentUpdateStatus
     {
-        InProgress = 1,
-        Completed = 2
+       // InProgress = 1,
+        Completed = 1
     }
 }

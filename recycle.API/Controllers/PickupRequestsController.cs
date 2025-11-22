@@ -247,7 +247,7 @@ public class PickupRequestsController : ControllerBase
 
     // PATCH: api/pickuprequests/{id}/status
     [HttpPatch("{id:guid}/status")]
-    [Authorize(Roles = "Admin,Driver")]
+   [Authorize(Roles = "Admin,Driver")]
     public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto statusDto)
     {
         try

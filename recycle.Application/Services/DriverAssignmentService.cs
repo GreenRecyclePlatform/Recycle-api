@@ -94,9 +94,12 @@ namespace recycle.Application.Services
 
             if (action == DriverAction.Accept)
             {
-                assignment.Status = AssignmentStatus.Accepted;
+                assignment.Status = AssignmentStatus.InProgress; 
+
+              //  assignment.Status = AssignmentStatus.Accepted;
                 assignment.AcceptedAt = DateTime.UtcNow;
                 assignment.DriverNotes = notes;
+                assignment.StartedAt = DateTime.UtcNow;  
 
                 // use--> GetAsync
                 var request = await _unitOfWork.PickupRequests.GetAsync(
@@ -105,7 +108,7 @@ namespace recycle.Application.Services
 
                 if (request != null)
                 {
-                    request.Status = "Accepted";
+                    request.Status = "PickedUp"; 
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
                 }
             }
@@ -144,25 +147,27 @@ namespace recycle.Application.Services
             if (assignment.DriverId != driverId)
                 throw new Exception("This assignment does not belong to you");
 
-            if (assignment.Status != AssignmentStatus.Accepted && assignment.Status != AssignmentStatus.InProgress)
-                throw new Exception($"Cannot update. Assignment status is: {assignment.Status}");
-            // Update status-1
-            if (status == AssignmentUpdateStatus.InProgress)
-            {
-                assignment.Status = AssignmentStatus.InProgress;
-                assignment.StartedAt = DateTime.UtcNow;
-                assignment.DriverNotes = notes;
+            //if (assignment.Status != AssignmentStatus.Accepted && assignment.Status != AssignmentStatus.InProgress)
+                if (assignment.Status != AssignmentStatus.InProgress)
 
-                var request = await _unitOfWork.PickupRequests.GetAsync(
-                    filter: r => r.RequestId == assignment.RequestId
-                );
+                    throw new Exception($"Cannot update. Assignment status is: {assignment.Status}");
+            //// Update status-1
+            //if (status == AssignmentUpdateStatus.InProgress)
+            //{
+            //    assignment.Status = AssignmentStatus.InProgress;
+            //    assignment.StartedAt = DateTime.UtcNow;
+            //    assignment.DriverNotes = notes;
 
-                if (request != null)
-                {
-                    request.Status = "PickedUp";
-                    await _unitOfWork.PickupRequests.UpdateAsync(request);
-                }
-            }
+            //    var request = await _unitOfWork.PickupRequests.GetAsync(
+            //        filter: r => r.RequestId == assignment.RequestId
+            //    );
+
+            //    if (request != null)
+            //    {
+            //        request.Status = "PickedUp";
+            //        await _unitOfWork.PickupRequests.UpdateAsync(request);
+            //    }
+            //}
             // Update status-2
             else if (status == AssignmentUpdateStatus.Completed)
             {
@@ -333,6 +338,31 @@ namespace recycle.Application.Services
                 DriverNotes = assignment.DriverNotes,
                 IsActive = assignment.IsActive
             };
+        }
+
+        public async Task<List<AvailableDriverDto>> GetAvailableDriversAsync()
+        {
+            // Get all users with driver profile and available
+            var drivers = await _unitOfWork.Users.GetAll(
+                filter: u => u.DriverProfile != null && u.DriverProfile.IsAvailable,
+                includes: query => query.Include(u => u.DriverProfile)
+            );
+
+            // Map to DTO
+            var availableDrivers = drivers.Select(d => new AvailableDriverDto
+            {
+                DriverId = d.Id,
+                DriverName = $"{d.FirstName} {d.LastName}",
+                Email = d.Email,
+                PhoneNumber = d.PhoneNumber,
+                ProfileImageUrl = d.DriverProfile.profileImageUrl,
+                Rating = d.DriverProfile.Rating,
+                RatingCount = d.DriverProfile.ratingCount,
+                IsAvailable = d.DriverProfile.IsAvailable,
+                TotalTrips = d.DriverProfile.TotalTrips
+            }).ToList();
+
+            return availableDrivers;
         }
     }
 }
