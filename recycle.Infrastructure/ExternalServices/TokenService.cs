@@ -94,20 +94,15 @@ namespace recycle.Infrastructure.ExternalServices
             return refreshToken.Refresh_Token;
         }
 
-        public async Task<Tokens> RefreshAccessToken(Tokens tokens)
+        public async Task<Tokens> RefreshAccessToken(string refreshToken)
         {
-            var existingRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Refresh_Token == tokens.RefreshToken);
+            var existingRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Refresh_Token == refreshToken);
             if (existingRefreshToken == null || !existingRefreshToken.IsValid)
             {
                 return new Tokens();
             }
 
-            var isTokenValid = GetAccessTokenData(tokens.AccessToken, existingRefreshToken.UserId, existingRefreshToken.JwtTokenId);
-            if (!isTokenValid)
-            {
-                await MarkTokenAsInvalid(existingRefreshToken);
-                return new Tokens();
-            }
+           
 
             if (!existingRefreshToken.IsValid)
             {
@@ -144,22 +139,6 @@ namespace recycle.Infrastructure.ExternalServices
             };
         }
 
-        private bool GetAccessTokenData(string accessToken, Guid expectedUserId, string expectedTokenId)
-        {
-            try
-            {
-                var tokenHandler = new JwtSecurityTokenHandler();
-                var jwt = tokenHandler.ReadJwtToken(accessToken);
-                var jwtTokenId = jwt.Claims.FirstOrDefault(u => u.Type == JwtRegisteredClaimNames.Jti).Value;
-                var userId = jwt.Claims.FirstOrDefault(u => u.Type == JwtRegisteredClaimNames.Sub).Value;
-                return Guid.Parse(userId) == expectedUserId && jwtTokenId == expectedTokenId;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
 
         private async Task MarkTokenAsInvalid(RefreshToken refreshToken)
         {
@@ -175,18 +154,14 @@ namespace recycle.Infrastructure.ExternalServices
         }
 
 
-        public async Task<bool> RevokeRefreshToken(Tokens model)
+        public async Task<bool> RevokeRefreshToken(string refreshToken)
         {
-            var existingRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Refresh_Token == model.RefreshToken);
+            var existingRefreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Refresh_Token == refreshToken);
             if (existingRefreshToken == null)
             {
                 return false;
             }
-            var isTokenValid = GetAccessTokenData(model.AccessToken, existingRefreshToken.UserId, existingRefreshToken.JwtTokenId);
-            if (!isTokenValid)
-            {
-                return false;
-            }
+          
 
             await MarkAllTokenInChainAsInvalid(existingRefreshToken.UserId, existingRefreshToken.JwtTokenId);
 

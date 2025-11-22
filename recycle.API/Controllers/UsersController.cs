@@ -118,24 +118,28 @@ namespace recycle.API.Controllers
                 return BadRequest("Username or Email or password is incorrect");
             }
 
+            SetRefreshTokenInCookie(Tokens.RefreshToken);
 
-            return Ok(Tokens);
+            return Ok(Tokens.AccessToken);
         }
 
         [HttpPost("Refresh")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetNewTokenFromRefreshToken([FromBody] Tokens model)
+        public async Task<IActionResult> GetNewTokenFromRefreshToken()
         {
             if (ModelState.IsValid)
             {
-                var tokens = await _tokenService.RefreshAccessToken(model);
+                var refreshToken = Request.Cookies["refreshToken"];
+               
+                var tokens = await _tokenService.RefreshAccessToken(refreshToken);
 
                 if (tokens == null || string.IsNullOrEmpty(tokens.AccessToken))
                 {
                     return BadRequest("Invalid token");
                 }
-              return Ok(tokens);
+                SetRefreshTokenInCookie(tokens.RefreshToken);
+                return Ok(tokens.AccessToken);
             }
             else
             {
@@ -147,11 +151,13 @@ namespace recycle.API.Controllers
         [HttpPost("Logout")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RevokeRefreshToken(Tokens model)
+        public async Task<IActionResult> RevokeRefreshToken()
         {
             if (ModelState.IsValid)
             {
-                var result = await _tokenService.RevokeRefreshToken(model);
+                var refreshToken = Request.Cookies["refreshToken"];
+               
+                var result = await _tokenService.RevokeRefreshToken(refreshToken);
                 if (!result)
                 {
                     return BadRequest("Invalid token");
@@ -162,6 +168,18 @@ namespace recycle.API.Controllers
             {
                 return BadRequest("Invalid request");
             }
+        }
+
+        private void SetRefreshTokenInCookie(string refreshToken)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
         }
 
     }
