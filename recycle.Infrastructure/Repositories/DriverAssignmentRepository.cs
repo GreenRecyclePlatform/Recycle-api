@@ -41,8 +41,8 @@ namespace recycle.Infrastructure.Repositories
      Guid driverId, AssignmentStatus? status = null)
         {
             var query = _context.DriverAssignments
-                .Include(da => da.PickupRequest)
-                .Include(da => da.Driver)
+                .Include(da => da.PickupRequest).ThenInclude(pr => pr.Address)
+                .Include(da => da.Driver).ThenInclude(d => d.User)
                 .Include(da => da.AssignedByAdmin)
                 .Where(da => da.DriverId == driverId);
 
@@ -60,9 +60,9 @@ namespace recycle.Infrastructure.Repositories
         public async Task<List<DriverAssignment>> GetHistoryByRequestIdAsync(Guid requestId)
         {
             return await _context.DriverAssignments
-                .Include(da => da.Driver)
+                .Include(da => da.Driver).ThenInclude(d => d.User)
                 .Include(da => da.AssignedByAdmin)
-                .Include(da => da.PickupRequest)
+                .Include(da => da.PickupRequest).ThenInclude(pr => pr.Address)
                 .Where(da => da.RequestId == requestId)
                 .OrderByDescending(da => da.AssignedAt)
                 .ToListAsync();

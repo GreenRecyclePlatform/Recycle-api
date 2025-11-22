@@ -33,20 +33,23 @@ namespace recycle.API.Controllers
 
             //Admin assigns a driver to a pickup request
             [HttpPost("assign")]
-            [Authorize(Roles = "Admin")]
-            public async Task<IActionResult> AssignDriver([FromBody] CreateDriverAssignmentDto dto)
+        [Authorize(Roles = "Admin")]
+
+        public async Task<IActionResult> AssignDriver([FromBody] CreateDriverAssignmentDto dto)
             {
                 try
                 {
-                    var adminId = GetCurrentUserId();
-                    var result = await _assignmentService.AssignDriverAsync(dto, adminId);
+                 var adminId = GetCurrentUserId();
+                var result = await _assignmentService.AssignDriverAsync(dto, adminId);
                     return Ok(result);
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(new { message = ex.Message });
-                }
+
+                return BadRequest(new { message = ex.Message });
+
             }
+        }
 
             // Driver accepts or rejects an assignment
             [HttpPost("respond")]
@@ -55,8 +58,9 @@ namespace recycle.API.Controllers
             {
                 try
                 {
-                    var driverId = GetCurrentUserId();
-                    var result = await _assignmentService.RespondToAssignmentAsync(
+
+                var driverId = GetCurrentUserId();
+                var result = await _assignmentService.RespondToAssignmentAsync(
                         dto.AssignmentId,
                         dto.Action,
                         dto.Notes,
@@ -71,13 +75,14 @@ namespace recycle.API.Controllers
 
             // Driver updates assignment status (InProgress/Completed)
             [HttpPut("update-status")]
-            [Authorize(Roles = "Driver")]
+           [Authorize(Roles = "Driver")]
             public async Task<IActionResult> UpdateStatus([FromBody] UpdateAssignmentStatusDto dto)
             {
                 try
                 {
-                    var driverId = GetCurrentUserId();
-                    var result = await _assignmentService.UpdateAssignmentStatusAsync(
+                var driverId = GetCurrentUserId();
+
+                var result = await _assignmentService.UpdateAssignmentStatusAsync(
                         dto.AssignmentId,
                         dto.Status,
                         dto.Notes,
@@ -92,13 +97,14 @@ namespace recycle.API.Controllers
 
             //Admin reassigns a driver
             [HttpPost("reassign")]
-            [Authorize(Roles = "Admin")]
+           [Authorize(Roles = "Admin")]
             public async Task<IActionResult> ReassignDriver([FromBody] ReassignDriverDto dto)
             {
                 try
                 {
-                    var adminId = GetCurrentUserId();
-                    var result = await _assignmentService.ReassignDriverAsync(
+                var adminId = GetCurrentUserId();
+
+                var result = await _assignmentService.ReassignDriverAsync(
                         dto.AssignmentId,
                         dto.NewDriverId,
                         adminId,
@@ -133,8 +139,9 @@ namespace recycle.API.Controllers
             {
                 try
                 {
-                    var driverId = GetCurrentUserId();
-                    var result = await _assignmentService.GetDriverAssignmentsAsync(driverId, status);
+
+                 var driverId = GetCurrentUserId();
+                var result = await _assignmentService.GetDriverAssignmentsAsync(driverId, status);
                     return Ok(result);
                 }
                 catch (Exception ex)
@@ -145,7 +152,7 @@ namespace recycle.API.Controllers
 
             //Get assignment history for a pickup request
             [HttpGet("request/{requestId}/history")]
-            [Authorize(Roles = "Admin")]
+           [Authorize(Roles = "Admin")]
             public async Task<IActionResult> GetRequestHistory(Guid requestId)
             {
                 try
@@ -176,6 +183,27 @@ namespace recycle.API.Controllers
                     return BadRequest(new { message = ex.Message });
                 }
             }
+
+
+        /// <summary>
+        /// Get all available drivers for assignment
+        /// </summary>
+        [HttpGet("available-drivers")]
+      //  [Authorize(Roles = "Admin")]
+      [AllowAnonymous]
+        public async Task<IActionResult> GetAvailableDrivers()
+        {
+            try
+            {
+                var drivers = await _assignmentService.GetAvailableDriversAsync();
+                return Ok(drivers);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
+
+    }
     
 }

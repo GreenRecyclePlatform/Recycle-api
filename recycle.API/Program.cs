@@ -13,6 +13,7 @@ using recycle.Infrastructure;
 using recycle.Infrastructure.Hubs;
 using recycle.Infrastructure.Repositories;
 using recycle.Infrastructure.Services;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -37,6 +37,9 @@ namespace recycle.Application.Interfaces.IService
 
         // Get active assignment for a pickup request
         Task<DriverAssignmentResponseDto?> GetActiveAssignmentForRequestAsync(Guid requestId);
+
+        Task<List<AvailableDriverDto>> GetAvailableDriversAsync();
+
     }
 }
 
