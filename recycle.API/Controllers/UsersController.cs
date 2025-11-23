@@ -162,6 +162,8 @@ namespace recycle.API.Controllers
                 {
                     return BadRequest("Invalid token");
                 }
+                DeleteRefreshTokenCookie();
+
                 return Ok("Logout successful");
             }
             else
@@ -180,6 +182,17 @@ namespace recycle.API.Controllers
                 Expires = DateTime.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+        }
+        private void DeleteRefreshTokenCookie()
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(-1) // Set expiration to past date
+            };
+            Response.Cookies.Append("refreshToken", "", cookieOptions);
         }
 
     }
