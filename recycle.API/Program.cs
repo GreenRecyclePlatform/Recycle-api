@@ -22,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 //// Register Specific Repositories (for UnitOfWork)
-builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 //builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
 //builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
 //builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
@@ -131,33 +131,47 @@ builder.Services.AddSwaggerGen(options =>
             new string[] {}
         }
     });
-   
-});
 
+});
+//===============================================commented to just test ==================================================
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll", policy =>
+//    {
+//        policy
+//            .AllowAnyHeader()
+//            .AllowAnyMethod()
+//            .AllowCredentials()
+//            .SetIsOriginAllowed(_ => true); // allow any origin
+//    });
+//});
+
+
+////CORS
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowAll", policy =>
+//    {
+//        policy.AllowAnyOrigin()
+//              .AllowAnyMethod()
+//              .AllowAnyHeader();
+//    });
+//});
+//===============================================commented to just test ==================================================
+
+//=========================================================added this after commneting the above=====================================
+// ✅ CORS Configuration - Add this ONCE before var app = builder.Build()
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowAngular", policy =>
     {
-        policy
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()
-            .SetIsOriginAllowed(_ => true); // allow any origin
-    });
-});
-
-
-//CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200") // Your Angular app
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
-
+//=========================================================added this after commneting the above=====================================
 
 var app = builder.Build();
 
@@ -167,33 +181,67 @@ using (var scope = app.Services.CreateScope())
     var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
     await dbInitializer.InitializeAsync();
 }
-// Use CORS
-app.UseCors("AllowAll");
-// Configure the HTTP request pipeline.
+//===================================================again commented to test=============================================
+//// Use CORS
+//app.UseCors("AllowAll");
+//// Configure the HTTP request pipeline.
+//if (app.Environment.IsDevelopment())
+//{
+//    //app.MapOpenApi();
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+//app.UseCors("AllowAll");
+
+//app.UseStaticFiles();
+
+//app.UseHttpsRedirection();
+
+//app.UseAuthentication();
+//app.UseAuthorization();
+
+//app.MapControllers();
+//app.MapHub<NotificationHub>("/hubs/notifications");
+
+
+//app.UseStaticFiles();
+//app.UseHttpsRedirection();
+//app.UseAuthentication();
+//app.UseAuthorization();
+//app.MapControllers();
+//===================================================again commented to test=============================================
+
+
+
+//==================================================the above commented replaced with this===============================
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+// ✅ Use CORS - Must be BEFORE Authentication/Authorization
+app.UseCors("AllowAngular");
 
 app.UseStaticFiles();
-
 app.UseHttpsRedirection();
 
+// ✅ Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ✅ Map endpoints
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
+app.Run();
 
-app.UseStaticFiles();
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+//==================================================the above commented replaced with this===============================
+
+
 
 app.Run();
+
+
