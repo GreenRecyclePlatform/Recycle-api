@@ -161,6 +161,7 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+app.UseCors("AllowAngularApp");
 
 
 using (var scope = app.Services.CreateScope())

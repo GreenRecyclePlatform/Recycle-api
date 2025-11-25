@@ -21,14 +21,39 @@ namespace recycle.API.Controllers
             _reviewService = reviewService;
         }
 
+        #region GetCurrentUserId
         private Guid GetCurrentUserId()
         {
+            // Try multiple claim types to find the user ID
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                           ?? User.FindFirst("nameid")?.Value
+                           ?? User.FindFirst("sub")?.Value;
 
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim))
-                throw new UnauthorizedAccessException("User ID not found in token");
-            return Guid.Parse(userIdClaim);
+            {
+                // Log all available claims for debugging
+                var claims = string.Join(", ", User.Claims.Select(c => $"{c.Type}={c.Value}"));
+                throw new UnauthorizedAccessException($"User ID not found in token. Available claims: {claims}");
+            }
+
+            if (!Guid.TryParse(userIdClaim, out Guid userId))
+            {
+                throw new UnauthorizedAccessException($"Invalid User ID format: {userIdClaim}");
+            }
+
+            return userId;
         }
+        #endregion
+
+
+        //private Guid GetCurrentUserId()
+        //{
+
+        //    var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    if (string.IsNullOrEmpty(userIdClaim))
+        //        throw new UnauthorizedAccessException("User ID not found in token");
+        //    return Guid.Parse(userIdClaim);
+        //}
 
 
 
