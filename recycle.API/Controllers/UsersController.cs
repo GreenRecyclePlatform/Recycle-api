@@ -1,11 +1,14 @@
 ﻿using Azure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs;
 using recycle.Application.Interfaces;
+using recycle.Application.Services;
 using recycle.Domain.Entities;
 using System.Net;
+using LoginRequest = recycle.Application.DTOs.LoginRequest;
 
 namespace recycle.API.Controllers
 {
@@ -18,9 +21,11 @@ namespace recycle.API.Controllers
         private readonly ITokenService _tokenService;
         private readonly IValidator<RegisterationRequest> _registerValidator;
         private readonly IValidator<LoginRequest> _loginValidator;
+        private readonly IEmailService _emailService;
+       
 
         public UsersController(IUserRepository userRepository, IAuthService authService, ITokenService tokenService, IValidator<RegisterationRequest> registerValidator,
-            IValidator<LoginRequest> loginValidator)
+            IValidator<LoginRequest> loginValidator, IEmailService emailService)
 
         {
             _userRepo = userRepository;
@@ -28,22 +33,34 @@ namespace recycle.API.Controllers
             _tokenService = tokenService;
             _registerValidator = registerValidator;
             _loginValidator = loginValidator;
+            _emailService = emailService;
+        }
+
+        [HttpPost("email")]
+        public async Task<IActionResult> sendEmail()
+        {
+            await _emailService.SendEmail("mohammed.mechengineer.70@gmail.com", "trysendingemail","emailworking");
+            return Ok("work correct");
+
         }
 
 
         [HttpPost("forgot-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ForgotPassword([FromBody] string email)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest forgot)
         {
             if (ModelState.IsValid)
             {
-                var result = await _authService.InitiatePasswordResetAsync(email);
+                var result = await _authService.InitiatePasswordResetAsync(forgot.Email);
                 if (!result)
                 {
                     return BadRequest("Error while processing forgot password request");
                 }
-                return Ok("Password reset link has been sent to your email, if the email exists");
+                return Ok(new
+                {
+                    message = "Password reset link has been sent to your email, if the email exists"
+                });
             }
             else
             {
@@ -54,15 +71,15 @@ namespace recycle.API.Controllers
         [HttpPost("reset-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ResetPassword([FromBody] string token,string newPassword)
+        public async Task<IActionResult> ResetPassword( ResetPasswordRequest resetRequest )
         {
            
-            var result = await _authService.ResetPasswordAsync(token,newPassword);
+            var result = await _authService.ResetPasswordAsync(resetRequest.Token,resetRequest.newPassword);
             if (!result)
             {
                 return BadRequest("Error while resetting password. The token may be invalid or expired.");
             }
-            return Ok("Password has been reset successfully");
+            return Ok(new { message = "Password has been reset successfully" });
         }
 
         [HttpPost("Register")]
@@ -82,8 +99,6 @@ namespace recycle.API.Controllers
             if (!ifUserNameUnique)
             {
 
-              
-                
                 return BadRequest("Username or Email already exists");
             }
 
@@ -94,8 +109,10 @@ namespace recycle.API.Controllers
                 return BadRequest("Error while registering");
             }
 
-            return Ok($"Welcome {model.FirstName}");
+
+            return Ok(new {message = $"Welcome {model.FirstName}" });
         }
+
 
         [HttpPost("Login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -120,7 +137,7 @@ namespace recycle.API.Controllers
 
             SetRefreshTokenInCookie(Tokens.RefreshToken);
 
-            return Ok(Tokens.AccessToken);
+            return Ok(new loginResponse{ AccessToken = Tokens.AccessToken });
         }
 
         [HttpPost("Refresh")]
@@ -164,7 +181,7 @@ namespace recycle.API.Controllers
                 }
                 DeleteRefreshTokenCookie();
 
-                return Ok("Logout successful");
+                return Ok(new { message = "Logout successful" });
             }
             else
             {
@@ -195,5 +212,14 @@ namespace recycle.API.Controllers
             Response.Cookies.Append("refreshToken", "", cookieOptions);
         }
 
+    }
+    public class ResetPasswordRequest
+    {
+        public string Token { get; set; }
+        public string newPassword { get; set; }
+    }
+    internal class loginResponse
+    {
+        public string AccessToken { get; set; }
     }
 }
