@@ -4,42 +4,41 @@ using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using recycle.Application.DTOs.RequestMaterials;
-using recycle.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace recycle.Application.Services
 {
     public class MaterialService : IMaterialService
     {
-        private readonly IMaterialRepository _materialRepository;
+        private readonly IMaterialRepository _repository;
 
-        public MaterialService(IMaterialRepository materialRepository)
+        public MaterialService(IMaterialRepository repository)
         {
-            _materialRepository = materialRepository;
+            _repository = repository;
         }
 
         public async Task<IEnumerable<MaterialDto>> GetAllMaterialsAsync(bool includeInactive = false)
         {
-            var materials = await _materialRepository.GetAllAsync(includeInactive);
+            var materials = await _repository.GetAllAsync(includeInactive);
             return materials.Select(MapToDto);
         }
 
         public async Task<MaterialDto?> GetMaterialByIdAsync(Guid id)
         {
-            var material = await _materialRepository.GetByIdAsync(id);
-            return material == null ? null : MapToDto(material);
+            var material = await _repository.GetByIdAsync(id);
+            return material != null ? MapToDto(material) : null;
         }
 
         public async Task<MaterialDto> CreateMaterialAsync(CreateMaterialDto dto)
         {
-            // Validate unique name
-            if (!await _materialRepository.IsNameUniqueAsync(dto.Name))
+            // Validate selling price vs buying price
+            if (dto.SellingPrice <= dto.BuyingPrice)
+            {
+                throw new InvalidOperationException("Selling price must be greater than buying price");
+            }
+
+            // Check if name is unique
+            if (!await _repository.IsNameUniqueAsync(dto.Name))
             {
                 throw new InvalidOperationException($"Material with name '{dto.Name}' already exists");
             }
@@ -47,68 +46,89 @@ namespace recycle.Application.Services
             var material = new Material
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name.Trim(),
-                Description = dto.Description?.Trim(),
-                Unit = dto.Unit?.Trim(),
+                Name = dto.Name,
+                Description = dto.Description,
+                Unit = dto.Unit,
+                Icon = dto.Icon,
+                Image = dto.Image,
+                BuyingPrice = dto.BuyingPrice,
+                SellingPrice = dto.SellingPrice,
                 PricePerKg = dto.PricePerKg,
-                IsActive = true,   // default for new materials
-                CreatedAt = DateTime.UtcNow
+                Status = dto.Status,
+                IsActive = dto.Status == "active",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = null
             };
 
-            var created = await _materialRepository.CreateAsync(material);
-            return MapToDto(created);
+            var createdMaterial = await _repository.CreateAsync(material);
+            return MapToDto(createdMaterial);
         }
 
         public async Task<MaterialDto> UpdateMaterialAsync(Guid id, UpdateMaterialDto dto)
         {
-            var existing = await _materialRepository.GetByIdAsync(id);
-            if (existing == null)
-            {
-                throw new InvalidOperationException($"Material with ID {id} not found");
-            }
+            var material = await _repository.GetByIdAsync(id);
 
-            if (!await _materialRepository.IsNameUniqueAsync(dto.Name, id))
-            {
-                throw new InvalidOperationException($"Material with name '{dto.Name}' already exists");
-            }
-
-            existing.Name = dto.Name.Trim();
-            existing.Description = dto.Description?.Trim();
-            existing.Unit = dto.Unit?.Trim();
-            existing.PricePerKg = dto.PricePerKg;
-            existing.IsActive = dto.IsActive;   // bool → no ??
-            existing.UpdatedAt = DateTime.UtcNow;
-
-            var updated = await _materialRepository.UpdateAsync(existing);
-            return MapToDto(updated);
-        }
-
-        public async Task<bool> DeleteMaterialAsync(Guid id)
-        {
-            // Business Logic: Check if material exists
-            var material = await _materialRepository.GetByIdAsync(id);
             if (material == null)
             {
                 throw new InvalidOperationException($"Material with ID {id} not found");
             }
 
-            // Business Logic: Check if used in requests
-            if (await _materialRepository.IsUsedInRequestsAsync(id))
+            // Validate selling price vs buying price
+            if (dto.SellingPrice <= dto.BuyingPrice)
             {
-                throw new InvalidOperationException(
-                    "Cannot delete material that is used in pickup requests. Consider deactivating it instead.");
+                throw new InvalidOperationException("Selling price must be greater than buying price");
             }
 
-            return await _materialRepository.DeleteAsync(id);
+            // Check if name is unique (excluding current material)
+            if (!await _repository.IsNameUniqueAsync(dto.Name, id))
+            {
+                throw new InvalidOperationException($"Another material with name '{dto.Name}' already exists");
+            }
+
+            material.Name = dto.Name;
+            material.Description = dto.Description;
+            material.Unit = dto.Unit;
+            material.Icon = dto.Icon;
+            material.BuyingPrice = dto.BuyingPrice;
+            material.SellingPrice = dto.SellingPrice;
+            material.PricePerKg = dto.PricePerKg;
+            material.Status = dto.Status;
+            material.IsActive = dto.Status == "active";
+            material.UpdatedAt = DateTime.UtcNow;
+
+            // Only update image if a new one is provided
+            if (!string.IsNullOrEmpty(dto.Image))
+            {
+                material.Image = dto.Image;
+            }
+
+            var updatedMaterial = await _repository.UpdateAsync(material);
+            return MapToDto(updatedMaterial);
+        }
+
+        public async Task<bool> DeleteMaterialAsync(Guid id)
+        {
+            if (!await _repository.ExistsAsync(id))
+            {
+                return false;
+            }
+
+            try
+            {
+                return await _repository.DeleteAsync(id);
+            }
+            catch (InvalidOperationException)
+            {
+                throw;
+            }
         }
 
         public async Task<IEnumerable<MaterialDto>> SearchMaterialsAsync(string searchTerm, bool onlyActive = true)
         {
-            var materials = await _materialRepository.SearchAsync(searchTerm, onlyActive);
+            var materials = await _repository.SearchAsync(searchTerm, onlyActive);
             return materials.Select(MapToDto);
         }
 
-        // Manual Mapping Helper: Entity to DTO
         private static MaterialDto MapToDto(Material material)
         {
             return new MaterialDto
@@ -117,7 +137,12 @@ namespace recycle.Application.Services
                 Name = material.Name,
                 Description = material.Description,
                 Unit = material.Unit,
+                Icon = material.Icon,
+                Image = material.Image,
+                BuyingPrice = material.BuyingPrice,
+                SellingPrice = material.SellingPrice,
                 PricePerKg = material.PricePerKg,
+                Status = material.Status,
                 IsActive = material.IsActive,
                 CreatedAt = material.CreatedAt,
                 UpdatedAt = material.UpdatedAt

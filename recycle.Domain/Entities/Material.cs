@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace recycle.Domain.Entities
 {
@@ -11,8 +8,13 @@ namespace recycle.Domain.Entities
         public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public string? Unit { get; set; }
-        public decimal PricePerKg { get; set; }
+        public string? Unit { get; set; } 
+        public string Icon { get; set; } = "♻️";
+        public string? Image { get; set; }
+        public decimal BuyingPrice { get; set; }
+        public decimal SellingPrice { get; set; }
+        public decimal PricePerKg { get; set; } 
+        public string Status { get; set; } = "active";
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

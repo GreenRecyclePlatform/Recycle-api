@@ -16,6 +16,7 @@ using recycle.Infrastructure.Services;
 using System.Security.Claims;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -31,7 +32,8 @@ builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
 builder.Services.AddControllers();
 
 
-
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 
 builder.Services.AddApplication();
 
@@ -135,27 +137,15 @@ builder.Services.AddSwaggerGen(options =>
    
 });
 
+
+// CORS Configuration (Single definition)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()
-            .SetIsOriginAllowed(_ => true); // allow any origin
-    });
-});
-
-
-//CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        policy.AllowAnyOrigin()      // Allow any origin for development
+              .AllowAnyMethod()       // Allow any HTTP method
+              .AllowAnyHeader();      // Allow any header
     });
 });
 
@@ -178,23 +168,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
-
-app.UseStaticFiles();
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notifications");
-
-
-app.UseStaticFiles();
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+// Middleware pipeline (ORDER MATTERS!)
+app.UseCors("AllowAll");           // 1. CORS first
+app.UseStaticFiles();              // 2. Static files
+app.UseHttpsRedirection();         // 3. HTTPS redirection
+app.UseAuthentication();           // 4. Authentication
+app.UseAuthorization();            // 5. Authorization
+app.MapControllers();              // 6. Map controllers
+app.MapHub<NotificationHub>("/hubs/notifications");  // 7. SignalR hub
 
 app.Run();
