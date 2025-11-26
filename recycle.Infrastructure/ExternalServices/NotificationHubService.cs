@@ -74,7 +74,8 @@ namespace recycle.Infrastructure.Services
                 NotificationType = notificationDto.Type,
                 RelatedEntityType = notificationDto.RelatedEntityType,
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                 UserId = null
             };
 
             await _unitOfWork.Notifications.AddAsync(notification);

@@ -25,5 +25,9 @@
 		<ProjectReference Include="..\recycle.Application\recycle.Application.csproj" />
 		<ProjectReference Include="..\recycle.Infrastructure\recycle.Infrastructure.csproj" />
 	</ItemGroup>
+	
+    <ItemGroup>
+      <Folder Include="wwwroot\images\" />
+    </ItemGroup>
 
 </Project>

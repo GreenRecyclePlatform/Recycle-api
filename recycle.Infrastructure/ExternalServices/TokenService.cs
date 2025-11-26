@@ -81,6 +81,7 @@ namespace recycle.Infrastructure.ExternalServices
 
         public async Task<string> CreateNewRefreshToken(Guid userId, string jwtTokenId)
         {
+            await MarkAllTokenInChainAsInvalid(userId, jwtTokenId);
             RefreshToken refreshToken = new RefreshToken()
             {
                 UserId = userId,
@@ -143,6 +144,7 @@ namespace recycle.Infrastructure.ExternalServices
         private async Task MarkTokenAsInvalid(RefreshToken refreshToken)
         {
             refreshToken.IsValid = false;
+             _context.RefreshTokens.Update(refreshToken);
             await _context.SaveChangesAsync();
         }
 
@@ -151,6 +153,7 @@ namespace recycle.Infrastructure.ExternalServices
             await _context.RefreshTokens.Where(u => u.UserId == userId
               && u.JwtTokenId == jwtTokenId)
                   .ExecuteUpdateAsync(u => u.SetProperty(refreshToken => refreshToken.IsValid, false));
+
         }
 
 

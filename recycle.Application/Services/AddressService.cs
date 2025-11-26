@@ -12,6 +12,7 @@ namespace recycle.Application.Services
     public class AddressService
     {
         private readonly IUnitOfWork _unitOfWork;
+        
         public AddressService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;

@@ -20,7 +20,7 @@ namespace recycle.Infrastructure.Configurations
                 .HasDefaultValueSql("NEWID()"); // Auto-generate GUID in SQL Server
 
             builder.Property(n => n.UserId)
-                .IsRequired();
+                .IsRequired(false);
 
             builder.Property(n => n.NotificationType)
                 .IsRequired()
