@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddScoped <IReviewRepository, ReviewRepository>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
 
