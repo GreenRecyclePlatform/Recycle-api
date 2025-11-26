@@ -6,6 +6,7 @@
         public Guid UserId { get; set; }
         public ApplicationUser User { get; set; }
         public string profileImageUrl { get; set; }
+        public string profileImageLocalPath { get; set; }
         public string idNumber { get; set; }
         public decimal Rating { get; set; } = 0;
         public int ratingCount { get; set; } = 0;
