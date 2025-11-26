@@ -43,7 +43,7 @@ namespace recycle.API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult> CreateDriverProfile([FromForm] DriverProfileDto driverProfileDto)
         {
-            var userId = Guid.Parse("81e0ce83-415d-476d-4162-08de24956878");//GetUserId();
+            var userId = GetUserId();
 
             var createdDriverProfile = await _driverProfileService.CreateDriverProfile(driverProfileDto, userId);
             return CreatedAtAction(nameof(GetDriverProfileById), new { id = createdDriverProfile.Id }, createdDriverProfile);
@@ -54,7 +54,7 @@ namespace recycle.API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult> UpdateDriverProfileImage([FromForm] UpdateDriverProfileImageDto newImage)
         {
-            var userId = Guid.Parse("81e0ce83-415d-476d-4162-08de24956878");//GetUserId();
+            var userId = GetUserId();
 
             var driverprofile = await _driverProfileService.UpdateDriverProfileImage(newImage,userId);
             return Ok(driverprofile);
@@ -73,7 +73,7 @@ namespace recycle.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> DeleteDriverProfile()
         {
-            var userId = Guid.Parse("81e0ce83-415d-476d-4162-08de24956878");//GetUserId();
+            var userId = GetUserId();
             await _driverProfileService.DeleteDriverProfile(userId);
             return NoContent();
         }
