@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace recycle.Application.DTOs
 {
-        public record AddressDto(
-        string Street,
-        string City,
-        string Governorate,
-        string PostalCode
-    );
+         public class AddressDto
+    {
+        public Guid Id { get; set; }
+        public string Street { get; set; }
+        public string City { get; set; }
+        public string Governorate { get; set; }
+        public string PostalCode { get; set; }
+    }
 }

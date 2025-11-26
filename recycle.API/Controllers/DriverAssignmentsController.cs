@@ -10,7 +10,7 @@ namespace recycle.API.Controllers
   
         [ApiController]
         [Route("api/[controller]")]
-        [Authorize]
+       [Authorize]
         public class DriverAssignmentsController : ControllerBase
         {
             private readonly IDriverAssignmentService _assignmentService;
@@ -39,7 +39,7 @@ namespace recycle.API.Controllers
             {
                 try
                 {
-                 var adminId = GetCurrentUserId();
+                var adminId = GetCurrentUserId();
                 var result = await _assignmentService.AssignDriverAsync(dto, adminId);
                     return Ok(result);
                 }
@@ -53,7 +53,7 @@ namespace recycle.API.Controllers
 
             // Driver accepts or rejects an assignment
             [HttpPost("respond")]
-            [Authorize(Roles = "Driver")]
+           [Authorize(Roles = "Driver")]
             public async Task<IActionResult> RespondToAssignment([FromBody] DriverResponseDto dto)
             {
                 try
@@ -134,13 +134,13 @@ namespace recycle.API.Controllers
 
             // Get all assignments for current driver (with optional status filter)
             [HttpGet("my-assignments")]
-            [Authorize(Roles = "Driver")]
+           [Authorize(Roles = "Driver")]
             public async Task<IActionResult> GetMyAssignments([FromQuery] AssignmentStatus? status = null)
             {
                 try
                 {
 
-                 var driverId = GetCurrentUserId();
+                var driverId = GetCurrentUserId();
                 var result = await _assignmentService.GetDriverAssignmentsAsync(driverId, status);
                     return Ok(result);
                 }
@@ -152,7 +152,7 @@ namespace recycle.API.Controllers
 
             //Get assignment history for a pickup request
             [HttpGet("request/{requestId}/history")]
-           [Authorize(Roles = "Admin")]
+          [Authorize(Roles = "Admin")]
             public async Task<IActionResult> GetRequestHistory(Guid requestId)
             {
                 try
@@ -189,8 +189,8 @@ namespace recycle.API.Controllers
         /// Get all available drivers for assignment
         /// </summary>
         [HttpGet("available-drivers")]
-      //  [Authorize(Roles = "Admin")]
-      [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
+      //[AllowAnonymous]
         public async Task<IActionResult> GetAvailableDrivers()
         {
             try

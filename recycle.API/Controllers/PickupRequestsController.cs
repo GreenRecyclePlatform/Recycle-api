@@ -82,7 +82,7 @@ public class PickupRequestsController : ControllerBase
 
     // GET: api/pickuprequests/status/{status}
     [HttpGet("status/{status}")]
-    [Authorize(Roles = "Admin")]
+   [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<PickupRequestResponseDto>>> GetByStatus(string status)
     {
         try

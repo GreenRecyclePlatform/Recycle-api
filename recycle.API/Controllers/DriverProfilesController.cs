@@ -30,6 +30,8 @@ namespace recycle.API.Controllers
             return Ok(driverProfiles);
         }
 
+      
+
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetDriverProfileById(Guid id)
