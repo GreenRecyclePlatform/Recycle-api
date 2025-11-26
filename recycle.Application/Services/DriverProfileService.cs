@@ -10,6 +10,7 @@ using recycle.Application.DTOs.DriverAssignments;
 using recycle.Application.DTOs;
 
 
+
 namespace recycle.Application.Services
 {
     public class DriverProfileService
@@ -88,7 +89,6 @@ namespace recycle.Application.Services
                 Address = dp.User.Addresses?.FirstOrDefault() != null
                     ? new AddressDto
                     {
-                        Id = dp.User.Addresses.First().Id,
                         Street = dp.User.Addresses.First().Street,
                         City = dp.User.Addresses.First().City,
                         Governorate = dp.User.Addresses.First().Governorate,
