@@ -9,9 +9,10 @@ namespace recycle.Application
 {
     public record DriverProfileDto
     {
+        public string stringUserId { get; set; }
         public string IdNumber { get; set; }
-        public string? ImageUrl { get; set; }
-        public string? ImageLocalPath { get; set; }
+        public string? ImageUrl { get; set; } = null;
+        public string? ImageLocalPath { get; set; } = null;
         public IFormFile Image {  get; set; }
     }
 }

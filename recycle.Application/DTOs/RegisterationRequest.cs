@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,5 +20,6 @@ namespace recycle.Application.DTOs
 
         public string Role { get; set; }
         public AddressDto Address { get; set; }
+     
     }
 }

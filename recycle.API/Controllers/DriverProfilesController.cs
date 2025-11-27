@@ -45,10 +45,10 @@ namespace recycle.API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<ActionResult> CreateDriverProfile([FromForm] DriverProfileDto driverProfileDto)
         {
-            var userId = GetUserId();
+            var userId = Guid.Parse(driverProfileDto.stringUserId);
 
             var createdDriverProfile = await _driverProfileService.CreateDriverProfile(driverProfileDto, userId);
-            return CreatedAtAction(nameof(GetDriverProfileById), new { id = createdDriverProfile.Id }, createdDriverProfile);
+            return Ok(new {message = "profile created"});
         }
 
         [HttpPut("image")]

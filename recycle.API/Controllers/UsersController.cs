@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using recycle.Application;
 using recycle.Application.DTOs;
 using recycle.Application.Interfaces;
 using recycle.Application.Services;
@@ -102,6 +103,8 @@ namespace recycle.API.Controllers
                 return BadRequest("Username or Email already exists");
             }
 
+
+           
             var user = await _authService.Register(model);
             if (user == null)
             {
@@ -110,7 +113,7 @@ namespace recycle.API.Controllers
             }
 
 
-            return Ok(new {message = $"Welcome {model.FirstName}" });
+            return Ok(new {message = $"Welcome {model.FirstName}", userId = user.Id.ToString() });
         }
 
 

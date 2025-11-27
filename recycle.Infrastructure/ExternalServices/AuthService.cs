@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using recycle.Application;
 using recycle.Application.DTOs;
 using recycle.Application.Interfaces;
 using recycle.Application.Services;
@@ -20,7 +21,8 @@ namespace recycle.Infrastructure.ExternalServices
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly AddressService _addressService;
-        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService,AddressService addressService)
+        private readonly DriverProfileService _driverProfileService;
+        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService,AddressService addressService, DriverProfileService driverProfileService)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
@@ -28,6 +30,7 @@ namespace recycle.Infrastructure.ExternalServices
             _roleManager = roleManager;
             _emailService = emailService;
             _addressService = addressService;
+            _driverProfileService = driverProfileService;
         }
 
         public async Task<bool> InitiatePasswordResetAsync(string email)
