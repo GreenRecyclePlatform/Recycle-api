@@ -19,15 +19,9 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 
-//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-//// Register Specific Repositories (for UnitOfWork)
-builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
-//builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
-//builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
-//builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
+builder.Services.AddScoped <IReviewRepository, ReviewRepository>();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
 
@@ -91,15 +85,6 @@ builder.Services.AddAuthentication(x =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-//=======================Abdelrahman Services======================
-// ===== ADD YOUR SERVICE REGISTRATIONS HERE (BEFORE var app = builder.Build()) =====
-//builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
-//builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
-//// ================================================================================
-
-//// Notifications
-//builder.Services.AddScoped<INotificationService, NotificationService>();
-//builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -137,16 +122,26 @@ builder.Services.AddSwaggerGen(options =>
    
 });
 
-
-// CORS Configuration (Single definition)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()      // Allow any origin for development
-              .AllowAnyMethod()       // Allow any HTTP method
-              .AllowAnyHeader();      // Allow any header
+        policy
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .SetIsOriginAllowed(_ => true); // allow any origin
     });
+
+    options.AddPolicy("AllowAngular", policy =>
+    {
+
+        policy.WithOrigins("http://localhost:4200") // Your Angular app
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+
 });
 
 
@@ -158,8 +153,7 @@ using (var scope = app.Services.CreateScope())
     var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
     await dbInitializer.InitializeAsync();
 }
-// Use CORS
-app.UseCors("AllowAll");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -169,9 +163,10 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware pipeline (ORDER MATTERS!)
-app.UseCors("AllowAll");           // 1. CORS first
+app.UseHttpsRedirection();   
 app.UseStaticFiles();              // 2. Static files
-app.UseHttpsRedirection();         // 3. HTTPS redirection
+app.UseCors("AllowAll");           // 1. CORS first
+app.UseCors("AllowAngular");
 app.UseAuthentication();           // 4. Authentication
 app.UseAuthorization();            // 5. Authorization
 app.MapControllers();              // 6. Map controllers

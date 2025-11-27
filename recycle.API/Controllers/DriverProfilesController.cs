@@ -30,6 +30,8 @@ namespace recycle.API.Controllers
             return Ok(driverProfiles);
         }
 
+      
+
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult> GetDriverProfileById(Guid id)
@@ -40,12 +42,24 @@ namespace recycle.API.Controllers
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<ActionResult> CreateDriverProfile([FromBody] DriverProfileDto driverProfileDto)
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult> CreateDriverProfile([FromForm] DriverProfileDto driverProfileDto)
         {
             var userId = GetUserId();
 
             var createdDriverProfile = await _driverProfileService.CreateDriverProfile(driverProfileDto, userId);
             return CreatedAtAction(nameof(GetDriverProfileById), new { id = createdDriverProfile.Id }, createdDriverProfile);
+        }
+
+        [HttpPut("image")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult> UpdateDriverProfileImage([FromForm] UpdateDriverProfileImageDto newImage)
+        {
+            var userId = GetUserId();
+
+            var driverprofile = await _driverProfileService.UpdateDriverProfileImage(newImage,userId);
+            return Ok(driverprofile);
         }
 
         [HttpPut("availability")]

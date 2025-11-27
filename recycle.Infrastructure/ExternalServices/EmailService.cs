@@ -16,21 +16,21 @@ namespace recycle.Infrastructure.ExternalServices
         {
             var email = new MimeMessage()
             {
-                Sender = MailboxAddress.Parse("mauricio.torp@ethereal.email"),
+                Sender = MailboxAddress.Parse("mohammedmu7.20@gmail.com"),
                 Subject = subject,
             };
 
             email.To.Add(MailboxAddress.Parse(recipient));
-            email.From.Add(new MailboxAddress("Mauricio Torp", "mauricio.torp@ethereal.email"));
+            email.From.Add(MailboxAddress.Parse("mohammedmu7.20@gmail.com"));
 
             var emailBody = new BodyBuilder();
             emailBody.TextBody = body;
             email.Body = emailBody.ToMessageBody();
 
             using var Smtp = new SmtpClient();
-            await Smtp.ConnectAsync("smtp.ethereal.email", 587, SecureSocketOptions.StartTls);
+            await Smtp.ConnectAsync("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
             // Note: Ethereal is a fake SMTP service for testing purposes.
-            await Smtp.AuthenticateAsync("mauricio.torp@ethereal.email", "ramYPbaubDqRP9Nk7r");
+            await Smtp.AuthenticateAsync("mohammedmu7.20@gmail.com", "orui uorp kqgk phck");
             await Smtp.SendAsync(email);
             await Smtp.DisconnectAsync(true);
         }
