@@ -16,6 +16,7 @@ using recycle.Infrastructure.Services;
 using System.Security.Claims;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -25,7 +26,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 
 
-
+builder.Services.AddScoped<IMaterialService, MaterialService>();
+builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 
 builder.Services.AddApplication();
 
@@ -160,24 +162,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("AllowAll");
+// Middleware pipeline (ORDER MATTERS!)
+app.UseHttpsRedirection();   
+app.UseStaticFiles();              // 2. Static files
+app.UseCors("AllowAll");           // 1. CORS first
 app.UseCors("AllowAngular");
-
-app.UseStaticFiles();
-
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notifications");
-
-
-app.UseStaticFiles();
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+app.UseAuthentication();           // 4. Authentication
+app.UseAuthorization();            // 5. Authorization
+app.MapControllers();              // 6. Map controllers
+app.MapHub<NotificationHub>("/hubs/notifications");  // 7. SignalR hub
 
 app.Run();
