@@ -10,7 +10,7 @@ namespace recycle.API.Controllers
   
         [ApiController]
         [Route("api/[controller]")]
-       [Authorize]
+      // [Authorize]
         public class DriverAssignmentsController : ControllerBase
         {
             private readonly IDriverAssignmentService _assignmentService;
@@ -33,13 +33,13 @@ namespace recycle.API.Controllers
 
             //Admin assigns a driver to a pickup request
             [HttpPost("assign")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
 
         public async Task<IActionResult> AssignDriver([FromBody] CreateDriverAssignmentDto dto)
             {
                 try
                 {
-                var adminId = GetCurrentUserId();
+                var adminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
                 var result = await _assignmentService.AssignDriverAsync(dto, adminId);
                     return Ok(result);
                 }
@@ -59,7 +59,7 @@ namespace recycle.API.Controllers
                 try
                 {
 
-                var driverId = GetCurrentUserId();
+                var driverId = Guid.Parse("22222222-2222-2222-2222-222222222222");
                 var result = await _assignmentService.RespondToAssignmentAsync(
                         dto.AssignmentId,
                         dto.Action,
@@ -80,7 +80,7 @@ namespace recycle.API.Controllers
             {
                 try
                 {
-                var driverId = GetCurrentUserId();
+                var driverId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
                 var result = await _assignmentService.UpdateAssignmentStatusAsync(
                         dto.AssignmentId,
@@ -97,13 +97,12 @@ namespace recycle.API.Controllers
 
             //Admin reassigns a driver
             [HttpPost("reassign")]
-           [Authorize(Roles = "Admin")]
+           //[Authorize(Roles = "Admin")]
             public async Task<IActionResult> ReassignDriver([FromBody] ReassignDriverDto dto)
             {
                 try
                 {
-                var adminId = GetCurrentUserId();
-
+                var adminId = Guid.Parse("11111111-1111-1111-1111-111111111111");
                 var result = await _assignmentService.ReassignDriverAsync(
                         dto.AssignmentId,
                         dto.NewDriverId,
@@ -152,7 +151,7 @@ namespace recycle.API.Controllers
 
             //Get assignment history for a pickup request
             [HttpGet("request/{requestId}/history")]
-          [Authorize(Roles = "Admin")]
+         // [Authorize(Roles = "Admin")]
             public async Task<IActionResult> GetRequestHistory(Guid requestId)
             {
                 try
@@ -189,7 +188,7 @@ namespace recycle.API.Controllers
         /// Get all available drivers for assignment
         /// </summary>
         [HttpGet("available-drivers")]
-        [Authorize(Roles = "Admin")]
+       // [Authorize(Roles = "Admin")]
       //[AllowAnonymous]
         public async Task<IActionResult> GetAvailableDrivers()
         {

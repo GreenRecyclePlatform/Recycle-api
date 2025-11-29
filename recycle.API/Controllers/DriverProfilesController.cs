@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application;
+using recycle.Application.DTOs.DriverAssignments;
 using recycle.Application.Services;
 using System.Security.Claims;
 
@@ -58,15 +59,30 @@ namespace recycle.API.Controllers
             var updatedDriverProfile = await _driverProfileService.UpdateDriverAvailability(userId, isAvailable);
             return Ok(updatedDriverProfile);
         }
-
-        [HttpDelete]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeleteDriverProfile()
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteDriverProfile(Guid id)
         {
-            var userId = GetUserId();
-            await _driverProfileService.DeleteDriverProfile(userId);
+            var result = await _driverProfileService.DeleteDriverProfile(id);
+
+            if (!result)
+                return NotFound(new { message = "Driver profile not found" });
+
             return NoContent();
         }
+
+        [HttpPut("{userId}")]
+        public async Task<IActionResult> UpdateDriverProfile(Guid userId, [FromBody] UpdateDriverProfileDto updateDto)
+        {
+            var result = await _driverProfileService.UpdateDriverProfile(userId, updateDto);
+
+            if (result == null)
+                return NotFound(new { message = "Driver profile not found" });
+
+            return Ok(result);
+        }
+
 
     }
 }

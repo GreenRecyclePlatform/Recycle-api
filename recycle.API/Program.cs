@@ -23,15 +23,12 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 //// Register Specific Repositories (for UnitOfWork)
-builder.Services.AddScoped < IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 //builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
 //builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
 //builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
 
 builder.Services.AddControllers();
-
-
-
 
 builder.Services.AddApplication();
 
@@ -46,7 +43,6 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequireLowercase = true;
 }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
-
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 builder.Services.AddAuthentication(x =>
@@ -84,7 +80,6 @@ builder.Services.AddAuthentication(x =>
         }
     };
 });
-
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -132,7 +127,7 @@ builder.Services.AddSwaggerGen(options =>
             new string[] {}
         }
     });
-   
+
 });
 
 builder.Services.AddCors(options =>
@@ -147,7 +142,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 //CORS
 builder.Services.AddCors(options =>
 {
@@ -159,9 +153,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 var app = builder.Build();
-
 
 using (var scope = app.Services.CreateScope())
 {
@@ -189,7 +181,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
-
 
 app.UseStaticFiles();
 app.UseHttpsRedirection();
