@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using recycle.Application;
 using recycle.Application.DTOs;
 using recycle.Application.Interfaces;
+using recycle.Application.Services;
 using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -18,13 +20,17 @@ namespace recycle.Infrastructure.ExternalServices
         private readonly IEmailService _emailService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
-        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService)
+        private readonly AddressService _addressService;
+        private readonly DriverProfileService _driverProfileService;
+        public AuthService(IUserRepository userRepository, ITokenService tokenService, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole<Guid>> roleManager, IEmailService emailService,AddressService addressService, DriverProfileService driverProfileService)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
             _userManager = userManager;
             _roleManager = roleManager;
             _emailService = emailService;
+            _addressService = addressService;
+            _driverProfileService = driverProfileService;
         }
 
         public async Task<bool> InitiatePasswordResetAsync(string email)
@@ -46,9 +52,14 @@ namespace recycle.Infrastructure.ExternalServices
             await _userRepository.SavePasswordResetTokenAsync(resetToken);
 
             //Here you would typically send the token to the user's email.
-            var resetLink = $"https://yourapp.com/reset-password?token={token}";
+            var resetLink = $"http://localhost:4200/reset-password?token={token}";
 
             await _emailService.SendEmail(user.Email, "Password Reset", $"Click the link to reset your password: {resetLink}");
+
+            //var resetLink = $"{token}";
+
+            //await _emailService.SendEmail(user.Email, "Password Reset",resetLink);
+
 
             return true;
            
@@ -162,6 +173,9 @@ namespace recycle.Infrastructure.ExternalServices
                     {
                         await _userManager.AddToRoleAsync(applicationUser, request.Role);
                     }
+
+                    await _addressService.CreateAddress(request.Address, user.Id);
+
                     return user;
                 }
 

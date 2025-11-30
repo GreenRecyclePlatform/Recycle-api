@@ -8,7 +8,8 @@ namespace recycle.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]  // ← Uncomment this when you want to require authentication for all endpoints
+    [AllowAnonymous]  // ← Remove this when you uncomment [Authorize] above
     public class MaterialsController : ControllerBase
     {
         private readonly IMaterialService _materialService;
@@ -21,19 +22,20 @@ namespace recycle.API.Controllers
         /// <summary>
         /// Get all materials
         /// </summary>
-        /// <param name="includeInactive">Include inactive materials (Admin only)</param>
+        /// <param name="includeInactive">Include inactive materials</param>
         /// <returns>List of materials</returns>
         [HttpGet]
-        [AllowAnonymous]
+        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> GetAll([FromQuery] bool includeInactive = false)
         {
             try
             {
+                // Uncomment below when authorization is enabled
                 // Only admins can see inactive materials
-                if (includeInactive && !User.IsInRole("Admin"))
-                {
-                    includeInactive = false;
-                }
+                //if (includeInactive && !User.IsInRole("Admin"))
+                //{
+                //    includeInactive = false;
+                //}
 
                 var materials = await _materialService.GetAllMaterialsAsync(includeInactive);
                 return Ok(materials);
@@ -50,7 +52,7 @@ namespace recycle.API.Controllers
         /// <param name="id">Material ID</param>
         /// <returns>Material details</returns>
         [HttpGet("{id:guid}")]
-        [AllowAnonymous]
+        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<MaterialDto>> GetById(Guid id)
         {
             try
@@ -77,7 +79,7 @@ namespace recycle.API.Controllers
         /// <param name="onlyActive">Only search active materials</param>
         /// <returns>List of matching materials</returns>
         [HttpGet("search")]
-        [AllowAnonymous]
+        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> Search(
             [FromQuery] string searchTerm,
             [FromQuery] bool onlyActive = true)
@@ -99,12 +101,12 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Create a new material (Admin only)
+        /// Create a new material (Admin only when auth is enabled)
         /// </summary>
         /// <param name="dto">Material data</param>
         /// <returns>Created material</returns>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult<MaterialDto>> Create([FromBody] CreateMaterialDto dto)
         {
             try
@@ -128,13 +130,13 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Update an existing material (Admin only)
+        /// Update an existing material (Admin only when auth is enabled)
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <param name="dto">Material data</param>
         /// <returns>Updated material</returns>
         [HttpPut("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult<MaterialDto>> Update(Guid id, [FromBody] UpdateMaterialDto dto)
         {
             try
@@ -158,12 +160,12 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Delete a material (Admin only)
+        /// Delete a material (Admin only when auth is enabled)
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <returns>Success status</returns>
         [HttpDelete("{id:guid}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult> Delete(Guid id)
         {
             try

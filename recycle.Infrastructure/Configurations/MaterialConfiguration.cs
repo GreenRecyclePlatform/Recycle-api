@@ -28,6 +28,23 @@ namespace recycle.Infrastructure.Configurations
             builder.Property(m => m.Unit)
                 .HasMaxLength(20);
 
+            builder.Property(m => m.Icon)
+                .HasMaxLength(50);
+
+            builder.Property(m => m.Status)
+                .HasMaxLength(20);
+
+            // Price configurations
+            builder.Property(m => m.BuyingPrice)
+                .IsRequired()
+                .HasPrecision(18, 2)
+                .HasComment("Price paid when buying from users");
+
+            builder.Property(m => m.SellingPrice)
+                .IsRequired()
+                .HasPrecision(18, 2)
+                .HasComment("Price when selling to recyclers");
+
             builder.Property(m => m.PricePerKg)
                 .IsRequired()
                 .HasPrecision(18, 2)
@@ -41,9 +58,11 @@ namespace recycle.Infrastructure.Configurations
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
+            // Indexes
             builder.HasIndex(m => m.Name).IsUnique();
             builder.HasIndex(m => m.IsActive);
 
+            // Relationships
             builder.HasMany(m => m.RequestMaterials)
                 .WithOne(rm => rm.Material)
                 .HasForeignKey(rm => rm.MaterialId)
