@@ -17,5 +17,7 @@ namespace recycle.Application.DTOs.DriverAssignments
         public int RatingCount { get; set; }
         public bool IsAvailable { get; set; }
         public int TotalTrips { get; set; }
+
+        public AddressDto? Address { get; set; }
     }
 }

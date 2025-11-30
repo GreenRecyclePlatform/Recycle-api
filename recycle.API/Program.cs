@@ -1,41 +1,33 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using recycle.Application;
-using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
-using recycle.Application.Interfaces.IService;
-using recycle.Application.Services;
 using recycle.Domain.Entities;
 using recycle.Infrastructure;
 using recycle.Infrastructure.Hubs;
 using recycle.Infrastructure.Repositories;
-using recycle.Infrastructure.Services;
-using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-//// Register Specific Repositories (for UnitOfWork)
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
-//builder.Services.AddScoped<IRepository<ApplicationUser>, Repository<ApplicationUser>>(); 
-//builder.Services.AddScoped<IRepository<PickupRequest>, Repository<PickupRequest>>();
-//builder.Services.AddScoped<IRepository<DriverAssignment>, Repository<DriverAssignment>>();
-
 builder.Services.AddControllers();
 
+// Register Specific Repositories
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+
+// Add Application Layer Services
 builder.Services.AddApplication();
 
+// Add Infrastructure Layer Services
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add SignalR
 builder.Services.AddSignalR();
 
+// Configure Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
 {
     options.Password.RequiredLength = 8;
@@ -44,6 +36,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
     options.Password.RequireLowercase = true;
 }).AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
+// Configure JWT Authentication
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 builder.Services.AddAuthentication(x =>
 {
@@ -51,7 +44,7 @@ builder.Services.AddAuthentication(x =>
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(x =>
 {
-    x.RequireHttpsMetadata = true;
+    x.RequireHttpsMetadata = false; // ✅ Changed to false for localhost
     x.SaveToken = true;
     x.TokenValidationParameters = new TokenValidationParameters
     {
@@ -60,10 +53,10 @@ builder.Services.AddAuthentication(x =>
         ValidateIssuer = true,
         ValidIssuer = "recycle.API",
         ValidateAudience = false,
-        //ValidAudience = "TechHubClient",
         ClockSkew = TimeSpan.Zero,
     };
-    // IMPORTANT: Configure JWT for SignalR
+
+    // Configure JWT for SignalR
     x.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -81,19 +74,7 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-
-//=======================Abdelrahman Services======================
-// ===== ADD YOUR SERVICE REGISTRATIONS HERE (BEFORE var app = builder.Build()) =====
-//builder.Services.AddScoped<IPickupRequestRepository, PickupRequestRepository>();
-//builder.Services.AddScoped<IPickupRequestService, PickupRequestService>();
-//// ================================================================================
-
-//// Notifications
-//builder.Services.AddScoped<INotificationService, NotificationService>();
-//builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
-
+// Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -127,65 +108,51 @@ builder.Services.AddSwaggerGen(options =>
             new string[] {}
         }
     });
-
 });
 
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
         policy
-            .AllowAnyHeader()
+            .AllowAnyOrigin()
             .AllowAnyMethod()
-            .AllowCredentials()
-            .SetIsOriginAllowed(_ => true); // allow any origin
-    });
-});
-
-//CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+            .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
+// Initialize Database
 using (var scope = app.Services.CreateScope())
 {
     var dbInitializer = scope.ServiceProvider.GetRequiredService<DbInitializer>();
     await dbInitializer.InitializeAsync();
 }
-// Use CORS
-app.UseCors("AllowAll");
-// Configure the HTTP request pipeline.
+
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Use CORS
 app.UseCors("AllowAll");
 
+// Use Static Files
 app.UseStaticFiles();
 
+// Use HTTPS Redirection
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
+// Use Authentication & Authorization (ORDER MATTERS!)
+app.UseAuthentication(); // ✅ Must be before UseAuthorization
 app.UseAuthorization();
 
+// Map Controllers and Hubs
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
-
-app.UseStaticFiles();
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
 
 app.Run();

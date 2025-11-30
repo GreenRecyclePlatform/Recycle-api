@@ -8,7 +8,7 @@ namespace recycle.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
+[Authorize]
 public class PickupRequestsController : ControllerBase
 {
     private readonly IPickupRequestService _pickupRequestService;
@@ -20,7 +20,7 @@ public class PickupRequestsController : ControllerBase
 
     // GET: api/pickuprequests
     [HttpGet]
-   // [Authorize(Roles = "Admin")]
+   [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<PickupRequestResponseDto>>> GetAll()
     {
         try
@@ -82,7 +82,7 @@ public class PickupRequestsController : ControllerBase
 
     // GET: api/pickuprequests/status/{status}
     [HttpGet("status/{status}")]
-   //[Authorize(Roles = "Admin")]
+   [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<PickupRequestResponseDto>>> GetByStatus(string status)
     {
         try
@@ -247,7 +247,7 @@ public class PickupRequestsController : ControllerBase
 
     // PATCH: api/pickuprequests/{id}/status
     [HttpPatch("{id:guid}/status")]
-  // [Authorize(Roles = "Admin,Driver")]
+  [Authorize(Roles = "Admin,Driver")]
     public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusDto statusDto)
     {
         try

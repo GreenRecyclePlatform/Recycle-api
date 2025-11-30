@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application;
 using recycle.Application.DTOs.DriverAssignments;
@@ -9,6 +10,7 @@ namespace recycle.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DriverProfilesController : ControllerBase
     {
         DriverProfileService _driverProfileService;
@@ -25,6 +27,8 @@ namespace recycle.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult> GetDriverProfiles()
         {
             var driverProfiles = await _driverProfileService.GetDriverProfiles();
@@ -53,6 +57,7 @@ namespace recycle.API.Controllers
 
         [HttpPut("availability")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Driver")]
         public async Task<ActionResult> UpdateDriverAvailability([FromBody] bool isAvailable)
         {
             var userId = GetUserId();
@@ -62,6 +67,8 @@ namespace recycle.API.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> DeleteDriverProfile(Guid id)
         {
             var result = await _driverProfileService.DeleteDriverProfile(id);
