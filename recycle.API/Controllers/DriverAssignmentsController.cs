@@ -75,7 +75,7 @@ namespace recycle.API.Controllers
 
             // Driver updates assignment status (InProgress/Completed)
             [HttpPut("update-status")]
-           [Authorize(Roles = "Driver")]
+          [Authorize(Roles = "Driver")]
             public async Task<IActionResult> UpdateStatus([FromBody] UpdateAssignmentStatusDto dto)
             {
                 try
@@ -103,7 +103,6 @@ namespace recycle.API.Controllers
                 try
                 {
                 var adminId = GetCurrentUserId();
-
                 var result = await _assignmentService.ReassignDriverAsync(
                         dto.AssignmentId,
                         dto.NewDriverId,
@@ -134,7 +133,7 @@ namespace recycle.API.Controllers
 
             // Get all assignments for current driver (with optional status filter)
             [HttpGet("my-assignments")]
-           [Authorize(Roles = "Driver")]
+          [Authorize(Roles = "Driver")]
             public async Task<IActionResult> GetMyAssignments([FromQuery] AssignmentStatus? status = null)
             {
                 try
@@ -152,7 +151,7 @@ namespace recycle.API.Controllers
 
             //Get assignment history for a pickup request
             [HttpGet("request/{requestId}/history")]
-          [Authorize(Roles = "Admin")]
+         [Authorize(Roles = "Admin")]
             public async Task<IActionResult> GetRequestHistory(Guid requestId)
             {
                 try
@@ -189,7 +188,7 @@ namespace recycle.API.Controllers
         /// Get all available drivers for assignment
         /// </summary>
         [HttpGet("available-drivers")]
-        [Authorize(Roles = "Admin")]
+      [Authorize(Roles = "Admin")]
       //[AllowAnonymous]
         public async Task<IActionResult> GetAvailableDrivers()
         {
