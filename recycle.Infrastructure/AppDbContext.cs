@@ -30,6 +30,7 @@ namespace recycle.Infrastructure
         public DbSet<PickupRequest> PickupRequests { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<Setting> Settings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
