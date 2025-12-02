@@ -45,6 +45,7 @@ namespace recycle.API.Controllers
             return Ok(driverProfile);
         }
 
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [Consumes("multipart/form-data")]
@@ -92,8 +93,12 @@ namespace recycle.API.Controllers
         }
 
         [HttpPut("{userId}")]
+        [Authorize(Roles = "Driver")]
+
         public async Task<IActionResult> UpdateDriverProfile(Guid userId, [FromBody] UpdateDriverProfileDto updateDto)
         {
+
+         
             var result = await _driverProfileService.UpdateDriverProfile(userId, updateDto);
 
             if (result == null)
