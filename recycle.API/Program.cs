@@ -29,6 +29,9 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 
+builder.Services.AddScoped<IProfileService, ProfileService>();
+
+
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);

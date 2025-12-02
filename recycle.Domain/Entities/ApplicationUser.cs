@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 
 namespace recycle.Domain.Entities
 {
-    public class ApplicationUser:IdentityUser<Guid>
+    public class ApplicationUser : IdentityUser<Guid>
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime DateOfBirth { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // ✅ ADD THIS LINE
+
         public string? StripeAccountId { get; set; }
 
 
@@ -23,6 +25,13 @@ namespace recycle.Domain.Entities
         public ICollection<Notification> Notifications { get; set; }
 
         public DriverProfile? DriverProfile { get; set; }
+
+        // Additional properties can be added here as needed
+        public bool EmailNotifications { get; set; } = true;
+        public bool SmsNotifications { get; set; } = false;
+        public bool PickupReminders { get; set; } = true;
+        public bool MarketingEmails { get; set; } = false;
+        public ICollection<UserAchievement>? Achievements { get; set; }
 
     }
 }
