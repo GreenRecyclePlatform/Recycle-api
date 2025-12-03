@@ -24,11 +24,49 @@ namespace recycle.Application.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<DriverProfile> GetDriverProfileById(Guid Id)
+        public async Task<DriverProfileResponseDto> GetDriverProfileById(Guid id)
         {
-            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(dp => dp.Id == Id);
-            return driverProfile;
+            var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
+                id,
+                includes: query => query
+                    .Include(dp => dp.User)          
+         .Include(dp => dp.User.Addresses) 
+            );
+
+            if (driverProfile == null)
+                return null;
+
+            var result = new DriverProfileResponseDto
+            {
+                Id = driverProfile.Id,
+                UserId = driverProfile.UserId,
+                FirstName = driverProfile.User.FirstName,
+                LastName = driverProfile.User.LastName,
+                ProfileImageUrl = driverProfile.profileImageUrl,
+                IdNumber = driverProfile.idNumber,
+                Rating = driverProfile.Rating,
+                RatingCount = driverProfile.ratingCount,
+                IsAvailable = driverProfile.IsAvailable,
+                TotalTrips = driverProfile.TotalTrips,
+                CreatedAt = driverProfile.CreatedAt,
+                phonenumber=driverProfile.User.PhoneNumber,
+                Email=driverProfile.User.Email,
+                Address = driverProfile.User.Addresses?.FirstOrDefault() != null
+                    ? new AddressDto
+                    {
+                        Street = driverProfile.User.Addresses.First().Street,
+                        City = driverProfile.User.Addresses.First().City,
+                        Governorate = driverProfile.User.Addresses.First().Governorate,
+                        PostalCode = driverProfile.User.Addresses.First().PostalCode
+                    }
+                    : null
+            };
+
+            return result;
         }
+
+
+
 
         public async Task<DriverProfile> UpdateDriverProfileImage(UpdateDriverProfileImageDto imageDto,Guid userId)
         {
@@ -133,13 +171,13 @@ namespace recycle.Application.Services
         public async Task<List<DriverProfileResponseDto>> GetDriverProfiles()
         {
             var driverProfiles = await _unitOfWork.DriverProfiles.GetAll(
-                filter: null,
-                includes: query => query
-                    .Include(dp => dp.User)
-                        .ThenInclude(u => u.Addresses)
-            );
+     filter: null,
+     includes: query => query
+         .Include(dp => dp.User)           
+         .Include(dp => dp.User.Addresses) 
+ );
 
-            
+
             // Map إلى DTO
             var result = driverProfiles.Select(dp => new DriverProfileResponseDto
             {
@@ -147,6 +185,7 @@ namespace recycle.Application.Services
                 UserId = dp.UserId,
                 FirstName = dp.User.FirstName,
                 LastName = dp.User.LastName,
+                Email = dp.User.Email!,
                 ProfileImageUrl = dp.profileImageUrl,
                 IdNumber = dp.idNumber,
                 Rating = dp.Rating,
@@ -154,6 +193,9 @@ namespace recycle.Application.Services
                 IsAvailable = dp.IsAvailable,
                 TotalTrips = dp.TotalTrips,
                 CreatedAt = dp.CreatedAt,
+                phonenumber = dp.User.PhoneNumber,
+
+
 
                 // first Address if more 1
                 Address = dp.User.Addresses?.FirstOrDefault() != null
@@ -169,9 +211,9 @@ namespace recycle.Application.Services
 
             return result;
         }
-        public async Task<bool> DeleteDriverProfile(Guid userId)
+        public async Task<bool> DeleteDriverProfile(Guid id)
         {
-            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(dp => dp.UserId == userId);
+            var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(id);
             if (driverProfile == null)
             {
                 return false;
@@ -189,6 +231,51 @@ namespace recycle.Application.Services
             await _unitOfWork.DriverProfiles.RemoveAsync(driverProfile);
             await _unitOfWork.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<DriverProfileResponseDto> UpdateDriverProfile(Guid driverProfileId, UpdateDriverProfileDto updateDto)
+        {
+            // 1. Get Driver Profile by its ID (not User ID)
+            var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
+                driverProfileId,  // ⬅️ Changed from userId to driverProfileId
+                includes: query => query
+                    .Include(dp => dp.User)
+                    .Include(dp => dp.User.Addresses)
+            );
+
+            if (driverProfile == null)
+                return null;
+
+            // 2. Update User information
+            driverProfile.User.FirstName = updateDto.FirstName;
+            driverProfile.User.LastName = updateDto.LastName;
+            driverProfile.User.PhoneNumber = updateDto.PhoneNumber;
+            driverProfile.User.Email = updateDto.Email;
+
+            // 3. Update Driver Profile
+            driverProfile.profileImageUrl = updateDto.ProfileImageUrl ?? driverProfile.profileImageUrl;
+
+            // 4. Update Address
+            if (updateDto.Address != null)
+            {
+                var existingAddress = driverProfile.User.Addresses?.FirstOrDefault();
+
+                if (existingAddress != null)
+                {
+                    // Update existing address
+                    existingAddress.Street = updateDto.Address.Street;
+                    existingAddress.City = updateDto.Address.City;
+                    existingAddress.Governorate = updateDto.Address.Governorate;
+                    existingAddress.PostalCode = updateDto.Address.PostalCode;
+                }
+            }
+
+            // 5. Save changes
+            await _unitOfWork.DriverProfiles.UpdateAsync(driverProfile);
+            await _unitOfWork.SaveChangesAsync();
+
+            // 6. Return updated profile
+            return await GetDriverProfileById(driverProfile.Id);
         }
     }
 }

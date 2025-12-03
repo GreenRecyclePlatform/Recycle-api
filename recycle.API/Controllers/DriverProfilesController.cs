@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application;
+using recycle.Application.DTOs.DriverAssignments;
 using recycle.Application.Services;
 using System.Security.Claims;
 
@@ -8,6 +10,7 @@ namespace recycle.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DriverProfilesController : ControllerBase
     {
         DriverProfileService _driverProfileService;
@@ -24,6 +27,8 @@ namespace recycle.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Admin")]
+
         public async Task<ActionResult> GetDriverProfiles()
         {
             var driverProfiles = await _driverProfileService.GetDriverProfiles();
@@ -39,6 +44,7 @@ namespace recycle.API.Controllers
             var driverProfile = await _driverProfileService.GetDriverProfileById(id);
             return Ok(driverProfile);
         }
+
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -64,21 +70,43 @@ namespace recycle.API.Controllers
 
         [HttpPut("availability")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Driver")]
         public async Task<ActionResult> UpdateDriverAvailability([FromBody] bool isAvailable)
         {
             var userId = GetUserId();
             var updatedDriverProfile = await _driverProfileService.UpdateDriverAvailability(userId, isAvailable);
             return Ok(updatedDriverProfile);
         }
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [Authorize(Roles = "Admin")]
 
-        [HttpDelete]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult> DeleteDriverProfile()
+        public async Task<IActionResult> DeleteDriverProfile(Guid id)
         {
-            var userId = GetUserId();
-            await _driverProfileService.DeleteDriverProfile(userId);
+            var result = await _driverProfileService.DeleteDriverProfile(id);
+
+            if (!result)
+                return NotFound(new { message = "Driver profile not found" });
+
             return NoContent();
         }
+
+        [HttpPut("{userId}")]
+        [Authorize(Roles = "Driver")]
+
+        public async Task<IActionResult> UpdateDriverProfile(Guid userId, [FromBody] UpdateDriverProfileDto updateDto)
+        {
+
+         
+            var result = await _driverProfileService.UpdateDriverProfile(userId, updateDto);
+
+            if (result == null)
+                return NotFound(new { message = "Driver profile not found" });
+
+            return Ok(result);
+        }
+
 
     }
 }

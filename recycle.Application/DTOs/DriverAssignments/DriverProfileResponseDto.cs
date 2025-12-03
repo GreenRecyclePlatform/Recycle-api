@@ -21,6 +21,9 @@ namespace recycle.Application.DTOs.DriverAssignments
         public bool IsAvailable { get; set; }
         public int TotalTrips { get; set; }
         public DateTime CreatedAt { get; set; }
+        public string phonenumber { get; set; }
+         public string Email { get; set; }
+        
 
         public AddressDto? Address { get; set; }
     }

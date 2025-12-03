@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using recycle.Infrastructure;
 
@@ -11,9 +12,11 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251129235911_InitialFix")]
+    partial class InitialFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -153,36 +156,6 @@ namespace recycle.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.Achievement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Icon")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("RequiredCount")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Achievement");
-                });
-
             modelBuilder.Entity("recycle.Domain.Entities.Address", b =>
                 {
                     b.Property<Guid>("Id")
@@ -231,9 +204,6 @@ namespace recycle.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("date");
 
@@ -242,9 +212,6 @@ namespace recycle.Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("EmailNotifications")
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
@@ -263,9 +230,6 @@ namespace recycle.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<bool>("MarketingEmails")
-                        .HasColumnType("bit");
-
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -283,14 +247,8 @@ namespace recycle.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("PickupReminders")
-                        .HasColumnType("bit");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("SmsNotifications")
-                        .HasColumnType("bit");
 
                     b.Property<string>("StripeAccountId")
                         .HasColumnType("nvarchar(max)");
@@ -899,29 +857,12 @@ namespace recycle.Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
             modelBuilder.Entity("recycle.Domain.Entities.Setting", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AchievementId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("UnlockedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AchievementId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserAchievement");
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1165,29 +1106,8 @@ namespace recycle.Infrastructure.Migrations
                     b.Navigation("Reviewer");
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
-                {
-                    b.HasOne("recycle.Domain.Entities.Achievement", "Achievement")
-                        .WithMany()
-                        .HasForeignKey("AchievementId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("recycle.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("Achievements")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Achievement");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("recycle.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Navigation("Achievements");
-
                     b.Navigation("Addresses");
 
                     b.Navigation("DriverProfile");

@@ -104,6 +104,23 @@ namespace recycle.Infrastructure.Repositories
             return await dbSet.FindAsync(id);
         }
 
+
+        public async Task<T> GetByIdAsync(
+    Guid id,
+    Func<IQueryable<T>, IQueryable<T>>? includes = null)
+        {
+            IQueryable<T> query = dbSet;
+
+            if (includes != null)
+            {
+                query = includes(query);
+            }
+
+            return await query.FirstOrDefaultAsync(e =>
+                EF.Property<Guid>(e, "Id") == id);
+        }
+
+
         public async Task<int> CountAsync(Expression<Func<T, bool>> filter = null)
         {
             return filter == null
