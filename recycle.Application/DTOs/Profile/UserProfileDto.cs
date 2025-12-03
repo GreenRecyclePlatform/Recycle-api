@@ -1,4 +1,5 @@
 ﻿using recycle.Application.DTOs.Notifications;
+using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace recycle.Application.DTOs.Profile
         public DateTime DateOfBirth { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        public AddressDto? PrimaryAddress { get; set; }
+        public Address? PrimaryAddress { get; set; }
         public ProfileStatsDto Stats { get; set; }
         public EnvironmentalImpactDto EnvironmentalImpact { get; set; }
         public NotificationPreferencesDto NotificationPreferences { get; set; }

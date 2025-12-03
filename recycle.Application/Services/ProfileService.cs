@@ -67,7 +67,7 @@ namespace recycle.Application.Services
                 PhoneNumber = user.PhoneNumber,
                 DateOfBirth = user.DateOfBirth,
                 CreatedAt = user.CreatedAt,
-                PrimaryAddress = primaryAddress != null ? new AddressDto
+                PrimaryAddress = primaryAddress != null ? new Address
                 {
                     Id = primaryAddress.Id,
                     Street = primaryAddress.Street,
@@ -185,7 +185,7 @@ namespace recycle.Application.Services
             return await GetProfileAsync(userId);
         }
 
-        public async Task<AddressDto> UpdateAddressAsync(Guid userId, UpdateAddressDto dto)
+        public async Task<Address> UpdateAddressAsync(Guid userId, UpdateAddressDto dto)
         {
             var user = await _userManager.Users
                 .Include(u => u.Addresses)
@@ -219,16 +219,9 @@ namespace recycle.Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new AddressDto
-            {
-                Id = primaryAddress.Id,
-                Street = primaryAddress.Street,
-                City = primaryAddress.City,
-                Governorate = primaryAddress.Governorate,
-                PostalCode = primaryAddress.PostalCode
-            };
+            // ✅ RETURN THE EXISTING primaryAddress OBJECT
+            return primaryAddress;
         }
-
         public async Task<NotificationPreferencesDto> UpdateNotificationPreferencesAsync(
             Guid userId,
             NotificationPreferencesDto dto)
