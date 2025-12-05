@@ -1,172 +1,172 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
-using recycle.Domain.Enums;
-using recycle.Infrastructure.Repositories;
-using Stripe;
 
 namespace Recycle.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
-        private readonly IStripeAdapter _stripeAdapter;
-        private readonly IConfiguration _configuration;
         private readonly IUnitOfWork _unitOfWork;
 
-        public PaymentController(IPaymentService paymentService, IStripeAdapter stripeAdapter, IConfiguration configuration, IUnitOfWork unitOfWork)
+        public PaymentController(IPaymentService paymentService, IUnitOfWork unitOfWork)
         {
             _paymentService = paymentService;
-            _stripeAdapter = stripeAdapter;
-            _configuration = configuration;
             _unitOfWork = unitOfWork;
         }
 
+        /// <summary>
+        /// Create a new payment record (Admin only)
+        /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreatePayment([FromBody] CreatePaymentDto dto)
         {
             var result = await _paymentService.CreatePaymentAsync(dto);
+            if (result == null)
+                return BadRequest("Unable to create payment. Check request and user IDs.");
+
             return Ok(result);
         }
 
+        /// <summary>
+        /// Get all payments with optional status filter (Admin only)
+        /// </summary>
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetPayments([FromQuery] string? status)
         {
             var list = await _paymentService.GetPaymentsAsync(status);
             return Ok(list);
         }
 
+        /// <summary>
+        /// Get payment by ID
+        /// </summary>
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetPayment(Guid id)
         {
-            var p = await _paymentService.GetPaymentByIdAsync(id);
-            if (p == null) return NotFound();
-            return Ok(p);
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
+            if (payment == null)
+                return NotFound();
+
+            return Ok(payment);
         }
 
-        [HttpPut("{id:guid}/status")]
-        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status, [FromQuery] Guid adminId, [FromQuery] string? notes, [FromQuery] string? failureReason)
+        /// <summary>
+        /// Admin approves payment and sends money via PayPal
+        /// </summary>
+        [HttpPut("{id:guid}/approve")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApprovePayment(
+            Guid id,
+            [FromQuery] Guid adminId,
+            [FromQuery] string? notes)
         {
-            var ok = await _paymentService.UpdatePaymentStatusAsync(id, status, adminId, notes, failureReason);
-            if (!ok) return NotFound();
-            return Ok("Status updated");
+            var success = await _paymentService.UpdatePaymentStatusAsync(
+                id,
+                recycle.Domain.Enums.PaymentStatuses.Approved,
+                adminId,
+                notes);
+
+            if (!success)
+                return NotFound("Payment not found");
+
+            return Ok(new { message = "Payment approved and processed via PayPal" });
         }
 
-        [HttpPost("onboard-driver")]
-        public async Task<IActionResult> OnboardDriver([FromQuery] Guid userId, [FromQuery] string email, [FromQuery] string refreshUrl, [FromQuery] string returnUrl)
+        /// <summary>
+        /// Admin rejects payment
+        /// </summary>
+        [HttpPut("{id:guid}/reject")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RejectPayment(
+            Guid id,
+            [FromQuery] Guid adminId,
+            [FromQuery] string reason)
         {
-            // 1. Create Express account
-            var stripeAccountId = await _stripeAdapter.CreateExpressAccountAsync(userId, email);
+            var success = await _paymentService.UpdatePaymentStatusAsync(
+                id,
+                recycle.Domain.Enums.PaymentStatuses.Failed,
+                adminId,
+                failureReason: reason);
 
-            // You must save stripeAccountId to your Users table (via UnitOfWork user repo). Example:
-            // var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            // user.StripeAccountId = stripeAccountId; _unitOfWork.Users.Update(user); await _unitOfWork.SaveAsync();
-            // For now just return account id and account link
+            if (!success)
+                return NotFound("Payment not found");
 
-            // 2. SAVE StripeAccountId to the user in DB (REQUIRED)
-            var user = await _unitOfWork.Users.GetByIdAsync(userId);
-            if (user == null)
-                return NotFound("User not found.");
-
-            user.StripeAccountId = stripeAccountId;
-            _unitOfWork.Users?.UpdateAsync(user);
-            await _unitOfWork.SaveChangesAsync();
-
-            // 3. Generate Stripe onboarding link
-            var accountLink = await _stripeAdapter.CreateAccountLinkAsync(stripeAccountId, refreshUrl, returnUrl);
-
-            // 4. Return info to frontend
-            return Ok(new { stripeAccountId, accountLink });
+            return Ok(new { message = "Payment rejected" });
         }
 
+        /// <summary>
+        /// Request payout after pickup completion (automatically creates payment)
+        /// </summary>
         [HttpPost("request-payout")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> RequestPayout([FromBody] PayoutRequestDto dto)
         {
-            // dto: RecipientUserId, Amount, RequestId, Currency (optional)
-            var paymentDto = await _paymentService.RequestPayoutAsync(dto.RecipientUserId, dto.Amount, dto.RequestId, dto.Currency ?? "usd");
-            if (paymentDto == null) return BadRequest("Unable to create payout");
+            var payment = await _paymentService.RequestPayoutAsync(
+                dto.RecipientUserId,
+                dto.Amount,
+                dto.RequestId,
+                dto.Currency ?? "EUR");
 
-            return Ok(paymentDto);
+            if (payment == null)
+                return BadRequest("Unable to create payout request");
+
+            return Ok(new
+            {
+                message = "Payout request created. Admin needs to approve it.",
+                payment
+            });
         }
 
-        // Webhook endpoint. Stripe sends events here.
-        [HttpPost("stripe/webhook")]
-        public async Task<IActionResult> StripeWebhook()
-        {
-            var json = await new StreamReader(Request.Body).ReadToEndAsync();
-            var signature = Request.Headers["Stripe-Signature"];
-
-            Event stripeEvent;
-
-            try
-            {
-                stripeEvent = _stripeAdapter.VerifyAndConstructEvent(json, signature!);
-            }
-            catch
-            {
-                return BadRequest("Invalid Stripe signature");
-            }
-
-            switch (stripeEvent.Type)
-            {
-                case "transfer.paid":
-                    var transfer = stripeEvent.Data.Object as Transfer;
-                    if (transfer?.Metadata != null && transfer.Metadata.ContainsKey("ID"))
-                    {
-                        Guid pid = Guid.Parse(transfer.Metadata["ID"]);
-                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Paid, pid, "Stripe transfer.paid webhook");
-                    }
-                    break;
-
-                case "transfer.failed":
-                    var t2 = stripeEvent.Data.Object as Transfer;
-                    if (t2?.Metadata != null && t2.Metadata.ContainsKey("ID"))
-                    {
-                        Guid pid = Guid.Parse(t2.Metadata["ID"]);
-                        await _paymentService.UpdatePaymentStatusAsync(pid, PaymentStatuses.Failed, pid, "Stripe transfer.failed webhook", "Stripe failure");
-                    }
-                    break;
-            }
-
-            return Ok();
-        }
-
-        // DEV only: create test charge in platform to add funds (remove in production)
-        [HttpPost("stripe/test-charge")]
-        public async Task<IActionResult> CreateTestCharge([FromQuery] long amountInCents, [FromQuery] string currency = "usd")
-        {
-            try
-            {
-                var charge = await _stripeAdapter.CreateTestChargeAsync(amountInCents, currency);
-                return Ok(new { success = true, chargeId = charge.Id, status = charge.Status });
-            }
-            catch (StripeException ex)
-            {
-                return BadRequest(new { success = false, error = ex.Message });
-            }
-        }
-
-
-
-        //Will be added later with the front
-        [HttpGet("stripe/login")]
-        public async Task<IActionResult> GetStripeDashboardLoginLink([FromQuery] Guid userId)
-        {
-            return Ok();
-        }
-
-        [HttpGet("account/status")]
-        public async Task<IActionResult> GetStripeAccountStatus([FromQuery] Guid userId)
-        {
-            return Ok();
-        }
-
-        [HttpGet("user/{userId}")]
+        /// <summary>
+        /// Get user's payment history
+        /// </summary>
+        [HttpGet("user/{userId:guid}")]
         public async Task<IActionResult> GetUserPayments(Guid userId)
         {
-            return Ok();
+            var payments = await _paymentService.GetPaymentsAsync(null);
+            var userPayments = payments.Where(p => p.RecipientUserID == userId).ToList();
+
+            return Ok(userPayments);
         }
+
+        /// <summary>
+        /// Check PayPal payout status by payment ID
+        /// </summary>
+        [HttpGet("{id:guid}/paypal-status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CheckPayPalStatus(Guid id)
+        {
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
+            if (payment == null)
+                return NotFound("Payment not found");
+
+            if (string.IsNullOrEmpty(payment.TransactionReference))
+                return BadRequest("No PayPal transaction reference found");
+
+            try
+            {
+                var paypalService = HttpContext.RequestServices.GetRequiredService<IPayPalPayoutService>();
+                var status = await paypalService.GetPayoutStatusAsync(payment.TransactionReference);
+
+                return Ok(new
+                {
+                    paymentId = id,
+                    paypalBatchId = payment.TransactionReference,
+                    paypalStatus = status
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
     }
 }

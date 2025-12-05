@@ -15,8 +15,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" />
-    <PackageReference Include="Stripe.net" Version="49.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
+    <PackageReference Include="PayoutsSdk" Version="1.1.1" />
+    <PackageReference Include="PayPalCheckoutSdk" Version="1.0.4" />
   </ItemGroup>
 
   <ItemGroup>
