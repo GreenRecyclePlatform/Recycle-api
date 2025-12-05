@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using recycle.Application.Common;
+using recycle.Application.DTOs;
 using recycle.Application.DTOs.DriverAssignments;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace recycle.Application.Services
 {
@@ -345,7 +347,9 @@ namespace recycle.Application.Services
             // Get all users with driver profile and available
             var drivers = await _unitOfWork.Users.GetAll(
                 filter: u => u.DriverProfile != null && u.DriverProfile.IsAvailable,
-                includes: query => query.Include(u => u.DriverProfile)
+                includes: query => query
+                    .Include(u => u.DriverProfile)
+                    .Include(u => u.Addresses)
             );
 
             // Map to DTO
@@ -359,7 +363,16 @@ namespace recycle.Application.Services
                 Rating = d.DriverProfile.Rating,
                 RatingCount = d.DriverProfile.ratingCount,
                 IsAvailable = d.DriverProfile.IsAvailable,
-                TotalTrips = d.DriverProfile.TotalTrips
+                TotalTrips = d.DriverProfile.TotalTrips,
+                Address = d.Addresses?.FirstOrDefault() != null
+                    ? new AddressDto
+                    {
+                        Street = d.Addresses.First().Street,
+                        City = d.Addresses.First().City,
+                        Governorate = d.Addresses.First().Governorate,
+                        PostalCode = d.Addresses.First().PostalCode
+                    }
+                    : null
             }).ToList();
 
             return availableDrivers;

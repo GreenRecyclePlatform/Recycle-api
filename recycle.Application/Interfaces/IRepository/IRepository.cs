@@ -23,6 +23,9 @@ namespace recycle.Application.Interfaces.IRepository
         Task RemoveAsync(T entity);
 
         Task<T> GetByIdAsync(Guid id);
+        Task<T> GetByIdAsync( Guid id, Func<IQueryable<T>, IQueryable<T>>? includes = null
+);
+
         Task<int> CountAsync(Expression<Func<T, bool>> filter = null);
         Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
 
