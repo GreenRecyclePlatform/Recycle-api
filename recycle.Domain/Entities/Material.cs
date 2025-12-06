@@ -10,7 +10,9 @@ namespace recycle.Domain.Entities
         public string? Description { get; set; }
         public string? Unit { get; set; } 
         public string Icon { get; set; } = "♻️";
-        public string? Image { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImageLocalPath { get; set; }
+
         public decimal BuyingPrice { get; set; }
         public decimal SellingPrice { get; set; }
         public decimal PricePerKg { get; set; } 

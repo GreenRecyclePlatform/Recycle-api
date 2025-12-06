@@ -1,8 +1,10 @@
-﻿using recycle.Application.DTOs.Materials;
+﻿using Microsoft.AspNetCore.Http;
+using recycle.Application.DTOs.Materials;
 using recycle.Application.Interfaces;
 using recycle.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,10 +13,12 @@ namespace recycle.Application.Services
     public class MaterialService : IMaterialService
     {
         private readonly IMaterialRepository _repository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public MaterialService(IMaterialRepository repository)
+        public MaterialService(IMaterialRepository repository, IHttpContextAccessor httpContextAccessor)
         {
             _repository = repository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<MaterialDto>> GetAllMaterialsAsync(bool includeInactive = false)
@@ -31,17 +35,32 @@ namespace recycle.Application.Services
 
         public async Task<MaterialDto> CreateMaterialAsync(CreateMaterialDto dto)
         {
-            // Validate selling price vs buying price
-            if (dto.SellingPrice <= dto.BuyingPrice)
+            string? imageUrl = null;
+            string? imageLocalPath = null;
+
+            if (dto.Image != null)
             {
-                throw new InvalidOperationException("Selling price must be greater than buying price");
+                string filename = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
+                string imagepath = @"wwwroot\images\materials\" + filename;
+                var directoryLocation = Path.Combine(Directory.GetCurrentDirectory(), imagepath);
+                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images\materials\"));
+
+                using (var filestream = new FileStream(directoryLocation, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(filestream);
+                }
+
+                var baseUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host.Value}{_httpContextAccessor.HttpContext.Request.PathBase.Value}";
+                imageUrl = baseUrl + "/images/materials/" + filename;
+                imageLocalPath = imagepath;
             }
 
-            // Check if name is unique
-            if (!await _repository.IsNameUniqueAsync(dto.Name))
-            {
-                throw new InvalidOperationException($"Material with name '{dto.Name}' already exists");
-            }
+            if (dto.SellingPrice <= dto.BuyingPrice)
+                throw new InvalidOperationException("Selling price must be greater than buying price");
+
+            // ❌ REMOVED: Name uniqueness check
+            // if (!await _repository.IsNameUniqueAsync(dto.Name))
+            //     throw new InvalidOperationException($"Material with name '{dto.Name}' already exists");
 
             var material = new Material
             {
@@ -50,7 +69,8 @@ namespace recycle.Application.Services
                 Description = dto.Description,
                 Unit = dto.Unit,
                 Icon = dto.Icon,
-                Image = dto.Image,
+                ImageUrl = imageUrl,
+                ImageLocalPath = imageLocalPath,
                 BuyingPrice = dto.BuyingPrice,
                 SellingPrice = dto.SellingPrice,
                 PricePerKg = dto.PricePerKg,
@@ -67,24 +87,42 @@ namespace recycle.Application.Services
         public async Task<MaterialDto> UpdateMaterialAsync(Guid id, UpdateMaterialDto dto)
         {
             var material = await _repository.GetByIdAsync(id);
-
             if (material == null)
-            {
                 throw new InvalidOperationException($"Material with ID {id} not found");
+
+            // If there's a new image, upload it and delete the old one
+            if (dto.Image != null)
+            {
+                if (!string.IsNullOrEmpty(material.ImageLocalPath))
+                {
+                    var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), material.ImageLocalPath);
+                    FileInfo file = new FileInfo(oldFilePathDirectory);
+                    if (file.Exists) file.Delete();
+                }
+
+                string filename = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
+                string imagepath = @"wwwroot\images\materials\" + filename;
+                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images\materials\"));
+
+                using (var filestream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), imagepath), FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(filestream);
+                }
+
+                var baseUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host.Value}{_httpContextAccessor.HttpContext.Request.PathBase.Value}";
+                material.ImageUrl = baseUrl + "/images/materials/" + filename;
+                material.ImageLocalPath = imagepath;
             }
 
-            // Validate selling price vs buying price
+            // Validate prices
             if (dto.SellingPrice <= dto.BuyingPrice)
-            {
                 throw new InvalidOperationException("Selling price must be greater than buying price");
-            }
 
-            // Check if name is unique (excluding current material)
-            if (!await _repository.IsNameUniqueAsync(dto.Name, id))
-            {
-                throw new InvalidOperationException($"Another material with name '{dto.Name}' already exists");
-            }
+            // ❌ REMOVED: Name uniqueness check
+            // if (!await _repository.IsNameUniqueAsync(dto.Name, id))
+            //     throw new InvalidOperationException($"Another material with name '{dto.Name}' already exists");
 
+            // Update all other data
             material.Name = dto.Name;
             material.Description = dto.Description;
             material.Unit = dto.Unit;
@@ -96,21 +134,59 @@ namespace recycle.Application.Services
             material.IsActive = dto.Status == "active";
             material.UpdatedAt = DateTime.UtcNow;
 
-            // Only update image if a new one is provided
-            if (!string.IsNullOrEmpty(dto.Image))
-            {
-                material.Image = dto.Image;
-            }
-
             var updatedMaterial = await _repository.UpdateAsync(material);
             return MapToDto(updatedMaterial);
         }
 
+        public async Task<Material> UpdateMaterialImageAsync(Guid id, UpdateMaterialImageDto imageDto)
+        {
+            var material = await _repository.GetByIdAsync(id);
+            if (material == null)
+                throw new InvalidOperationException($"Material with ID {id} not found");
+
+            if (imageDto.Image != null)
+            {
+                // Delete old image if exists
+                if (!string.IsNullOrEmpty(material.ImageLocalPath))
+                {
+                    var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), material.ImageLocalPath);
+                    FileInfo file = new FileInfo(oldFilePathDirectory);
+                    if (file.Exists)
+                        file.Delete();
+                }
+
+                string filename = Guid.NewGuid().ToString() + Path.GetExtension(imageDto.Image.FileName);
+                string imagepath = @"wwwroot\images\materials\" + filename;
+                var directoryLocation = Path.Combine(Directory.GetCurrentDirectory(), imagepath);
+                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot\images\materials\"));
+
+                using (var filestream = new FileStream(directoryLocation, FileMode.Create))
+                {
+                    await imageDto.Image.CopyToAsync(filestream);
+                }
+
+                var baseUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host.Value}{_httpContextAccessor.HttpContext.Request.PathBase.Value}";
+                material.ImageUrl = baseUrl + "/images/materials/" + filename;
+                material.ImageLocalPath = imagepath;
+                material.UpdatedAt = DateTime.UtcNow;
+
+                await _repository.UpdateAsync(material);
+                return material;
+            }
+
+            return material;
+        }
+
         public async Task<bool> DeleteMaterialAsync(Guid id)
         {
-            if (!await _repository.ExistsAsync(id))
+            var material = await _repository.GetByIdAsync(id);
+            if (material == null) return false;
+
+            if (!string.IsNullOrEmpty(material.ImageLocalPath))
             {
-                return false;
+                var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), material.ImageLocalPath);
+                FileInfo file = new FileInfo(oldFilePathDirectory);
+                if (file.Exists) file.Delete();
             }
 
             try
@@ -138,7 +214,8 @@ namespace recycle.Application.Services
                 Description = material.Description,
                 Unit = material.Unit,
                 Icon = material.Icon,
-                Image = material.Image,
+                ImageUrl = material.ImageUrl,
+                ImageLocalPath = material.ImageLocalPath,
                 BuyingPrice = material.BuyingPrice,
                 SellingPrice = material.SellingPrice,
                 PricePerKg = material.PricePerKg,
