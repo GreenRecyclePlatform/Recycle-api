@@ -154,9 +154,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware pipeline (ORDER MATTERS!)
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseCors("AllowAll");  // This allows all origins, including  Angular app
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
