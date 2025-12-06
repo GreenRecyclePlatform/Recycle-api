@@ -18,6 +18,7 @@ namespace recycle.Infrastructure.Configurations
             builder.Property(a => a.Id)
                 .ValueGeneratedNever();
 
+
             builder.Property(m => m.Name)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -33,6 +34,15 @@ namespace recycle.Infrastructure.Configurations
 
             builder.Property(m => m.Status)
                 .HasMaxLength(20);
+
+
+            builder.Property(m => m.ImageUrl)
+         .HasMaxLength(500)
+         .HasComment("Public URL of the material image");
+
+            builder.Property(m => m.ImageLocalPath)
+                .HasMaxLength(500)
+                .HasComment("Local file system path of the material image");
 
             // Price configurations
             builder.Property(m => m.BuyingPrice)
@@ -59,7 +69,7 @@ namespace recycle.Infrastructure.Configurations
                 .HasDefaultValueSql("GETUTCDATE()");
 
             // Indexes
-            builder.HasIndex(m => m.Name).IsUnique();
+           // builder.HasIndex(m => m.Name).IsUnique();
             builder.HasIndex(m => m.IsActive);
 
             // Relationships
