@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using recycle.Application.Interfaces;
 using recycle.Domain.Entities;
 using System;
@@ -10,27 +10,27 @@ using System.Threading.Tasks;
 using recycle.Application.DTOs.DriverAssignments;
 using recycle.Application.DTOs;
 
-
-
 namespace recycle.Application.Services
 {
     public class DriverProfileService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         public DriverProfileService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<DriverProfileResponseDto> GetDriverProfileById(Guid id)
+        // ✅✅✅ Method جديدة: جيب Driver Profile بالـ User ID ✅✅✅
+        public async Task<DriverProfileResponseDto> GetDriverProfileByUserId(Guid userId)
         {
-            var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
-                id,
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                dp => dp.UserId == userId,
                 includes: query => query
-                    .Include(dp => dp.User)          
-         .Include(dp => dp.User.Addresses) 
+                    .Include(dp => dp.User)
+                    .Include(dp => dp.User.Addresses)
             );
 
             if (driverProfile == null)
@@ -49,8 +49,8 @@ namespace recycle.Application.Services
                 IsAvailable = driverProfile.IsAvailable,
                 TotalTrips = driverProfile.TotalTrips,
                 CreatedAt = driverProfile.CreatedAt,
-                phonenumber=driverProfile.User.PhoneNumber,
-                Email=driverProfile.User.Email,
+                phonenumber = driverProfile.User.PhoneNumber,
+                Email = driverProfile.User.Email,
                 Address = driverProfile.User.Addresses?.FirstOrDefault() != null
                     ? new AddressDto
                     {
@@ -65,12 +65,51 @@ namespace recycle.Application.Services
             return result;
         }
 
-
-
-
-        public async Task<DriverProfile> UpdateDriverProfileImage(UpdateDriverProfileImageDto imageDto,Guid userId)
+        // ✅ Method موجودة: جيب Driver Profile بالـ Profile ID (للاستخدام الداخلي)
+        public async Task<DriverProfileResponseDto> GetDriverProfileById(Guid id)
         {
-            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(p=>p.UserId == userId);
+            var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
+                id,
+                includes: query => query
+                    .Include(dp => dp.User)
+                    .Include(dp => dp.User.Addresses)
+            );
+
+            if (driverProfile == null)
+                return null;
+
+            var result = new DriverProfileResponseDto
+            {
+                Id = driverProfile.Id,
+                UserId = driverProfile.UserId,
+                FirstName = driverProfile.User.FirstName,
+                LastName = driverProfile.User.LastName,
+                ProfileImageUrl = driverProfile.profileImageUrl,
+                IdNumber = driverProfile.idNumber,
+                Rating = driverProfile.Rating,
+                RatingCount = driverProfile.ratingCount,
+                IsAvailable = driverProfile.IsAvailable,
+                TotalTrips = driverProfile.TotalTrips,
+                CreatedAt = driverProfile.CreatedAt,
+                phonenumber = driverProfile.User.PhoneNumber,
+                Email = driverProfile.User.Email,
+                Address = driverProfile.User.Addresses?.FirstOrDefault() != null
+                    ? new AddressDto
+                    {
+                        Street = driverProfile.User.Addresses.First().Street,
+                        City = driverProfile.User.Addresses.First().City,
+                        Governorate = driverProfile.User.Addresses.First().Governorate,
+                        PostalCode = driverProfile.User.Addresses.First().PostalCode
+                    }
+                    : null
+            };
+
+            return result;
+        }
+
+        public async Task<DriverProfile> UpdateDriverProfileImage(UpdateDriverProfileImageDto imageDto, Guid userId)
+        {
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(p => p.UserId == userId);
 
             if (imageDto.Image != null)
             {
@@ -88,7 +127,6 @@ namespace recycle.Application.Services
                 string filename = Guid.NewGuid().ToString() + Path.GetExtension(imageDto.Image.FileName);
                 string imagepath = @"wwwroot\images\" + filename;
                 var directoryLocation = Path.Combine(Directory.GetCurrentDirectory(), imagepath);
-
 
                 using (var filestream = new FileStream(directoryLocation, FileMode.Create))
                 {
@@ -108,8 +146,6 @@ namespace recycle.Application.Services
             {
                 return driverProfile;
             }
-
-
         }
 
         public async Task<DriverProfile> CreateDriverProfile(DriverProfileDto driverProfileDto, Guid userId)
@@ -134,7 +170,6 @@ namespace recycle.Application.Services
                 driverProfileDto.ImageUrl = baseUrl + "/images/" + filename;
                 driverProfileDto.ImageLocalPath = imagepath;
             }
-
 
             var driverProfile = new DriverProfile
             {
@@ -171,14 +206,12 @@ namespace recycle.Application.Services
         public async Task<List<DriverProfileResponseDto>> GetDriverProfiles()
         {
             var driverProfiles = await _unitOfWork.DriverProfiles.GetAll(
-     filter: null,
-     includes: query => query
-         .Include(dp => dp.User)           
-         .Include(dp => dp.User.Addresses) 
- );
+                filter: null,
+                includes: query => query
+                    .Include(dp => dp.User)
+                    .Include(dp => dp.User.Addresses)
+            );
 
-
-            // Map إلى DTO
             var result = driverProfiles.Select(dp => new DriverProfileResponseDto
             {
                 Id = dp.Id,
@@ -194,10 +227,6 @@ namespace recycle.Application.Services
                 TotalTrips = dp.TotalTrips,
                 CreatedAt = dp.CreatedAt,
                 phonenumber = dp.User.PhoneNumber,
-
-
-
-                // first Address if more 1
                 Address = dp.User.Addresses?.FirstOrDefault() != null
                     ? new AddressDto
                     {
@@ -211,6 +240,7 @@ namespace recycle.Application.Services
 
             return result;
         }
+
         public async Task<bool> DeleteDriverProfile(Guid id)
         {
             var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(id);
@@ -233,11 +263,11 @@ namespace recycle.Application.Services
             return true;
         }
 
+        // ✅ Update Driver Profile بالـ Driver Profile ID
         public async Task<DriverProfileResponseDto> UpdateDriverProfile(Guid driverProfileId, UpdateDriverProfileDto updateDto)
         {
-            // 1. Get Driver Profile by its ID (not User ID)
             var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
-                driverProfileId,  // ⬅️ Changed from userId to driverProfileId
+                driverProfileId,
                 includes: query => query
                     .Include(dp => dp.User)
                     .Include(dp => dp.User.Addresses)
@@ -246,23 +276,19 @@ namespace recycle.Application.Services
             if (driverProfile == null)
                 return null;
 
-            // 2. Update User information
             driverProfile.User.FirstName = updateDto.FirstName;
             driverProfile.User.LastName = updateDto.LastName;
             driverProfile.User.PhoneNumber = updateDto.PhoneNumber;
             driverProfile.User.Email = updateDto.Email;
 
-            // 3. Update Driver Profile
             driverProfile.profileImageUrl = updateDto.ProfileImageUrl ?? driverProfile.profileImageUrl;
 
-            // 4. Update Address
             if (updateDto.Address != null)
             {
                 var existingAddress = driverProfile.User.Addresses?.FirstOrDefault();
 
                 if (existingAddress != null)
                 {
-                    // Update existing address
                     existingAddress.Street = updateDto.Address.Street;
                     existingAddress.City = updateDto.Address.City;
                     existingAddress.Governorate = updateDto.Address.Governorate;
@@ -270,11 +296,9 @@ namespace recycle.Application.Services
                 }
             }
 
-            // 5. Save changes
             await _unitOfWork.DriverProfiles.UpdateAsync(driverProfile);
             await _unitOfWork.SaveChangesAsync();
 
-            // 6. Return updated profile
             return await GetDriverProfileById(driverProfile.Id);
         }
     }

@@ -141,7 +141,12 @@ builder.Services.AddCors(options =>
     });
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(
+
+             "http://localhost:55483",  // ⬅️ Frontend URL
+                "http://localhost:4200"    // لو بتستخدمي port 4200
+
+            )
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
