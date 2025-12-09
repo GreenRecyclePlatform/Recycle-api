@@ -99,7 +99,6 @@ namespace recycle.API.Controllers
             bool ifUserNameUnique = await _userRepo.IsUniqueAsync(model.Email, model.UserName);
             if (!ifUserNameUnique)
             {
-
                 return BadRequest("Username or Email already exists");
             }
 
@@ -134,8 +133,15 @@ namespace recycle.API.Controllers
 
             if (Tokens == null || string.IsNullOrEmpty(Tokens.AccessToken))
             {
+                if(!string.IsNullOrEmpty(model.Email))
+                {
+                    return BadRequest("Email or password is incorrect");
+                }
+                else
+                {
+                    return BadRequest("Username or password is incorrect");
+                }
 
-                return BadRequest("Username or Email or password is incorrect");
             }
 
             SetRefreshTokenInCookie(Tokens.RefreshToken);

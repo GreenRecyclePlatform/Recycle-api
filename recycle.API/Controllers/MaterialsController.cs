@@ -25,6 +25,7 @@ namespace recycle.API.Controllers
         /// <param name="includeInactive">Include inactive materials</param>
         /// <returns>List of materials</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> GetAll([FromQuery] bool includeInactive = false)
         {
@@ -52,7 +53,8 @@ namespace recycle.API.Controllers
         /// <param name="id">Material ID</param>
         /// <returns>Material details</returns>
         [HttpGet("{id:guid}")]
-        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MaterialDto>> GetById(Guid id)
         {
             try
@@ -79,6 +81,7 @@ namespace recycle.API.Controllers
         /// <param name="onlyActive">Only search active materials</param>
         /// <returns>List of matching materials</returns>
         [HttpGet("search")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> Search(
             [FromQuery] string searchTerm,
@@ -106,8 +109,11 @@ namespace recycle.API.Controllers
         /// <param name="dto">Material data</param>
         /// <returns>Created material</returns>
         [HttpPost]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
-        public async Task<ActionResult<MaterialDto>> Create([FromBody] CreateMaterialDto dto)
+        public async Task<ActionResult<MaterialDto>> Create([FromForm] CreateMaterialDto dto)
         {
             try
             {
@@ -136,8 +142,12 @@ namespace recycle.API.Controllers
         /// <param name="dto">Material data</param>
         /// <returns>Updated material</returns>
         [HttpPut("{id:guid}")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
-        public async Task<ActionResult<MaterialDto>> Update(Guid id, [FromBody] UpdateMaterialDto dto)
+        public async Task<ActionResult<MaterialDto>> Update(Guid id, [FromForm] UpdateMaterialDto dto)
         {
             try
             {
@@ -160,11 +170,41 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
+        /// Update material image only
+        /// </summary>
+        /// <param name="id">Material ID</param>
+        /// <param name="imageDto">Image file</param>
+        /// <returns>Updated material</returns>
+        [HttpPut("{id:guid}/image")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
+        public async Task<ActionResult> UpdateMaterialImage(Guid id, [FromForm] UpdateMaterialImageDto imageDto)
+        {
+            try
+            {
+                var material = await _materialService.UpdateMaterialImageAsync(id, imageDto);
+                return Ok(material);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while updating the material image", error = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Delete a material (Admin only when auth is enabled)
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <returns>Success status</returns>
         [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult> Delete(Guid id)
         {
