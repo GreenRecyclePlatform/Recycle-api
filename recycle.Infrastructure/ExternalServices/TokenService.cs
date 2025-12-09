@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -37,7 +38,8 @@ namespace recycle.Infrastructure.ExternalServices
                 return null;
             }
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            return token;
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            return encodedToken;
         }
 
         public async Task<Guid?> ValidatePasswordResetTokenAsync(string token)

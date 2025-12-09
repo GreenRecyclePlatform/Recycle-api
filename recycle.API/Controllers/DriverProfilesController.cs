@@ -10,7 +10,6 @@ namespace recycle.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class DriverProfilesController : ControllerBase
     {
         DriverProfileService _driverProfileService;

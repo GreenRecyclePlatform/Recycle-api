@@ -6,11 +6,27 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace recycle.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class rebuilddatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Achievement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RequiredCount = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Achievement", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -33,6 +49,12 @@ namespace recycle.Infrastructure.Migrations
                     FirstName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     DateOfBirth = table.Column<DateTime>(type: "date", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    StripeAccountId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmailNotifications = table.Column<bool>(type: "bit", nullable: false),
+                    SmsNotifications = table.Column<bool>(type: "bit", nullable: false),
+                    PickupReminders = table.Column<bool>(type: "bit", nullable: false),
+                    MarketingEmails = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -61,7 +83,13 @@ namespace recycle.Infrastructure.Migrations
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     Unit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Icon = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true, comment: "Public URL of the material image"),
+                    ImageLocalPath = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true, comment: "Local file system path of the material image"),
+                    BuyingPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false, comment: "Price paid when buying from users"),
+                    SellingPrice = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false, comment: "Price when selling to recyclers"),
                     PricePerKg = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false, comment: "Current price per kilogram"),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -69,6 +97,40 @@ namespace recycle.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Materials", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    JwtTokenId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    Refresh_Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsValid = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Settings",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Key = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Settings", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -206,8 +268,9 @@ namespace recycle.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     profileImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    profileImageLocalPath = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     idNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Rating = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Rating = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     ratingCount = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     TotalTrips = table.Column<int>(type: "int", nullable: false),
@@ -228,8 +291,8 @@ namespace recycle.Infrastructure.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    NotificationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NotificationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false, defaultValueSql: "NEWID()"),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     NotificationType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
@@ -238,14 +301,68 @@ namespace recycle.Infrastructure.Migrations
                     IsRead = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     Priority = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false, defaultValue: "Normal"),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ApplicationUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Notifications", x => x.NotificationId);
                     table.CheckConstraint("CHK_Notifications_Priority", "[Priority] IN ('Low', 'Normal', 'High', 'Urgent')");
                     table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
                         name: "FK_Notifications_Users",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PasswordResetTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime", nullable: false),
+                    IsUsed = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PasswordResetTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PasswordResetTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserAchievement",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AchievementId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UnlockedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserAchievement", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserAchievement_Achievement_AchievementId",
+                        column: x => x.AchievementId,
+                        principalTable: "Achievement",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserAchievement_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -342,13 +459,13 @@ namespace recycle.Infrastructure.Migrations
                     PaymentStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     PaymentMethod = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     TransactionReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    ApprovedByAdminID = table.Column<int>(type: "int", nullable: false),
+                    ApprovedByAdminID = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ApprovedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PaidAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FailedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     AdminNotes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    FailureReason = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
+                    FailureReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -517,10 +634,9 @@ namespace recycle.Infrastructure.Migrations
                 column: "IsActive");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Materials_Name",
-                table: "Materials",
-                column: "Name",
-                unique: true);
+                name: "IX_Notifications_ApplicationUserId",
+                table: "Notifications",
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_CreatedAt",
@@ -547,6 +663,11 @@ namespace recycle.Infrastructure.Migrations
                 name: "IX_Notifications_UserId_IsRead",
                 table: "Notifications",
                 columns: new[] { "UserId", "IsRead" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PasswordResetTokens_UserId",
+                table: "PasswordResetTokens",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_RecipientUserID",
@@ -624,6 +745,16 @@ namespace recycle.Infrastructure.Migrations
                 name: "IX_Reviews_ReviewerId",
                 table: "Reviews",
                 column: "ReviewerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserAchievement_AchievementId",
+                table: "UserAchievement",
+                column: "AchievementId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserAchievement_UserId",
+                table: "UserAchievement",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -651,13 +782,25 @@ namespace recycle.Infrastructure.Migrations
                 name: "Notifications");
 
             migrationBuilder.DropTable(
+                name: "PasswordResetTokens");
+
+            migrationBuilder.DropTable(
                 name: "Payments");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "RequestMaterials");
 
             migrationBuilder.DropTable(
                 name: "Reviews");
+
+            migrationBuilder.DropTable(
+                name: "Settings");
+
+            migrationBuilder.DropTable(
+                name: "UserAchievement");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -670,6 +813,9 @@ namespace recycle.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PickupRequests");
+
+            migrationBuilder.DropTable(
+                name: "Achievement");
 
             migrationBuilder.DropTable(
                 name: "Addresses");

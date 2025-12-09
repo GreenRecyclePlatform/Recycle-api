@@ -26,6 +26,13 @@ builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<IProfileService, ProfileService>();
+
+builder.Services.AddScoped<ISettingService, SettingService>();
+builder.Services.AddScoped<ISettingRepository, SettingRepository>();
+
+
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -137,7 +144,7 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials()
-            .SetIsOriginAllowed(_ => true); // allow any origin
+            .SetIsOriginAllowed(_ => true);
     });
     options.AddPolicy("AllowAngular", policy =>
     {
@@ -163,15 +170,19 @@ using (var scope = app.Services.CreateScope())
     await dbInitializer.InitializeAsync();
 }
 
-// ===================== Middleware Order  =====================
-app.UseCors("AllowAngular");
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Middleware pipeline (ORDER MATTERS!)
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
