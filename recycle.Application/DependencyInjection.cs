@@ -28,6 +28,9 @@ namespace recycle.Application
             services.AddScoped<DriverProfileService>();
 
 
+            ///
+            
+
             //services.AddScoped<IPickupRequestService, PickupRequestService>();
 
             return services;
