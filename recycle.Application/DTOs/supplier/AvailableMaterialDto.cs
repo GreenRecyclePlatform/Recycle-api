@@ -17,5 +17,8 @@ namespace recycle.Application.DTOs.supplier
         public decimal SellingPrice { get; set; } // السعر للـ Supplier
         public string Unit { get; set; } = "kg";
         public bool IsActive { get; set; }
+
+        public decimal AvailableQuantity { get; set; }
+
     }
 }

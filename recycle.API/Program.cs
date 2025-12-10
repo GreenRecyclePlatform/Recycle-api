@@ -23,6 +23,14 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 
+
+//supplier 
+builder.Services.AddScoped<ISupplierOrderRepository, SupplierOrderRepository>();
+builder.Services.AddScoped<StripeService>();
+builder.Services.AddScoped<ISupplierOrderService, SupplierOrderService>();
+
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 
