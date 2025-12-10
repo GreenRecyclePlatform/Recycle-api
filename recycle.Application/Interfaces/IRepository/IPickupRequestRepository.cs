@@ -28,4 +28,5 @@ public interface IPickupRequestRepository
     Task<bool> DeleteAsync(Guid requestId);
     Task<bool> UpdateStatusAsync(Guid requestId, string newStatus);
     Task<bool> UpdateTotalAmountAsync(Guid requestId, decimal totalAmount);
+    Task<IEnumerable<PickupRequest>> GetWaitingRequests();
 }

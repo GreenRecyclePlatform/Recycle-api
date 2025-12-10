@@ -18,6 +18,22 @@ public class PickupRequestsController : ControllerBase
         _pickupRequestService = pickupRequestService;
     }
 
+    [HttpGet("Waiting")]
+    public async Task<ActionResult<IEnumerable<WaitingRequestDto>>> GetWaitingRequests()
+    {
+        try
+        {
+            var requests = await _pickupRequestService.GetWaitingRequestsAsync();
+
+            return Ok(requests);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while retrieving waiting pickup requests.", error = ex.Message });
+        }
+    }
+
+
     // GET: api/pickuprequests
     [HttpGet]
    [Authorize(Roles = "Admin")]
@@ -87,7 +103,7 @@ public class PickupRequestsController : ControllerBase
     {
         try
         {
-            var validStatuses = new[] { "Pending", "Assigned", "PickedUp", "Completed", "Cancelled" };
+            var validStatuses = new[] { "Pending","Waiting", "Assigned", "PickedUp", "Completed", "Cancelled" };
 
             if (!validStatuses.Contains(status))
             {
