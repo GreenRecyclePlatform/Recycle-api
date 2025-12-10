@@ -38,6 +38,14 @@ namespace recycle.Infrastructure
         protected override void OnModelCreating(ModelBuilder builder)
         {
 
+            builder.Entity<IdentityRole<Guid>>().HasData(
+        new IdentityRole<Guid>
+        {
+            Id = Guid.NewGuid(),
+            Name = "Supplier",
+            NormalizedName = "SUPPLIER"
+        });
+
             builder.Entity<SupplierOrder>(entity =>
             {
                 entity.HasKey(e => e.OrderId);
