@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
+using System.Security.Claims;
 
 namespace Recycle.Api.Controllers
 {
@@ -168,5 +169,109 @@ namespace Recycle.Api.Controllers
             }
         }
 
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //=====================================================
+        //  NEW ENDPOINT 1: Get current user's payments
+        [HttpGet("my-payments")]
+        public async Task<ActionResult<IEnumerable<PaymentDto>>> GetMyPayments()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var payments = await _paymentService.GetUserPaymentsAsync(userId);
+                return Ok(payments);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error retrieving payments", error = ex.Message });
+            }
+        }
+
+        //  NEW ENDPOINT 2: Get payment summary
+        [HttpGet("summary")]
+        public async Task<ActionResult<PaymentSummaryDto>> GetSummary()
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var summary = await _paymentService.GetSummaryAsync(userId);
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error retrieving summary", error = ex.Message });
+            }
+        }
+
+        //  NEW ENDPOINT 3: Filter payments with pagination
+        [HttpPost("filter")]
+        public async Task<ActionResult<PagedResultDto<PaymentDto>>> FilterPayments(
+            [FromBody] PaymentFilterDto filter)
+        {
+            try
+            {
+                // If not admin, force filter to current user
+                var userRole = GetCurrentUserRole();
+                if (userRole != "Admin")
+                {
+                    filter.UserId = GetCurrentUserId();
+                }
+
+                var result = await _paymentService.FilterPaymentsAsync(filter);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error filtering payments", error = ex.Message });
+            }
+        }
+
+        //  NEW ENDPOINT 4: Complete payment (Admin only)
+        [HttpPut("{id}/complete")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CompletePayment(Guid id, [FromBody] CompletePaymentDto dto)
+        {
+            try
+            {
+                var result = await _paymentService.CompletePaymentAsync(id, dto.TransactionId);
+
+                if (!result)
+                {
+                    return NotFound(new { message = "Payment not found" });
+                }
+
+                return Ok(new { message = "Payment marked as completed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error completing payment", error = ex.Message });
+            }
+        }
+
+        //  Helper methods (add if not already present)
+        private Guid GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new UnauthorizedAccessException("User ID not found in token");
+
+            return Guid.Parse(userIdClaim);
+        }
+
+        private string GetCurrentUserRole()
+        {
+            return User.FindFirst(ClaimTypes.Role)?.Value ?? "User";
+        }
+
+
     }
+    
 }
