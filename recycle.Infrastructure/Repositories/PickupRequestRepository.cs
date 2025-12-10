@@ -217,10 +217,10 @@ public class PickupRequestRepository : IPickupRequestRepository
         return true;
     }
 
-    public async Task<IEnumerable<PickupRequest>> GetWaitingRequests()
+    public async Task<IEnumerable<PickupRequest>> GetWaitingRequests(string status)
     {
         return await _context.PickupRequests
-            .Where(pr => pr.Status == "Waiting")
+            .Where(pr => pr.Status == status)
             .Include(pr => pr.User)
             .Include(pr => pr.Address)
             .Include(pr => pr.RequestMaterials!)

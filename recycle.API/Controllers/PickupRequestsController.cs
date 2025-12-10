@@ -19,11 +19,11 @@ public class PickupRequestsController : ControllerBase
     }
 
     [HttpGet("Waiting")]
-    public async Task<ActionResult<IEnumerable<WaitingRequestDto>>> GetWaitingRequests()
+    public async Task<ActionResult<IEnumerable<WaitingRequestDto>>> GetWaitingRequests([FromQuery] string status = "Waiting")
     {
         try
         {
-            var requests = await _pickupRequestService.GetWaitingRequestsAsync();
+            var requests = await _pickupRequestService.GetWaitingRequestsAsync(status);
 
             return Ok(requests);
         }
