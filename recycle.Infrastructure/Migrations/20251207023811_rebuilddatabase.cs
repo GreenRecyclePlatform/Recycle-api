@@ -822,6 +822,13 @@ namespace recycle.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+        name: "SupplierOrders");
+
+            migrationBuilder.DropColumn(
+                name: "CompanyName",
+                table: "AspNetUsers");
         }
     }
 }
