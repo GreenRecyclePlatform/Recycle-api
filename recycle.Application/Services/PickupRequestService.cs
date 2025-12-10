@@ -1,4 +1,6 @@
-﻿using recycle.Application.DTOs.PickupRequest;
+﻿using recycle.Application.DTOs;
+using recycle.Application.DTOs.PickupRequest;
+using recycle.Application.DTOs.RequestMaterials;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
@@ -46,6 +48,36 @@ public class PickupRequestService : IPickupRequestService
     {
         var requests = await _pickupRequestRepository.GetByUserIdAsync(userId);
         return requests.Select(MapToResponseDto);
+    }
+
+    public async Task<IEnumerable<WaitingRequestDto>> GetWaitingRequestsAsync(string status)
+    {
+        var requests = await _pickupRequestRepository.GetWaitingRequests(status);
+
+        var requestsDto = requests.Select(request => new WaitingRequestDto
+        {
+            Id = request.RequestId,
+            UserName = request.User != null ? $"{request.User.FirstName} {request.User.LastName}" : "Unknown",
+            PreferredPickupDate = request.PreferredPickupDate,
+            PreferredPickupTime = request.PreferredPickupDate, // Assuming time is part of the date
+            Address = request.Address != null ? new AddressDto
+            {
+                Street = request.Address.Street,
+                City = request.Address.City,
+                Governorate = request.Address.Governorate,
+                PostalCode = request.Address.PostalCode
+            } : new AddressDto(),
+            phoneNumber = request.User?.PhoneNumber ?? string.Empty,
+            RequestMaterials = request.RequestMaterials?.Select(rm => new WaitingRequestMaterialDto
+            {
+                MaterialName = rm.Material?.Name ?? "Unknown",
+                EstimatedWeight = rm.EstimatedWeight
+            }).ToList() ?? new List<WaitingRequestMaterialDto>(),
+            TotalEstimatedWeight = request.TotalEstimatedWeight,
+            Status = request.Status
+        });
+
+        return requestsDto;
     }
 
     public async Task<IEnumerable<PickupRequestResponseDto>> GetByStatusAsync(string status)
@@ -145,7 +177,7 @@ public class PickupRequestService : IPickupRequestService
             Notes = createDto.Notes?.Trim(),
             TotalEstimatedWeight = totalEstimatedWeight,
             TotalAmount = totalAmount,
-            Status = "Pending",
+            Status = "Waiting",
             CreatedAt = DateTime.UtcNow,
             RequestMaterials = requestMaterials
         };
@@ -169,9 +201,9 @@ public class PickupRequestService : IPickupRequestService
         }
 
         // Only allow updates if status is Pending
-        if (existingRequest.Status != "Pending")
+        if (existingRequest.Status != "Waiting")
         {
-            throw new InvalidOperationException($"Cannot update request with status '{existingRequest.Status}'. Only 'Pending' requests can be updated.");
+            throw new InvalidOperationException($"Cannot update request with status '{existingRequest.Status}'. Only 'Waiting' requests can be updated.");
         }
 
         // Validate preferred pickup date
@@ -252,6 +284,7 @@ public class PickupRequestService : IPickupRequestService
         var validTransitions = new Dictionary<string, List<string>>
         {
             { "Pending", new List<string> { "Assigned", "Cancelled" } },
+            { "Waiting", new List<string> { "Pending", "Cancelled" } },
             { "Assigned", new List<string> { "PickedUp", "Cancelled" } },
             { "PickedUp", new List<string> { "Completed" } },
             { "Completed", new List<string>() }, // Terminal state

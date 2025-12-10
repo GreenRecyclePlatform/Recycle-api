@@ -8,7 +8,7 @@ public class PickupRequestResponseDto
     public Guid AddressId { get; set; }
     public string FullAddress { get; set; } = string.Empty;
     public DateTime PreferredPickupDate { get; set; }
-    public string Status { get; set; } = string.Empty;
+    public string Status { get; set; }
     public string? Notes { get; set; }
     public decimal TotalEstimatedWeight { get; set; }
     public decimal TotalAmount { get; set; }

@@ -153,7 +153,7 @@ public class PickupRequestRepository : IPickupRequestRepository
         }
 
         pickupRequest.CreatedAt = DateTime.UtcNow;
-        pickupRequest.Status = "Pending";
+        pickupRequest.Status = "Waiting";
 
         await _context.PickupRequests.AddAsync(pickupRequest);
         await _context.SaveChangesAsync();
@@ -215,5 +215,17 @@ public class PickupRequestRepository : IPickupRequestRepository
         await _context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<IEnumerable<PickupRequest>> GetWaitingRequests(string status)
+    {
+        return await _context.PickupRequests
+            .Where(pr => pr.Status == status)
+            .Include(pr => pr.User)
+            .Include(pr => pr.Address)
+            .Include(pr => pr.RequestMaterials!)
+                .ThenInclude(rm => rm.Material)
+            .ToListAsync();
+
     }
 }

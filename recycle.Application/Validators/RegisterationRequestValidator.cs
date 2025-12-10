@@ -38,10 +38,10 @@ namespace recycle.Application.Validators
                 .NotEmpty().WithMessage("Date of birth is required.")
                 .Must(BeAValidAge).WithMessage("You must be at least 18 years old.");
 
-            RuleFor(x=>x.Role)
+            RuleFor(x => x.Role)
                 .NotEmpty().WithMessage("Role is required.")
-                .Must(role => role == "User" || role == "Driver")
-                .WithMessage("Role must be either 'User', or 'Driver'.");
+                .Must(role => role == "User" || role == "Driver" || role == "Supplier")
+                .WithMessage("Role must be either 'User', or 'Driver', or 'Supplier'.");
         }
 
         private bool BeAValidAge(DateTime time)

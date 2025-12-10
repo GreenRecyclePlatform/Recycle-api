@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace recycle.Application.DTOs.Materials
@@ -10,7 +11,9 @@ namespace recycle.Application.DTOs.Materials
         public string? Description { get; set; }
         public string? Unit { get; set; }
         public string Icon { get; set; } = "♻️";
-        public string? Image { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImageLocalPath { get; set; }
+
         public decimal BuyingPrice { get; set; }
         public decimal SellingPrice { get; set; }
         public decimal PricePerKg { get; set; }
@@ -35,7 +38,9 @@ namespace recycle.Application.DTOs.Materials
         [Required(ErrorMessage = "Icon is required")]
         public string Icon { get; set; } = "♻️";
 
-        public string? Image { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImageLocalPath { get; set; }
+        public IFormFile? Image { get; set; }
 
         [Required(ErrorMessage = "Buying price is required")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Buying price must be greater than 0")]
@@ -69,7 +74,9 @@ namespace recycle.Application.DTOs.Materials
         [Required(ErrorMessage = "Icon is required")]
         public string Icon { get; set; } = "♻️";
 
-        public string? Image { get; set; }
+        public string? ImageUrl { get; set; }
+        public string? ImageLocalPath { get; set; }
+        public IFormFile? Image { get; set; }
 
         [Required(ErrorMessage = "Buying price is required")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Buying price must be greater than 0")]
@@ -86,5 +93,10 @@ namespace recycle.Application.DTOs.Materials
         [Required(ErrorMessage = "Status is required")]
         [RegularExpression("^(active|inactive)$", ErrorMessage = "Status must be either 'active' or 'inactive'")]
         public string Status { get; set; } = "active";
+    }
+
+    public class UpdateMaterialImageDto
+    {
+        public IFormFile? Image { get; set; }
     }
 }

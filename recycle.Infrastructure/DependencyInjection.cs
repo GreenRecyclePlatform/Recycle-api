@@ -101,10 +101,18 @@ using Microsoft.Extensions.DependencyInjection;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Application.Interfaces.IService;
+using recycle.Application.Interfaces.IService.recycle.Application.Interfaces;
 using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
 using recycle.Infrastructure.Services;
+using Stripe;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace recycle.Infrastructure
 {
@@ -169,6 +177,12 @@ namespace recycle.Infrastructure
 
             services.AddScoped<DbInitializer>();
             services.AddScoped<IDriverAssignmentRepository, DriverAssignmentRepository>();
+
+
+            //
+
+            services.AddScoped<IKnowledgeService, RecycleKnowledgeService>();
+
         }
     }
 }
