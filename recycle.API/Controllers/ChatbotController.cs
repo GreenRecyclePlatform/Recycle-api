@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using recycle.Application.Interfaces; // ✅ أضف ده
+using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IService.recycle.Application.Interfaces;
 using recycle.Application.Services;
 using recycle.Domain.Entities;
-using recycle.Domain.Entities; // ✅ أضف ده
 using System.Security.Claims;
 
 namespace recycle.API.Controllers
@@ -14,12 +13,12 @@ namespace recycle.API.Controllers
     public class ChatbotController : ControllerBase
     {
         private readonly RecycleRAGChatService _chatService;
-        private readonly IKnowledgeService _knowledgeService; // ✅ Interface
+        private readonly IKnowledgeService _knowledgeService; 
         private readonly ILogger<ChatbotController> _logger;
 
         public ChatbotController(
             RecycleRAGChatService chatService,
-            IKnowledgeService knowledgeService, // ✅ Interface
+            IKnowledgeService knowledgeService,
             ILogger<ChatbotController> logger)
         {
             _chatService = chatService;
@@ -27,9 +26,6 @@ namespace recycle.API.Controllers
             _logger = logger;
         }
 
-        /// <summary>
-        /// إرسال رسالة للـ Chatbot والحصول على رد
-        /// </summary>
         [HttpPost("chat")]
        // [ProducesResponseType(typeof(ChatResponseDto), 200)]
         [ProducesResponseType(400)]

@@ -39,6 +39,7 @@ namespace recycle.API.Controllers
             {
                 try
                 {
+
                 var adminId = GetCurrentUserId();
                 var result = await _assignmentService.AssignDriverAsync(dto, adminId);
                     return Ok(result);

@@ -25,10 +25,11 @@ namespace recycle.Application.Services
         {
             _unitOfWork = unitOfWork;
         }
-        //1
+
+        //1 - Assign Driver
         public async Task<DriverAssignmentResponseDto> AssignDriverAsync(CreateDriverAssignmentDto dto, Guid adminId)
         {
-            // 1. Validate pickup request exists - use--> GetAsync
+            // 1. Validate pickup request exists
             var request = await _unitOfWork.PickupRequests.GetAsync(
                 filter: r => r.RequestId == dto.RequestId
             );
@@ -40,16 +41,16 @@ namespace recycle.Application.Services
             if (request.Status != "Pending")
                 throw new Exception($"Cannot assign driver. Request status is: {request.Status}");
 
-            // 3. Validate driver exists - use--> GetAsync & include
-            var driver = await _unitOfWork.Users.GetAsync(
-                filter: u => u.Id == dto.DriverId,
-                includes: query => query.Include(u => u.DriverProfile)
+            // 3. ✅ Validate driver exists by DriverProfile ID
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.Id == dto.DriverId,
+                includes: query => query.Include(dp => dp.User)
             );
 
-            if (driver == null || driver.DriverProfile == null)
-                throw new Exception("Driver not found");
+            if (driverProfile == null)
+                throw new Exception("Driver profile not found");
 
-            if (!driver.DriverProfile.IsAvailable)
+            if (!driverProfile.IsAvailable)
                 throw new Exception("Driver is not available");
 
             // 4. Check if there's already an active assignment
@@ -57,7 +58,7 @@ namespace recycle.Application.Services
             if (existingAssignment != null)
                 throw new Exception("This request already has an active driver assignment");
 
-            // 5. Create new assignment
+            // 5. ✅ Create new assignment with DriverProfile ID
             var assignment = new DriverAssignment
             {
                 AssignmentId = Guid.NewGuid(),
@@ -81,14 +82,20 @@ namespace recycle.Application.Services
             var savedAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignment.AssignmentId);
             return MapToResponseDto(savedAssignment);
         }
-        //2
+
+        //2 - Respond to Assignment
         public async Task<DriverAssignmentResponseDto> RespondToAssignmentAsync(Guid assignmentId, DriverAction action, string? notes, Guid driverId)
         {
             var assignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
             if (assignment == null)
                 throw new Exception("Assignment not found");
 
-            if (assignment.DriverId != driverId)
+            // ✅ Verify this assignment belongs to the driver (driverId is User ID from JWT)
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.UserId == driverId
+            );
+
+            if (driverProfile == null || assignment.DriverId != driverProfile.Id)
                 throw new Exception("This assignment does not belong to you");
 
             if (assignment.Status != AssignmentStatus.Assigned)
@@ -96,21 +103,18 @@ namespace recycle.Application.Services
 
             if (action == DriverAction.Accept)
             {
-                assignment.Status = AssignmentStatus.InProgress; 
-
-              //  assignment.Status = AssignmentStatus.Accepted;
+                assignment.Status = AssignmentStatus.InProgress;
                 assignment.AcceptedAt = DateTime.UtcNow;
                 assignment.DriverNotes = notes;
-                assignment.StartedAt = DateTime.UtcNow;  
+                assignment.StartedAt = DateTime.UtcNow;
 
-                // use--> GetAsync
                 var request = await _unitOfWork.PickupRequests.GetAsync(
                     filter: r => r.RequestId == assignment.RequestId
                 );
 
                 if (request != null)
                 {
-                    request.Status = "PickedUp"; 
+                    request.Status = "PickedUp";
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
                 }
             }
@@ -139,39 +143,27 @@ namespace recycle.Application.Services
             var updatedAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
             return MapToResponseDto(updatedAssignment);
         }
-        //3
+
+        //3 - Update Assignment Status
         public async Task<DriverAssignmentResponseDto> UpdateAssignmentStatusAsync(Guid assignmentId, AssignmentUpdateStatus status, string? notes, Guid driverId)
         {
             var assignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
             if (assignment == null)
                 throw new Exception("Assignment not found");
 
-            if (assignment.DriverId != driverId)
+            // Verify ownership (driverId is User ID from JWT)
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.UserId == driverId
+            );
+
+            if (driverProfile == null || assignment.DriverId != driverProfile.Id)
                 throw new Exception("This assignment does not belong to you");
 
-            //if (assignment.Status != AssignmentStatus.Accepted && assignment.Status != AssignmentStatus.InProgress)
-                if (assignment.Status != AssignmentStatus.InProgress)
+            if (assignment.Status != AssignmentStatus.InProgress)
+                throw new Exception($"Cannot update. Assignment status is: {assignment.Status}");
 
-                    throw new Exception($"Cannot update. Assignment status is: {assignment.Status}");
-            //// Update status-1
-            //if (status == AssignmentUpdateStatus.InProgress)
-            //{
-            //    assignment.Status = AssignmentStatus.InProgress;
-            //    assignment.StartedAt = DateTime.UtcNow;
-            //    assignment.DriverNotes = notes;
-
-            //    var request = await _unitOfWork.PickupRequests.GetAsync(
-            //        filter: r => r.RequestId == assignment.RequestId
-            //    );
-
-            //    if (request != null)
-            //    {
-            //        request.Status = "PickedUp";
-            //        await _unitOfWork.PickupRequests.UpdateAsync(request);
-            //    }
-            //}
-            // Update status-2
-            else if (status == AssignmentUpdateStatus.Completed)
+            // Update status
+            if (status == AssignmentUpdateStatus.Completed)
             {
                 assignment.Status = AssignmentStatus.Completed;
                 assignment.CompletedAt = DateTime.UtcNow;
@@ -190,16 +182,11 @@ namespace recycle.Application.Services
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
                 }
 
-                // Update driver's total trips
-                var driver = await _unitOfWork.Users.GetAsync(
-                    filter: u => u.Id == assignment.DriverId,
-                    includes: query => query.Include(u => u.DriverProfile)
-                );
-
-                if (driver?.DriverProfile != null)
+                // ✅ Update driver's total trips using DriverProfile
+                if (driverProfile != null)
                 {
-                    driver.DriverProfile.TotalTrips++;
-                    await _unitOfWork.Users.UpdateAsync(driver);
+                    driverProfile.TotalTrips++;
+                    await _unitOfWork.DriverProfiles.UpdateAsync(driverProfile);
                 }
             }
 
@@ -209,23 +196,24 @@ namespace recycle.Application.Services
             var updatedAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
             return MapToResponseDto(updatedAssignment);
         }
-        //4
+
+        //4 - Reassign Driver
         public async Task<DriverAssignmentResponseDto> ReassignDriverAsync(Guid assignmentId, Guid newDriverId, Guid adminId, string? reason)
         {
             var currentAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
             if (currentAssignment == null)
                 throw new Exception("Assignment not found");
 
-            // Validate new driver
-            var newDriver = await _unitOfWork.Users.GetAsync(
-                filter: u => u.Id == newDriverId,
-                includes: query => query.Include(u => u.DriverProfile)
+            //  Validate new driver by DriverProfile ID
+            var newDriverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.Id == newDriverId,
+                includes: query => query.Include(dp => dp.User)
             );
 
-            if (newDriver == null || newDriver.DriverProfile == null)
-                throw new Exception("New driver not found");
+            if (newDriverProfile == null)
+                throw new Exception("New driver profile not found");
 
-            if (!newDriver.DriverProfile.IsAvailable)
+            if (!newDriverProfile.IsAvailable)
                 throw new Exception("New driver is not available");
 
             // Deactivate current assignment
@@ -233,7 +221,7 @@ namespace recycle.Application.Services
             currentAssignment.DriverNotes = $"Reassigned: {reason}";
             await _unitOfWork.DriverAssignments.UpdateAsync(currentAssignment);
 
-            // Create new assignment
+            // ✅ Create new assignment with DriverProfile ID
             var newAssignment = new DriverAssignment
             {
                 AssignmentId = Guid.NewGuid(),
@@ -264,7 +252,8 @@ namespace recycle.Application.Services
             var savedAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(newAssignment.AssignmentId);
             return MapToResponseDto(savedAssignment);
         }
-        //5
+
+        //5 - Get Assignment By ID
         public async Task<DriverAssignmentResponseDto> GetAssignmentByIdAsync(Guid assignmentId)
         {
             var assignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignmentId);
@@ -273,10 +262,19 @@ namespace recycle.Application.Services
 
             return MapToResponseDto(assignment);
         }
-        //6
+
+        //6 - Get Driver Assignments
         public async Task<List<DriverAssignmentResponseDto>> GetDriverAssignmentsAsync(Guid driverId, AssignmentStatus? status = null)
         {
-            var assignments = await _unitOfWork.DriverAssignments.GetByDriverIdAsync(driverId, status);
+            // driverId here is User ID from JWT, need to get DriverProfile ID
+            var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.UserId == driverId
+            );
+
+            if (driverProfile == null)
+                throw new Exception("Driver profile not found");
+
+            var assignments = await _unitOfWork.DriverAssignments.GetByDriverIdAsync(driverProfile.Id, status);
 
             var responseDtos = new List<DriverAssignmentResponseDto>();
             foreach (var assignment in assignments)
@@ -286,7 +284,8 @@ namespace recycle.Application.Services
 
             return responseDtos;
         }
-        //7
+
+        //7 - Get Request Assignment History
         public async Task<List<DriverAssignmentResponseDto>> GetRequestAssignmentHistoryAsync(Guid requestId)
         {
             var assignments = await _unitOfWork.DriverAssignments.GetHistoryByRequestIdAsync(requestId);
@@ -299,7 +298,8 @@ namespace recycle.Application.Services
 
             return responseDtos;
         }
-        //8
+
+        //8 - Get Active Assignment For Request
         public async Task<DriverAssignmentResponseDto?> GetActiveAssignmentForRequestAsync(Guid requestId)
         {
             var assignment = await _unitOfWork.DriverAssignments.GetActiveByRequestIdAsync(requestId);
@@ -308,19 +308,21 @@ namespace recycle.Application.Services
 
             return MapToResponseDto(assignment);
         }
-        //9
-        // Helper method for manual mapping (synchronous)
+
+        //9 - Map To Response DTO
         private DriverAssignmentResponseDto MapToResponseDto(DriverAssignment assignment)
         {
-            //1
+            // 1
             string pickupAddress = assignment.PickupRequest?.Address != null
                 ? $"{assignment.PickupRequest.Address.Street}, {assignment.PickupRequest.Address.City}"
                 : "Address not available";
-            //2
+
+            // 2 -  Get driver name from DriverProfile navigation
             string driverName = assignment.Driver?.User != null
                 ? $"{assignment.Driver.User.FirstName} {assignment.Driver.User.LastName}"
                 : "Unknown Driver";
-            //3
+
+            // 3
             string adminName = assignment.AssignedByAdmin != null
                 ? $"{assignment.AssignedByAdmin.FirstName} {assignment.AssignedByAdmin.LastName}"
                 : "Unknown Admin";
@@ -342,6 +344,7 @@ namespace recycle.Application.Services
             };
         }
 
+        //10 - Get Available Drivers
         public async Task<List<AvailableDriverDto>> GetAvailableDriversAsync()
         {
             // Get all users with driver profile and available
@@ -379,4 +382,3 @@ namespace recycle.Application.Services
         }
     }
 }
-
