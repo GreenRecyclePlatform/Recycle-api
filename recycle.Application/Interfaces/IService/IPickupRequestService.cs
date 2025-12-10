@@ -14,5 +14,5 @@ public interface IPickupRequestService
     Task<bool> DeleteAsync(Guid requestId);
     Task<bool> UpdateStatusAsync(Guid requestId, string newStatus);
     bool CanChangeStatus(string currentStatus, string newStatus);
-    Task<IEnumerable<WaitingRequestDto>> GetWaitingRequestsAsync();
+    Task<IEnumerable<WaitingRequestDto>> GetWaitingRequestsAsync(string status);
 }

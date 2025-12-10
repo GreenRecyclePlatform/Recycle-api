@@ -50,9 +50,9 @@ public class PickupRequestService : IPickupRequestService
         return requests.Select(MapToResponseDto);
     }
 
-    public async Task<IEnumerable<WaitingRequestDto>> GetWaitingRequestsAsync()
+    public async Task<IEnumerable<WaitingRequestDto>> GetWaitingRequestsAsync(string status)
     {
-        var requests = await _pickupRequestRepository.GetWaitingRequests();
+        var requests = await _pickupRequestRepository.GetWaitingRequests(status);
 
         var requestsDto = requests.Select(request => new WaitingRequestDto
         {
