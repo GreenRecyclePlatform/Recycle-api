@@ -35,12 +35,21 @@ namespace recycle.Infrastructure
             }
             catch (Exception ex) { }
 
+            if (!_roleManager.RoleExistsAsync("Supplier").GetAwaiter().GetResult())
+            {
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("Supplier"));
+            }
+
             if (!_roleManager.RoleExistsAsync("Admin").GetAwaiter().GetResult())
             {
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("Admin"));
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("User"));
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("Driver"));
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("Supplier"));
+
                 await SettingSeeder.SeedSettings(_db);
+
+               
 
 
                 var result = _userManager.CreateAsync(new ApplicationUser
