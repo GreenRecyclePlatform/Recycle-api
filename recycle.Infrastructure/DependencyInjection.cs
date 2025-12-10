@@ -102,7 +102,6 @@ using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Application.Interfaces.IService;
 using recycle.Application.Interfaces.IService.recycle.Application.Interfaces;
-using recycle.Application.Options;
 using recycle.Application.Services;
 using recycle.Infrastructure.ExternalServices;
 using recycle.Infrastructure.Repositories;
