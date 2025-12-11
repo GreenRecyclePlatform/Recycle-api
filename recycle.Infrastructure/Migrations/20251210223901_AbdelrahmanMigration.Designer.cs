@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using recycle.Infrastructure;
 
@@ -11,9 +12,11 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251210223901_AbdelrahmanMigration")]
+    partial class AbdelrahmanMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,9 +229,6 @@ namespace recycle.Infrastructure.Migrations
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
-
-                    b.Property<string>("CompanyName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -940,47 +940,6 @@ namespace recycle.Infrastructure.Migrations
                     b.ToTable("Settings");
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.SupplierOrder", b =>
-                {
-                    b.Property<Guid>("OrderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("OrderDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("PaidAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("PaymentStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("OrderId");
-
-                    b.HasIndex("PaymentStatus");
-
-                    b.HasIndex("SupplierId");
-
-                    b.ToTable("SupplierOrders");
-                });
-
             modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1003,39 +962,6 @@ namespace recycle.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("UserAchievement");
-                });
-
-            modelBuilder.Entity("recycle.Domain.Entities.recycle.Domain.Entities.SupplierOrderItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("MaterialId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("PricePerKg")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MaterialId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("SupplierOrderItems");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1253,17 +1179,6 @@ namespace recycle.Infrastructure.Migrations
                     b.Navigation("Reviewer");
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.SupplierOrder", b =>
-                {
-                    b.HasOne("recycle.Domain.Entities.ApplicationUser", "Supplier")
-                        .WithMany("SupplierOrders")
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Supplier");
-                });
-
             modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
                 {
                     b.HasOne("recycle.Domain.Entities.Achievement", "Achievement")
@@ -1283,25 +1198,6 @@ namespace recycle.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("recycle.Domain.Entities.recycle.Domain.Entities.SupplierOrderItem", b =>
-                {
-                    b.HasOne("recycle.Domain.Entities.Material", "Material")
-                        .WithMany("SupplierOrderItems")
-                        .HasForeignKey("MaterialId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("recycle.Domain.Entities.SupplierOrder", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Material");
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("recycle.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("Achievements");
@@ -1318,16 +1214,12 @@ namespace recycle.Infrastructure.Migrations
 
                     b.Navigation("ReviewsReceived");
 
-                    b.Navigation("SupplierOrders");
-
                     b.Navigation("pickupRequests");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.Material", b =>
                 {
                     b.Navigation("RequestMaterials");
-
-                    b.Navigation("SupplierOrderItems");
                 });
 
             modelBuilder.Entity("recycle.Domain.Entities.PickupRequest", b =>
@@ -1339,11 +1231,6 @@ namespace recycle.Infrastructure.Migrations
                     b.Navigation("RequestMaterials");
 
                     b.Navigation("Review");
-                });
-
-            modelBuilder.Entity("recycle.Domain.Entities.SupplierOrder", b =>
-                {
-                    b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618
         }

@@ -34,6 +34,7 @@ namespace recycle.Domain.Entities
 
         public string? FailureReason { get; set; }
 
+
         public PickupRequest PickupRequest { get; set; }
         public ApplicationUser? RecipientUser { get; set; }
         //public ApplicationUser? ApprovedByAdmin { get; set; }
