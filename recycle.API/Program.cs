@@ -31,7 +31,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
 builder.Services.AddScoped<ISettingRepository, SettingRepository>();
 
-
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
