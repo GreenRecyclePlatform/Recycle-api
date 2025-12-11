@@ -19,15 +19,12 @@ namespace recycle.Domain.Entities
             public string PaymentStatus { get; set; } = "Pending"; // Pending/Completed/Failed
             public string? StripePaymentIntentId { get; set; }
 
-            // ✅ الـ Columns الجديدة
             public DateTime? PaidAt { get; set; }
             public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
             public DateTime? UpdatedAt { get; set; }
 
-            // ⚠️ اتركي دي موجودة لحد ما تتأكدي إن كل حاجة شغالة
-            public string? OrderDetailsJson { get; set; }
 
-            // ✅ Navigation Properties
+            //  Navigation Properties
             public ApplicationUser Supplier { get; set; }
             public ICollection<SupplierOrderItem> OrderItems { get; set; } = new List<SupplierOrderItem>();
         }

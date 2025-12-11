@@ -27,18 +27,12 @@ namespace recycle.Application.Services
             _stripeService = stripeService;
         }
 
-        /// <summary>
-        /// ✅ 1️⃣ جلب المواد المتاحة للشراء - بدون DbContext
-        /// </summary>
+       
         public async Task<List<AvailableMaterialDto>> GetAvailableMaterialsAsync()
         {
-            // 1. جيب كل المواد النشطة
             var materials = await _materialRepository.GetAllAsync(includeInactive: false);
-
-            // 2. جيب الكميات المتاحة من Repository
             var availableQuantities = await _orderRepository.GetAvailableQuantitiesAsync();
 
-            // 3. اعمل Mapping
             var result = materials.Select(m => new AvailableMaterialDto
             {
                 MaterialId = m.Id,
@@ -49,7 +43,6 @@ namespace recycle.Application.Services
                 SellingPrice = m.SellingPrice,
                 Unit = m.Unit ?? "kg",
                 IsActive = m.IsActive,
-                // ✅ لو المادة موجودة في Dictionary، خد الكمية، لو لأ = 0
                 AvailableQuantity = availableQuantities.ContainsKey(m.Id)
                     ? availableQuantities[m.Id]
                     : 0
@@ -58,19 +51,25 @@ namespace recycle.Application.Services
             return result;
         }
 
-        /// <summary>
-        /// 2️⃣ إنشاء Order جديد (بدون دفع)
-        /// </summary>
+       
         public async Task<SupplierOrderResponseDto> CreateOrderAsync(
-            Guid supplierId,
-            CreateSupplierOrderDto dto)
+     Guid supplierId,
+     CreateSupplierOrderDto dto)
         {
-            // 1. Validate Supplier exists
+            // 1. Validate Supplier
             var supplier = await _userRepository.GetByIdAsync(supplierId);
             if (supplier == null)
                 throw new Exception("Supplier not found");
 
-            // 2. Validate Materials and Calculate Total
+            var availableQuantities = await _orderRepository.GetAvailableQuantitiesAsync();
+
+            Console.WriteLine($"🔍 Available Quantities Count: {availableQuantities.Count}");
+            foreach (var kvp in availableQuantities)
+            {
+                Console.WriteLine($"   MaterialId: {kvp.Key}, Quantity: {kvp.Value}");
+            }
+
+            // 3. Validate Materials
             var orderItems = new List<SupplierOrderItem>();
             decimal totalAmount = 0;
 
@@ -87,6 +86,24 @@ namespace recycle.Application.Services
                 if (item.Quantity <= 0)
                     throw new Exception("Quantity must be greater than zero");
 
+                // ✅ جيب الكمية المتاحة
+                var availableQty = availableQuantities.ContainsKey(material.Id)
+                    ? availableQuantities[material.Id]
+                    : 0;
+
+                Console.WriteLine($"🔍 Material: {material.Name}");
+                Console.WriteLine($"   Requested: {item.Quantity} kg");
+                Console.WriteLine($"   Available: {availableQty} kg");
+                Console.WriteLine($"   Contains Key: {availableQuantities.ContainsKey(material.Id)}");
+
+                if (item.Quantity > availableQty)
+                {
+                    throw new Exception(
+                        $"Insufficient quantity for material '{material.Name}'. " +
+                        $"Requested: {item.Quantity} kg, Available: {availableQty} kg"
+                    );
+                }
+
                 var itemTotal = item.Quantity * material.SellingPrice;
                 totalAmount += itemTotal;
 
@@ -101,7 +118,7 @@ namespace recycle.Application.Services
                 });
             }
 
-            // 3. Create Order Entity
+            // 4. Create Order
             var order = new SupplierOrder
             {
                 OrderId = Guid.NewGuid(),
@@ -113,16 +130,11 @@ namespace recycle.Application.Services
                 OrderItems = orderItems
             };
 
-            // 4. Save to Database
             var createdOrder = await _orderRepository.CreateOrderAsync(order);
-
-            // 5. Return Response
             return MapToResponseDto(createdOrder);
         }
 
-        /// <summary>
-        /// 3️⃣ إنشاء PaymentIntent في Stripe
-        /// </summary>
+       
         public async Task<PaymentIntentDto> CreatePaymentIntentAsync(Guid orderId)
         {
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
@@ -154,9 +166,7 @@ namespace recycle.Application.Services
             };
         }
 
-        /// <summary>
-        /// 4️⃣ تأكيد الدفع بعد نجاح Stripe
-        /// </summary>
+      
         public async Task<bool> ConfirmPaymentAsync(Guid orderId, string paymentIntentId)
         {
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
@@ -166,10 +176,12 @@ namespace recycle.Application.Services
             if (order.StripePaymentIntentId != paymentIntentId)
                 throw new Exception("Payment Intent ID mismatch");
 
-            var paymentIntent = await _stripeService.GetPaymentIntentAsync(paymentIntentId);
 
-            if (paymentIntent.Status != "succeeded")
-                throw new Exception($"Payment not successful. Status: {paymentIntent.Status}");
+
+            //var paymentIntent = await _stripeService.GetPaymentIntentAsync(paymentIntentId);
+
+            //if (paymentIntent.Status != "succeeded")
+            //    throw new Exception($"Payment not successful. Status: {paymentIntent.Status}");
 
             return await _orderRepository.UpdatePaymentStatusAsync(
                 orderId,
@@ -178,27 +190,21 @@ namespace recycle.Application.Services
             );
         }
 
-        /// <summary>
-        /// 5️⃣ جلب Order History للـ Supplier
-        /// </summary>
+       
         public async Task<List<SupplierOrderResponseDto>> GetMyOrdersAsync(Guid supplierId)
         {
             var orders = await _orderRepository.GetOrdersBySupplierIdAsync(supplierId);
             return orders.Select(MapToResponseDto).ToList();
         }
 
-        /// <summary>
-        /// 6️⃣ جلب Order واحد
-        /// </summary>
+       
         public async Task<SupplierOrderResponseDto?> GetOrderByIdAsync(Guid orderId)
         {
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
             return order == null ? null : MapToResponseDto(order);
         }
 
-        /// <summary>
-        /// Helper: Mapping من Entity لـ DTO
-        /// </summary>
+        
         private SupplierOrderResponseDto MapToResponseDto(SupplierOrder order)
         {
             return new SupplierOrderResponseDto

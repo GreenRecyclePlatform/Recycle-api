@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace recycle.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class rebuilddatabase : Migration
+    public partial class rebuildDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -51,6 +51,7 @@ namespace recycle.Infrastructure.Migrations
                     DateOfBirth = table.Column<DateTime>(type: "date", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     StripeAccountId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CompanyName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     EmailNotifications = table.Column<bool>(type: "bit", nullable: false),
                     SmsNotifications = table.Column<bool>(type: "bit", nullable: false),
                     PickupReminders = table.Column<bool>(type: "bit", nullable: false),
@@ -344,6 +345,31 @@ namespace recycle.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SupplierOrders",
+                columns: table => new
+                {
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    StripePaymentIntentId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PaidAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SupplierOrders", x => x.OrderId);
+                    table.ForeignKey(
+                        name: "FK_SupplierOrders_AspNetUsers_SupplierId",
+                        column: x => x.SupplierId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserAchievement",
                 columns: table => new
                 {
@@ -405,6 +431,35 @@ namespace recycle.Infrastructure.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SupplierOrderItems",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MaterialId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Quantity = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PricePerKg = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SupplierOrderItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SupplierOrderItems_Materials_MaterialId",
+                        column: x => x.MaterialId,
+                        principalTable: "Materials",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SupplierOrderItems_SupplierOrders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "SupplierOrders",
+                        principalColumn: "OrderId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -560,6 +615,11 @@ namespace recycle.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), null, "Supplier", "SUPPLIER" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",
@@ -747,6 +807,26 @@ namespace recycle.Infrastructure.Migrations
                 column: "ReviewerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SupplierOrderItems_MaterialId",
+                table: "SupplierOrderItems",
+                column: "MaterialId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupplierOrderItems_OrderId",
+                table: "SupplierOrderItems",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupplierOrders_PaymentStatus",
+                table: "SupplierOrders",
+                column: "PaymentStatus");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupplierOrders_SupplierId",
+                table: "SupplierOrders",
+                column: "SupplierId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserAchievement_AchievementId",
                 table: "UserAchievement",
                 column: "AchievementId");
@@ -800,6 +880,9 @@ namespace recycle.Infrastructure.Migrations
                 name: "Settings");
 
             migrationBuilder.DropTable(
+                name: "SupplierOrderItems");
+
+            migrationBuilder.DropTable(
                 name: "UserAchievement");
 
             migrationBuilder.DropTable(
@@ -809,10 +892,13 @@ namespace recycle.Infrastructure.Migrations
                 name: "DriverProfiles");
 
             migrationBuilder.DropTable(
+                name: "PickupRequests");
+
+            migrationBuilder.DropTable(
                 name: "Materials");
 
             migrationBuilder.DropTable(
-                name: "PickupRequests");
+                name: "SupplierOrders");
 
             migrationBuilder.DropTable(
                 name: "Achievement");
@@ -822,13 +908,6 @@ namespace recycle.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
-
-            migrationBuilder.DropTable(
-        name: "SupplierOrders");
-
-            migrationBuilder.DropColumn(
-                name: "CompanyName",
-                table: "AspNetUsers");
         }
     }
 }

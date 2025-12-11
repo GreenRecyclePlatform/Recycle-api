@@ -31,7 +31,7 @@ namespace recycle.API.Controllers
         /// جلب المواد المتاحة للشراء
         /// </summary>
         [HttpGet("available-materials")]
-        [AllowAnonymous] // عشان الـ Supplier يقدر يشوفها قبل ما يسجل دخول
+        [AllowAnonymous] 
         public async Task<IActionResult> GetAvailableMaterials()
         {
             try
@@ -45,11 +45,9 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// POST: api/supplierorders
-        /// إنشاء طلب جديد
-        /// </summary>
+      
         [HttpPost]
+
         public async Task<IActionResult> CreateOrder([FromBody] CreateSupplierOrderDto dto)
         {
             try
@@ -69,7 +67,7 @@ namespace recycle.API.Controllers
 
         /// <summary>
         /// POST: api/supplierorders/{orderId}/create-payment-intent
-        /// إنشاء PaymentIntent للدفع
+        ///  PaymentIntent للدفع
         /// </summary>
         [HttpPost("{orderId}/create-payment-intent")]
         public async Task<IActionResult> CreatePaymentIntent(Guid orderId)
@@ -85,10 +83,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// POST: api/supplierorders/confirm-payment
-        /// تأكيد الدفع بعد نجاح Stripe
-        /// </summary>
+       
         [HttpPost("confirm-payment")]
         public async Task<IActionResult> ConfirmPayment([FromBody] ConfirmPaymentDto dto)
         {
@@ -110,10 +105,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// GET: api/supplierorders/my-orders
-        /// جلب طلبات الـ Supplier الحالي
-        /// </summary>
+       
         [HttpGet("my-orders")]
         public async Task<IActionResult> GetMyOrders()
         {
@@ -129,10 +121,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// GET: api/supplierorders/{orderId}
-        /// جلب تفاصيل طلب معين
-        /// </summary>
+       
         [HttpGet("{orderId}")]
         public async Task<IActionResult> GetOrderById(Guid orderId)
         {
@@ -143,7 +132,6 @@ namespace recycle.API.Controllers
                 if (order == null)
                     return NotFound(new { message = "Order not found" });
 
-                // ✅ تأكد إن الـ Supplier هو صاحب الطلب
                 var supplierId = GetCurrentUserId();
                 if (order.SupplierId != supplierId)
                     return Forbid();
