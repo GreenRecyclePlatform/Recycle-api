@@ -1,5 +1,4 @@
-﻿
-using recycle.Application.DTOs.Reviews;
+﻿using recycle.Application.DTOs.Reviews;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Application.Interfaces.IService;
@@ -14,17 +13,20 @@ public class ReviewService : IReviewService
     private readonly IRepository<PickupRequest> _pickupRequestRepository;
     private readonly IRepository<ApplicationUser> _userRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationHubService _notificationService;
 
     public ReviewService(
         IReviewRepository reviewRepository,
         IRepository<PickupRequest> pickupRequestRepository,
         IRepository<ApplicationUser> userRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        INotificationHubService notificationService)
     {
         _reviewRepository = reviewRepository;
         _pickupRequestRepository = pickupRequestRepository;
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
     }
 
     // CREATE
@@ -62,6 +64,16 @@ public class ReviewService : IReviewService
 
         // Update driver rating
         await UpdateDriverRatingAsync(dto.DriverId);
+
+        // 🔔 Send notification to driver about new review
+        await _notificationService.SendToUser(dto.DriverId, new NotificationDto
+        {
+            Title = "New Review Received",
+            Message = $"You received a {dto.Rating}-star review from a customer.",
+            Type = NotificationTypes.NewReview,
+            RelatedEntityType = NotificationEntityTypes.Review,
+            RelatedEntityId = review.ReviewId
+        });
 
         return review;
     }
@@ -168,6 +180,19 @@ public class ReviewService : IReviewService
             });
         }
 
+        // 🔔 Send reminder notification if there are pending reviews
+        if (pendingReviews.Any())
+        {
+            await _notificationService.SendToUser(userId, new NotificationDto
+            {
+                Title = "Review Reminder",
+                Message = $"You have {pendingReviews.Count} completed pickup(s) waiting for your review.",
+                Type = NotificationTypes.ReviewReminder,
+                RelatedEntityType = NotificationEntityTypes.Review,
+                RelatedEntityId = null
+            });
+        }
+
         return pendingReviews;
     }
 
@@ -207,7 +232,6 @@ public class ReviewService : IReviewService
         if (review == null)
             return false;
         if (review.ReviewerId != userId)
-            //  if (review.RevieweeId != userId)
             return false;
 
         var driverId = review.RevieweeId;
@@ -253,9 +277,6 @@ public class ReviewService : IReviewService
         if (driverReviews.Any())
         {
             var averageRating = driverReviews.Average(r => r.Rating);
-
-            // Update driver profile rating if you have a DriverProfile entity
-            // This is optional - implement based on your domain model
 
             var driver = await _unitOfWork.DriverProfiles.GetAsync(p => p.UserId == driverId);
             if (driver != null)
@@ -311,6 +332,16 @@ public class ReviewService : IReviewService
 
         await _reviewRepository.UpdateAsync(review);
         await _unitOfWork.SaveChangesAsync();
+
+        // 🔔 Send notification to admins about flagged review
+        await _notificationService.SendToRole("Admin", new NotificationDto
+        {
+            Title = "Review Flagged",
+            Message = $"A review has been flagged for inappropriate content. Reason: {reason}",
+            Type = NotificationTypes.ReviewFlagged,
+            RelatedEntityType = NotificationEntityTypes.Review,
+            RelatedEntityId = reviewId
+        });
 
         return true;
     }

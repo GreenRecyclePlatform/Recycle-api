@@ -28,6 +28,7 @@ namespace recycle.Infrastructure.Services
                 Message = notificationDto.Message,
                 NotificationType = notificationDto.Type,
                 RelatedEntityType = notificationDto.RelatedEntityType,
+                RelatedEntityId = notificationDto.RelatedEntityId,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             };
@@ -55,8 +56,11 @@ namespace recycle.Infrastructure.Services
                 await _hubContext.Clients.User(userId.ToString())
                 .SendAsync("ReceiveNotification", notification);
             }
-            await _unitOfWork.Notifications.MarkAllAsReadAsync(userId);
-            await _unitOfWork.SaveChangesAsync();
+            var unreadCount = pendingNotification.Count();
+            await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateUnreadCount", unreadCount);
+
+            //await _unitOfWork.Notifications.MarkAllAsReadAsync(userId);
+            //await _unitOfWork.SaveChangesAsync();
         }
 
         //public async Task NotifyRead(Guid userId, Guid notificationId)
@@ -73,6 +77,7 @@ namespace recycle.Infrastructure.Services
                 Message = notificationDto.Message,
                 NotificationType = notificationDto.Type,
                 RelatedEntityType = notificationDto.RelatedEntityType,
+                RelatedEntityId = notificationDto.RelatedEntityId,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
                  UserId = null

@@ -12,17 +12,20 @@ public class PickupRequestService : IPickupRequestService
     private readonly IPickupRequestRepository _pickupRequestRepository;
     private readonly IMaterialRepository _materialRepository;
     private readonly IRepository<Address> _addressRepository;
+    private readonly INotificationHubService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public PickupRequestService(
         IPickupRequestRepository pickupRequestRepository,
         IMaterialRepository materialRepository,
         IRepository<Address> addressRepository,
+        INotificationHubService notificationService,
         IUnitOfWork unitOfWork)
     {
         _pickupRequestRepository = pickupRequestRepository;
         _materialRepository = materialRepository;
         _addressRepository = addressRepository;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
     }
 
@@ -59,7 +62,7 @@ public class PickupRequestService : IPickupRequestService
             Id = request.RequestId,
             UserName = request.User != null ? $"{request.User.FirstName} {request.User.LastName}" : "Unknown",
             PreferredPickupDate = request.PreferredPickupDate,
-            PreferredPickupTime = request.PreferredPickupDate, // Assuming time is part of the date
+            PreferredPickupTime = request.PreferredPickupDate,
             Address = request.Address != null ? new AddressDto
             {
                 Street = request.Address.Street,
@@ -186,6 +189,26 @@ public class PickupRequestService : IPickupRequestService
         var createdRequest = await _pickupRequestRepository.CreateAsync(pickupRequest);
         await _unitOfWork.SaveChangesAsync();
 
+        // 🔔 Send notification to user
+        await _notificationService.SendToUser(userId, new NotificationDto
+        {
+            Title = "Pickup Request Created",
+            Message = "Your pickup request has been successfully created and is waiting for admin approval.",
+            Type = NotificationTypes.RequestCreated,
+            RelatedEntityType = NotificationEntityTypes.PickupRequest,
+            RelatedEntityId = createdRequest.RequestId
+        });
+
+        // 🔔 Send notification to admins
+        await _notificationService.SendToRole("Admin", new NotificationDto
+        {
+            Title = "New Pickup Request",
+            Message = $"A new pickup request is waiting for assignment. Total weight: {totalEstimatedWeight}kg",
+            Type = NotificationTypes.NewRequestPending,
+            RelatedEntityType = NotificationEntityTypes.PickupRequest,
+            RelatedEntityId = createdRequest.RequestId
+        });
+
         // Fetch with details to return
         var requestWithDetails = await _pickupRequestRepository.GetByIdWithDetailsAsync(createdRequest.RequestId);
         return MapToResponseDto(requestWithDetails!);
@@ -275,6 +298,19 @@ public class PickupRequestService : IPickupRequestService
         var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
         await _unitOfWork.SaveChangesAsync();
 
+        // 🔔 Send notification based on status change
+        if (newStatus == "Cancelled")
+        {
+            await _notificationService.SendToUser(existingRequest.UserId, new NotificationDto
+            {
+                Title = "Request Cancelled",
+                Message = "Your pickup request has been cancelled.",
+                Type = NotificationTypes.RequestCancelled,
+                RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                RelatedEntityId = requestId
+            });
+        }
+
         return result;
     }
 
@@ -287,8 +323,8 @@ public class PickupRequestService : IPickupRequestService
             { "Waiting", new List<string> { "Pending", "Cancelled" } },
             { "Assigned", new List<string> { "PickedUp", "Cancelled" } },
             { "PickedUp", new List<string> { "Completed" } },
-            { "Completed", new List<string>() }, // Terminal state
-            { "Cancelled", new List<string>() }  // Terminal state
+            { "Completed", new List<string>() },
+            { "Cancelled", new List<string>() }
         };
 
         return validTransitions.ContainsKey(currentStatus) &&
