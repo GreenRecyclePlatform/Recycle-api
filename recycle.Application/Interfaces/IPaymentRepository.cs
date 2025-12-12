@@ -14,5 +14,9 @@ namespace recycle.Application.Interfaces
         Task<IEnumerable<Payment>> GetAllAsync(string? status);
         Task AddAsync(Payment payment);
         void Update(Payment payment);
+
+        //  NEW:  these methods
+        Task<IEnumerable<Payment>> GetByUserIdAsync(Guid userId);
+        IQueryable<Payment> GetQueryable();
     }
 }

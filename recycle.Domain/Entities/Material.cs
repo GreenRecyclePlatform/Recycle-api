@@ -1,4 +1,5 @@
-﻿using System;
+﻿using recycle.Domain.Entities.recycle.Domain.Entities;
+using System;
 using System.Collections.Generic;
 
 namespace recycle.Domain.Entities
@@ -22,5 +23,7 @@ namespace recycle.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
 
         public ICollection<RequestMaterial> RequestMaterials { get; set; } = new List<RequestMaterial>();
+        public ICollection<SupplierOrderItem> SupplierOrderItems { get; set; } = new List<SupplierOrderItem>();
+
     }
 }

@@ -15,6 +15,7 @@ namespace recycle.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // ✅ ADD THIS LINE
 
         public string? StripeAccountId { get; set; }
+        public string? CompanyName { get; set; }
 
 
         public ICollection<PickupRequest>? pickupRequests { get; set; }
@@ -23,6 +24,8 @@ namespace recycle.Domain.Entities
         public ICollection<Review> ReviewsGiven { get; set; }
         public ICollection<Review> ReviewsReceived { get; set; }
         public ICollection<Notification> Notifications { get; set; }
+        public ICollection<SupplierOrder>? SupplierOrders { get; set; }
+
 
         public DriverProfile? DriverProfile { get; set; }
 

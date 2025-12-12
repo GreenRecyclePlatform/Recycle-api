@@ -20,6 +20,9 @@ namespace recycle.Application.DTOs
 
         public string Role { get; set; }
         public AddressDto Address { get; set; }
-     
+
+        public string? CompanyName { get; set; }
+
+
     }
 }

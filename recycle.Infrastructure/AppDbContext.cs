@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using recycle.Domain.Entities;
+using recycle.Domain.Entities.recycle.Domain.Entities;
 using recycle.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
@@ -32,10 +33,63 @@ namespace recycle.Infrastructure
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Setting> Settings { get; set; }
 
+
+        public DbSet<SupplierOrder> SupplierOrders { get; set; }
+
+        public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<SupplierOrder>(entity =>
+            {
+                entity.HasKey(e => e.OrderId);
 
-            builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+                entity.Property(e => e.PaymentStatus)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(e => e.TotalAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.Supplier)
+                    .WithMany(u => u.SupplierOrders)
+                    .HasForeignKey(e => e.SupplierId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.PaymentStatus);
+                entity.HasIndex(e => e.SupplierId);
+            });
+
+            // ✅ Configuration للـ SupplierOrderItem
+            builder.Entity<SupplierOrderItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Quantity)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.PricePerKg)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(e => e.TotalPrice)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.Order)
+                    .WithMany(o => o.OrderItems)
+                    .HasForeignKey(e => e.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Material)
+                    .WithMany(m => m.SupplierOrderItems)
+                    .HasForeignKey(e => e.MaterialId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => e.OrderId);
+                entity.HasIndex(e => e.MaterialId);
+            });
+        
+
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(builder);
 
             builder.Entity<DriverProfile>()

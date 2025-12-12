@@ -45,7 +45,8 @@ namespace recycle.Infrastructure
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("Admin"));
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("User"));
                 await _roleManager.CreateAsync(new IdentityRole<Guid>("Driver"));
-               
+                await _roleManager.CreateAsync(new IdentityRole<Guid>("Supplier"));
+
                 await SettingSeeder.SeedSettings(_db);
 
                

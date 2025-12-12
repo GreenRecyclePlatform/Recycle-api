@@ -23,6 +23,14 @@ builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IMaterialService, MaterialService>();
 builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
 
+
+//supplier 
+builder.Services.AddScoped<ISupplierOrderRepository, SupplierOrderRepository>();
+builder.Services.AddScoped<StripeService>();
+builder.Services.AddScoped<ISupplierOrderService, SupplierOrderService>();
+
+
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 
@@ -31,7 +39,8 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
 builder.Services.AddScoped<ISettingRepository, SettingRepository>();
 
-
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
