@@ -33,22 +33,12 @@ namespace recycle.Infrastructure
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Setting> Settings { get; set; }
 
-
         public DbSet<SupplierOrder> SupplierOrders { get; set; }
 
         public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
-            builder.Entity<IdentityRole<Guid>>().HasData(
-        new IdentityRole<Guid>
-        {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), 
-            Name = "Supplier",
-            NormalizedName = "SUPPLIER"
-        });
-
             builder.Entity<SupplierOrder>(entity =>
             {
                 entity.HasKey(e => e.OrderId);

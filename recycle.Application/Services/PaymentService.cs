@@ -1,5 +1,6 @@
 ﻿// File: recycle.Application/Services/PaymentService.cs
 // FINAL CORRECTED VERSION -
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using recycle.Application.DTOs.Payment;
 using recycle.Application.Interfaces;
@@ -236,6 +237,145 @@ namespace recycle.Application.Services
 
             return await CreatePaymentAsync(createDto);
         }
+
+        /// <summary>
+        /// ✨ NEW: Get payments for a specific user
+        /// </summary>
+        public async Task<IEnumerable<PaymentDto>> GetUserPaymentsAsync(Guid userId)
+        {
+            var payments = await _unitOfWork.Payments.GetByUserIdAsync(userId);
+            return payments.Select(MapToDto);
+        }
+
+        /// <summary>
+        /// ✨ NEW: Get payment summary for a user
+        /// </summary>
+        public async Task<PaymentSummaryDto> GetSummaryAsync(Guid userId)
+        {
+            var payments = await _unitOfWork.Payments.GetByUserIdAsync(userId);
+            var paymentList = payments.ToList();
+
+            var completedPayments = paymentList
+                .Where(p => p.PaymentStatus == PaymentStatuses.Paid)
+                .ToList();
+
+            // Calculate earnings (payments received)
+            var totalEarnings = completedPayments
+                .Where(p => p.RecipientType == "User" || p.RecipientType == "Driver")
+                .Sum(p => p.Amount);
+
+            // Calculate withdrawals (for now, assume all payments are earnings)
+            // You may need to add a Type field to Payment entity later
+            var totalWithdrawals = 0m; // Will be implemented when you add payment types
+
+            var pendingAmount = paymentList
+                .Where(p => p.PaymentStatus == PaymentStatuses.Pending ||
+                           p.PaymentStatus == PaymentStatuses.Approved)
+                .Sum(p => p.Amount);
+
+            var lastPayment = paymentList
+                .OrderByDescending(p => p.CreatedAt)
+                .FirstOrDefault();
+
+            return new PaymentSummaryDto
+            {
+                TotalEarnings = totalEarnings,
+                TotalWithdrawals = totalWithdrawals,
+                PendingAmount = pendingAmount,
+                AvailableBalance = totalEarnings - totalWithdrawals,
+                LastPaymentDate = lastPayment?.CreatedAt
+            };
+        }
+
+        /// <summary>
+        /// ✨ NEW: Filter payments with pagination
+        /// </summary>
+        public async Task<PagedResultDto<PaymentDto>> FilterPaymentsAsync(PaymentFilterDto filter)
+        {
+            // Get queryable
+            var query = _unitOfWork.Payments.GetQueryable();
+
+            // Apply filters
+            if (filter.UserId.HasValue)
+            {
+                query = query.Where(p => p.RecipientUserID == filter.UserId.Value);
+            }
+
+            if (!string.IsNullOrEmpty(filter.Status))
+            {
+                query = query.Where(p => p.PaymentStatus == filter.Status);
+            }
+
+            if (filter.FromDate.HasValue)
+            {
+                query = query.Where(p => p.CreatedAt >= filter.FromDate.Value);
+            }
+
+            if (filter.ToDate.HasValue)
+            {
+                query = query.Where(p => p.CreatedAt <= filter.ToDate.Value);
+            }
+
+            if (filter.MinAmount.HasValue)
+            {
+                query = query.Where(p => p.Amount >= filter.MinAmount.Value);
+            }
+
+            if (filter.MaxAmount.HasValue)
+            {
+                query = query.Where(p => p.Amount <= filter.MaxAmount.Value);
+            }
+
+            // Get total count
+            var totalCount = await query.CountAsync();
+
+            // Apply pagination
+            var payments = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            // Map to DTOs
+            var paymentDtos = payments.Select(MapToDto).ToList();
+
+            var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+            return new PagedResultDto<PaymentDto>
+            {
+                Data = paymentDtos,
+                TotalCount = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                TotalPages = totalPages
+            };
+        }
+
+        /// <summary>
+        /// ✨ NEW: Complete a payment (mark as paid with transaction ID)
+        /// </summary>
+        public async Task<bool> CompletePaymentAsync(Guid id, string transactionId)
+        {
+            var payment = await _unitOfWork.Payments.GetByIdAsync(id);
+            if (payment == null)
+            {
+                _logger.LogWarning("Payment {PaymentId} not found", id);
+                return false;
+            }
+
+            payment.PaymentStatus = PaymentStatuses.Paid;
+            payment.TransactionReference = transactionId;
+            payment.PaidAt = DateTime.UtcNow;
+
+            _unitOfWork.Payments.Update(payment);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Payment {PaymentId} marked as completed with transaction {TransactionId}",
+                id, transactionId);
+
+            return true;
+        }
+
 
         #region Helper Methods
 

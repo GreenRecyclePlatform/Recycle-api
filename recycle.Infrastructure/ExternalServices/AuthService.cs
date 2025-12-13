@@ -148,7 +148,8 @@ namespace recycle.Infrastructure.ExternalServices
                 Email = request.Email,
                 DateOfBirth = request.DateOfBirth,
                 UserName = request.UserName,
-                PhoneNumber = request.PhoneNumber
+                PhoneNumber = request.PhoneNumber,
+                CompanyName = request.CompanyName,
             };
             var result = await _userRepository.IsUniqueAsync(request.Email, request.UserName);
 
