@@ -22,7 +22,7 @@ namespace recycle.Application.Services
         {
             var options = new PaymentIntentCreateOptions
             {
-                Amount = (long)(amount * 100), // Stripe بيستخدم cents (مثلاً: $10.50 = 1050)
+                Amount = (long)(amount * 100), 
                 Currency = currency.ToLower(),
                 PaymentMethodTypes = new List<string> { "card" },
 
