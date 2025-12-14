@@ -38,97 +38,140 @@ public class ReviewService : IReviewService
     // CREATE
     public async Task<Review> CreateReview(Guid userId, CreateReviewDto dto)
     {
-        Console.WriteLine($"🔍 CreateReview called - UserId: {userId}, RequestId: {dto.RequestId}");
-
-        // 1️⃣ Get the pickup request WITH driver assignments using includes
-        var request = await _pickupRequestRepository.GetByIdAsync(
-            dto.RequestId,
-            includes: query => query
-                .Include(r => r.DriverAssignments)
-                .ThenInclude(da => da.Driver)
-        );
-
-        if (request == null)
+        try
         {
-            Console.WriteLine($"❌ Pickup request {dto.RequestId} not found");
-            throw new InvalidOperationException("Pickup request not found");
+            Console.WriteLine($"🔍 CreateReview called - UserId: {userId}, RequestId: {dto.RequestId}");
+
+            // 1️⃣ Get the pickup request WITH driver assignments using GetAll
+            var requests = await _pickupRequestRepository.GetAll(
+                filter: r => r.RequestId == dto.RequestId,
+                includes: query => query
+                    .Include(r => r.DriverAssignments)
+                        .ThenInclude(da => da.Driver)
+                            .ThenInclude(d => d.User)
+            );
+
+            var request = requests.FirstOrDefault();
+
+            if (request == null)
+            {
+                Console.WriteLine($"❌ Pickup request {dto.RequestId} not found");
+                throw new InvalidOperationException("Pickup request not found");
+            }
+
+            Console.WriteLine($"✅ Found request: Status={request.Status}, UserId={request.UserId}");
+
+            // 2️⃣ Verify it's the user's request
+            if (request.UserId != userId)
+            {
+                Console.WriteLine($"❌ Request belongs to user {request.UserId}, not {userId}");
+                throw new UnauthorizedAccessException("You can only review your own pickups");
+            }
+
+            // 3️⃣ Verify request is completed
+            if (request.Status != "Completed")
+            {
+                Console.WriteLine($"❌ Request status is {request.Status}, not Completed");
+                throw new InvalidOperationException("Can only review completed pickup requests");
+            }
+
+            // 4️⃣ Check if review already exists
+            var existingReview = await _reviewRepository.GetByRequestIdAsync(dto.RequestId);
+            if (existingReview != null)
+            {
+                Console.WriteLine($"❌ Review already exists for request {dto.RequestId}");
+                throw new InvalidOperationException("You have already reviewed this pickup");
+            }
+
+            // 5️⃣ ✅ GET DRIVER FROM REQUEST
+            var driverAssignment = request.DriverAssignments?
+                .Where(da => da.Status == AssignmentStatus.Completed ||
+                            da.Status == AssignmentStatus.Assigned)
+                .OrderByDescending(da => da.AssignedAt)
+                .FirstOrDefault();
+
+            if (driverAssignment == null)
+            {
+                Console.WriteLine($"❌ No driver assignment found for request {dto.RequestId}");
+                throw new InvalidOperationException("This pickup request has no assigned driver");
+            }
+
+            var driverProfile = driverAssignment.Driver;
+            if (driverProfile == null)
+            {
+                Console.WriteLine($"❌ Driver profile not found for assignment");
+                throw new InvalidOperationException("Driver profile not found");
+            }
+
+            // ✅✅ GET THE USER ID FROM DRIVER PROFILE, NOT THE DRIVER ID
+            var driverUserId = driverProfile.UserId;
+            Console.WriteLine($"✅ Found driver profile ID: {driverAssignment.DriverId}");
+            Console.WriteLine($"✅ Found driver USER ID: {driverUserId}");
+
+            // ✅ Verify the driver user exists
+            var driverUser = await _userRepository.GetByIdAsync(driverUserId);
+            if (driverUser == null)
+            {
+                Console.WriteLine($"❌ Driver user {driverUserId} not found");
+                throw new InvalidOperationException("Driver user not found");
+            }
+            Console.WriteLine($"✅ Driver user exists: {driverUser.FirstName} {driverUser.LastName}");
+
+            // ✅ Verify the reviewer user exists
+            var reviewerUser = await _userRepository.GetByIdAsync(userId);
+            if (reviewerUser == null)
+            {
+                Console.WriteLine($"❌ Reviewer user {userId} not found");
+                throw new InvalidOperationException("Reviewer user not found");
+            }
+            Console.WriteLine($"✅ Reviewer user exists: {reviewerUser.FirstName} {reviewerUser.LastName}");
+
+            // 6️⃣ Create review - USE DRIVER USER ID, NOT DRIVER PROFILE ID
+            var review = new Review
+            {
+                ReviewId = Guid.NewGuid(),
+                RequestId = dto.RequestId,
+                RevieweeId = driverUserId,  // ✅✅ USE USER ID, NOT DRIVER PROFILE ID
+                ReviewerId = userId,
+                Rating = dto.Rating,
+                Comment = dto.Comment ?? string.Empty,
+                CreatedAt = DateTime.UtcNow,
+                IsFlagged = false,
+                IsHidden = false
+            };
+
+            Console.WriteLine($"🔍 About to save review: ReviewId={review.ReviewId}, RequestId={review.RequestId}, RevieweeId={review.RevieweeId}, ReviewerId={review.ReviewerId}");
+
+            await _reviewRepository.AddAsync(review);
+
+            Console.WriteLine("🔍 Review added to repository, now saving changes...");
+            await _unitOfWork.SaveChangesAsync();
+
+            Console.WriteLine($"✅ Review created successfully: {review.ReviewId}");
+
+            // 7️⃣ Update driver rating - USE DRIVER USER ID
+            await UpdateDriverRatingAsync(driverUserId);
+
+            // 8️⃣ Send notification - USE DRIVER USER ID
+            await _notificationService.SendToUser(driverUserId, new NotificationDto
+            {
+                Title = "New Review Received",
+                Message = $"You received a {dto.Rating}-star review from a customer.",
+                Type = NotificationTypes.NewReview,
+                RelatedEntityType = NotificationEntityTypes.Review,
+                RelatedEntityId = review.ReviewId
+            });
+
+            return review;
         }
-
-        Console.WriteLine($"✅ Found request: Status={request.Status}, UserId={request.UserId}");
-
-        // 2️⃣ Verify it's the user's request
-        if (request.UserId != userId)
+        catch (Exception ex)
         {
-            Console.WriteLine($"❌ Request belongs to user {request.UserId}, not {userId}");
-            throw new UnauthorizedAccessException("You can only review your own pickups");
+            Console.WriteLine($"❌❌❌ ERROR in CreateReview: {ex.Message}");
+            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"❌ Inner exception: {ex.InnerException?.Message}");
+            throw;
         }
-
-        // 3️⃣ Verify request is completed
-        if (request.Status != "Completed")
-        {
-            Console.WriteLine($"❌ Request status is {request.Status}, not Completed");
-            throw new InvalidOperationException("Can only review completed pickup requests");
-        }
-
-        // 4️⃣ Check if review already exists
-        var existingReview = await _reviewRepository.GetByRequestIdAsync(dto.RequestId);
-        if (existingReview != null)
-        {
-            Console.WriteLine($"❌ Review already exists for request {dto.RequestId}");
-            throw new InvalidOperationException("You have already reviewed this pickup");
-        }
-
-        // 5️⃣ ✅ GET DRIVER ID FROM REQUEST
-        var driverAssignment = request.DriverAssignments?
-            .Where(da => da.Status == AssignmentStatus.Completed ||
-                        da.Status == AssignmentStatus.Assigned)
-            .OrderByDescending(da => da.AssignedAt)
-            .FirstOrDefault();
-
-        if (driverAssignment == null)
-        {
-            Console.WriteLine($"❌ No driver assignment found for request {dto.RequestId}");
-            throw new InvalidOperationException("This pickup request has no assigned driver");
-        }
-
-        var driverId = driverAssignment.DriverId;
-        Console.WriteLine($"✅ Found driver ID from assignment: {driverId}");
-
-        // 6️⃣ Create review
-        var review = new Review
-        {
-            ReviewId = Guid.NewGuid(),
-            RequestId = dto.RequestId,
-            RevieweeId = driverId,  // ✅ From driver assignment
-            ReviewerId = userId,
-            Rating = dto.Rating,
-            Comment = dto.Comment,
-            CreatedAt = DateTime.UtcNow,
-            IsFlagged = false,
-            IsHidden = false
-        };
-
-        await _reviewRepository.AddAsync(review);
-        await _unitOfWork.SaveChangesAsync();
-
-        Console.WriteLine($"✅ Review created successfully: {review.ReviewId}");
-
-        // 7️⃣ Update driver rating
-        await UpdateDriverRatingAsync(driverId);
-
-        // 8️⃣ Send notification
-        await _notificationService.SendToUser(driverId, new NotificationDto
-        {
-            Title = "New Review Received",
-            Message = $"You received a {dto.Rating}-star review from a customer.",
-            Type = NotificationTypes.NewReview,
-            RelatedEntityType = NotificationEntityTypes.Review,
-            RelatedEntityId = review.ReviewId
-        });
-
-        return review;
     }
-
     public async Task<ReviewDto> CreateReviewAsync(Guid userId, CreateReviewDto dto)
     {
         var review = await CreateReview(userId, dto);
@@ -197,17 +240,18 @@ public class ReviewService : IReviewService
     {
         Console.WriteLine($"📋 GetPendingReviewsForUserAsync - UserId: {userId}");
 
-        // ✅ Get completed requests WITH driver assignments included
+        // ✅ Include Driver AND Driver.User
         var completedRequests = await _pickupRequestRepository.GetAll(
             filter: r => r.UserId == userId && r.Status == "Completed",
             includes: query => query
                 .Include(r => r.DriverAssignments)
-                .ThenInclude(da => da.Driver)
+                    .ThenInclude(da => da.Driver)
+                        .ThenInclude(d => d.User)  // ✅ Add this line!
         );
 
         Console.WriteLine($"✅ Found {completedRequests.Count()} completed requests");
 
-        // Get reviewed request IDs
+        // Rest of the code remains the same...
         var allReviews = await _reviewRepository.GetAllAsync();
         var reviewedRequestIds = allReviews
             .Where(r => r.ReviewerId == userId)
@@ -222,7 +266,6 @@ public class ReviewService : IReviewService
         {
             Console.WriteLine($"🔍 Processing request: {request.RequestId}");
 
-            // Get driver from assignments (already included)
             var driverAssignment = request.DriverAssignments?
                 .Where(da => da.Status == AssignmentStatus.Completed ||
                             da.Status == AssignmentStatus.Assigned)
@@ -236,9 +279,10 @@ public class ReviewService : IReviewService
             }
 
             var driverId = driverAssignment.DriverId;
-            var driver = driverAssignment.Driver; // Already included!
+            var driver = driverAssignment.Driver;
 
-            var driverName = driver != null
+            // ✅ Now driver.User will be loaded
+            var driverName = driver?.User != null
                 ? $"{driver.User.FirstName} {driver.User.LastName}".Trim()
                 : "Unknown Driver";
 
@@ -255,7 +299,6 @@ public class ReviewService : IReviewService
 
         Console.WriteLine($"✅ Returning {pendingReviews.Count} pending reviews");
 
-        // Send reminder notification
         if (pendingReviews.Any())
         {
             await _notificationService.SendToUser(userId, new NotificationDto
@@ -318,9 +361,14 @@ public class ReviewService : IReviewService
     }
 
     // VALIDATION
+    // VALIDATION
     public async Task<ValidationResult> CanUserReviewRequestAsync(Guid userId, Guid requestId)
     {
-        var request = await _pickupRequestRepository.GetByIdAsync(requestId);
+        var requests = await _pickupRequestRepository.GetAll(
+            filter: r => r.RequestId == requestId
+        );
+
+        var request = requests.FirstOrDefault();
 
         if (request == null)
             return new ValidationResult { IsValid = false, ErrorMessage = "Pickup request not found" };

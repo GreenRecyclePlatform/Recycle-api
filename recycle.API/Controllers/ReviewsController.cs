@@ -58,10 +58,12 @@ namespace recycle.API.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ Error creating review: {ex.Message}");
+                Console.WriteLine($"❌ Inner exception: {ex.InnerException?.Message}");
+
                 return BadRequest(new ApiResponse<object>
                 {
                     Success = false,
-                    Message = ex.Message
+                    Message = $"{ex.Message} | Inner: {ex.InnerException?.Message}"
                 });
             }
         }
