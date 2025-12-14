@@ -12,17 +12,20 @@ public class PickupRequestService : IPickupRequestService
     private readonly IPickupRequestRepository _pickupRequestRepository;
     private readonly IMaterialRepository _materialRepository;
     private readonly IRepository<Address> _addressRepository;
+    private readonly INotificationHubService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public PickupRequestService(
         IPickupRequestRepository pickupRequestRepository,
         IMaterialRepository materialRepository,
         IRepository<Address> addressRepository,
+        INotificationHubService notificationService,
         IUnitOfWork unitOfWork)
     {
         _pickupRequestRepository = pickupRequestRepository;
         _materialRepository = materialRepository;
         _addressRepository = addressRepository;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
     }
 
@@ -59,7 +62,7 @@ public class PickupRequestService : IPickupRequestService
             Id = request.RequestId,
             UserName = request.User != null ? $"{request.User.FirstName} {request.User.LastName}" : "Unknown",
             PreferredPickupDate = request.PreferredPickupDate,
-            PreferredPickupTime = request.PreferredPickupDate, // Assuming time is part of the date
+            PreferredPickupTime = request.PreferredPickupDate,
             Address = request.Address != null ? new AddressDto
             {
                 Street = request.Address.Street,
@@ -186,6 +189,46 @@ public class PickupRequestService : IPickupRequestService
         var createdRequest = await _pickupRequestRepository.CreateAsync(pickupRequest);
         await _unitOfWork.SaveChangesAsync();
 
+        Console.WriteLine($"🔔 About to send notifications for request {createdRequest.RequestId}");
+
+        // 🔔 Send notification to user
+        try
+        {
+            await _notificationService.SendToUser(userId, new NotificationDto
+            {
+                Title = "Pickup Request Created ✅",
+                Message = "Your pickup request has been successfully created and is waiting for admin approval.",
+                Type = NotificationTypes.RequestCreated,
+                RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                RelatedEntityId = createdRequest.RequestId,
+                Priority = "Normal"
+            });
+            Console.WriteLine($"✅ User notification sent");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to send user notification: {ex.Message}");
+        }
+
+        // 🔔 Send notification to admins
+        try
+        {
+            await _notificationService.SendToRole("Admin", new NotificationDto
+            {
+                Title = "New Pickup Request 📦",
+                Message = $"A new pickup request is waiting for assignment. Total weight: {totalEstimatedWeight}kg, Amount: ${totalAmount:F2}",
+                Type = NotificationTypes.NewRequestPending,
+                RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                RelatedEntityId = createdRequest.RequestId,
+                Priority = "High"
+            });
+            Console.WriteLine($"✅ Admin notification sent");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to send admin notification: {ex.Message}");
+        }
+
         // Fetch with details to return
         var requestWithDetails = await _pickupRequestRepository.GetByIdWithDetailsAsync(createdRequest.RequestId);
         return MapToResponseDto(requestWithDetails!);
@@ -200,7 +243,7 @@ public class PickupRequestService : IPickupRequestService
             return null;
         }
 
-        // Only allow updates if status is Pending
+        // Only allow updates if status is Waiting
         if (existingRequest.Status != "Waiting")
         {
             throw new InvalidOperationException($"Cannot update request with status '{existingRequest.Status}'. Only 'Waiting' requests can be updated.");
@@ -259,23 +302,154 @@ public class PickupRequestService : IPickupRequestService
 
     public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
     {
-        var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
+        Console.WriteLine($"🔄 UpdateStatusAsync called - RequestId: {requestId}, NewStatus: {newStatus}");
+
+        // Get request with full details for notifications
+        var existingRequest = await _pickupRequestRepository.GetByIdWithDetailsAsync(requestId);
 
         if (existingRequest == null)
         {
+            Console.WriteLine($"❌ Request not found: {requestId}");
             return false;
         }
 
+        var oldStatus = existingRequest.Status;
+        Console.WriteLine($"📊 Status transition: {oldStatus} → {newStatus}");
+
         // Validate status transition
-        if (!CanChangeStatus(existingRequest.Status, newStatus))
+        if (!CanChangeStatus(oldStatus, newStatus))
         {
-            throw new InvalidOperationException($"Invalid status transition from '{existingRequest.Status}' to '{newStatus}'.");
+            throw new InvalidOperationException($"Invalid status transition from '{oldStatus}' to '{newStatus}'.");
         }
 
+        // Update status in database
         var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
         await _unitOfWork.SaveChangesAsync();
 
+        Console.WriteLine($"💾 Status updated in database");
+
+        // 🔔 Send notifications based on status change
+        try
+        {
+            await SendStatusChangeNotifications(existingRequest, oldStatus, newStatus);
+            Console.WriteLine($"✅ Notifications sent for status change");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Failed to send notifications: {ex.Message}");
+        }
+
         return result;
+    }
+
+    /// <summary>
+    /// Send appropriate notifications based on status change
+    /// </summary>
+    private async Task SendStatusChangeNotifications(PickupRequest request, string oldStatus, string newStatus)
+    {
+        Console.WriteLine($"📤 SendStatusChangeNotifications - Old: {oldStatus}, New: {newStatus}");
+
+        switch (newStatus)
+        {
+            case "Pending": // ✅ Admin approved the request (from Waiting)
+                if (oldStatus == "Waiting")
+                {
+                    Console.WriteLine($"📤 Sending approval notification to user {request.UserId}");
+
+                    try
+                    {
+                        await _notificationService.SendToUser(request.UserId, new NotificationDto
+                        {
+                            Title = "Pickup Request Approved ✅",
+                            Message = "Great news! Your pickup request has been approved and is now pending driver assignment.",
+                            Type = NotificationTypes.RequestCreated,
+                            RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                            RelatedEntityId = request.RequestId,
+                            Priority = "High"
+                        });
+                        Console.WriteLine($"✅ Approval notification sent to user");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Failed to send approval notification: {ex.Message}");
+                    }
+                }
+                break;
+
+            case "Assigned": // Driver assigned
+                Console.WriteLine($"📤 Sending driver assigned notification");
+
+                await _notificationService.SendToUser(request.UserId, new NotificationDto
+                {
+                    Title = "Driver Assigned 🚗",
+                    Message = "A driver has been assigned to your pickup request. They will contact you soon.",
+                    Type = NotificationTypes.DriverAssigned,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = request.RequestId,
+                    Priority = "High"
+                });
+                break;
+
+            case "PickedUp": // Driver picked up materials
+                Console.WriteLine($"📤 Sending pickup notification");
+
+                await _notificationService.SendToUser(request.UserId, new NotificationDto
+                {
+                    Title = "Materials Picked Up 📦",
+                    Message = "Your recyclable materials have been picked up successfully. Processing payment...",
+                    Type = NotificationTypes.PickupCompleted,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = request.RequestId,
+                    Priority = "Normal"
+                });
+                break;
+
+            case "Completed": // Pickup completed and verified
+                Console.WriteLine($"📤 Sending completion notifications");
+
+                // Notify user
+                await _notificationService.SendToUser(request.UserId, new NotificationDto
+                {
+                    Title = "Pickup Completed 🎉",
+                    Message = "Your pickup has been completed successfully. Payment will be processed soon.",
+                    Type = NotificationTypes.PickupCompleted,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = request.RequestId,
+                    Priority = "Normal"
+                });
+
+                // Notify admin
+                await _notificationService.SendToRole("Admin", new NotificationDto
+                {
+                    Title = "Pickup Ready for Review ✅",
+                    Message = $"A pickup has been completed and is ready for review. Amount: ${request.TotalAmount:F2}",
+                    Type = NotificationTypes.PickupReadyForReview,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = request.RequestId,
+                    Priority = "Normal"
+                });
+                break;
+
+            case "Cancelled": // Request cancelled
+                Console.WriteLine($"📤 Sending cancellation notification");
+
+                await _notificationService.SendToUser(request.UserId, new NotificationDto
+                {
+                    Title = "Request Cancelled ❌",
+                    Message = oldStatus == "Waiting"
+                        ? "Your pickup request has been rejected by admin."
+                        : "Your pickup request has been cancelled.",
+                    Type = NotificationTypes.RequestCancelled,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = request.RequestId,
+                    Priority = "Normal"
+                });
+                break;
+
+            default:
+                Console.WriteLine($"⚠️ No notification configured for status: {newStatus}");
+                break;
+        }
     }
 
     public bool CanChangeStatus(string currentStatus, string newStatus)
@@ -283,12 +457,12 @@ public class PickupRequestService : IPickupRequestService
         // Define valid status transitions
         var validTransitions = new Dictionary<string, List<string>>
         {
-            { "Pending", new List<string> { "Assigned", "Cancelled" } },
             { "Waiting", new List<string> { "Pending", "Cancelled" } },
-            { "Assigned", new List<string> { "PickedUp", "Cancelled" } },
+            { "Pending", new List<string> { "Assigned", "Cancelled" } },
+            { "Assigned", new List<string> { "PickedUp", "Pending", "Cancelled" } },
             { "PickedUp", new List<string> { "Completed" } },
-            { "Completed", new List<string>() }, // Terminal state
-            { "Cancelled", new List<string>() }  // Terminal state
+            { "Completed", new List<string>() },
+            { "Cancelled", new List<string>() }
         };
 
         return validTransitions.ContainsKey(currentStatus) &&

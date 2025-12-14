@@ -1,5 +1,4 @@
 ﻿// File: recycle.Application/Services/PaymentService.cs
-// FINAL CORRECTED VERSION -
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using recycle.Application.DTOs.Payment;
@@ -18,15 +17,18 @@ namespace recycle.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPayPalPayoutService _payPalService;
         private readonly ILogger<PaymentService> _logger;
+        private readonly INotificationHubService _notificationService;
 
         public PaymentService(
             IUnitOfWork unitOfWork,
             IPayPalPayoutService payPalService,
-            ILogger<PaymentService> logger)
+            ILogger<PaymentService> logger,
+            INotificationHubService notificationService)
         {
             _unitOfWork = unitOfWork;
             _payPalService = payPalService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -75,7 +77,6 @@ namespace recycle.Application.Services
         /// </summary>
         public async Task<IEnumerable<PaymentDto>> GetPaymentsAsync(string? status)
         {
-            // FIXED: Use the correct signature from IPaymentRepository
             var payments = await _unitOfWork.Payments.GetAllAsync(status);
             return payments.Select(MapToDto);
         }
@@ -148,7 +149,7 @@ namespace recycle.Application.Services
                     var payoutResult = await _payPalService.SendPayoutAsync(
                         recipientEmail: user.Email!,
                         amount: payment.Amount,
-                        currency: "EUR", // Change to "EGP" if PayPal supports it
+                        currency: "EUR",
                         note: $"Payment for recyclable materials - Request #{payment.RequestId}"
                     );
 
@@ -161,6 +162,34 @@ namespace recycle.Application.Services
 
                         _logger.LogInformation("PayPal payout successful. BatchId: {BatchId}",
                             payoutResult.PayoutBatchId);
+
+                        // 🔔 Send notification to user/driver about payment approval
+                        var notificationType = payment.RecipientType == "Driver"
+                            ? NotificationTypes.DriverPaymentApproved
+                            : NotificationTypes.PaymentApproved;
+
+                        await _notificationService.SendToUser(payment.RecipientUserID, new NotificationDto
+                        {
+                            Title = "Payment Approved",
+                            Message = $"Your payment of {payment.Amount:C} has been approved and is being processed.",
+                            Type = notificationType,
+                            RelatedEntityType = NotificationEntityTypes.Payment,
+                            RelatedEntityId = paymentId
+                        });
+
+                        // 🔔 Send notification about payment completion
+                        var paidNotificationType = payment.RecipientType == "Driver"
+                            ? NotificationTypes.DriverPaymentPaid
+                            : NotificationTypes.PaymentPaid;
+
+                        await _notificationService.SendToUser(payment.RecipientUserID, new NotificationDto
+                        {
+                            Title = "Payment Completed",
+                            Message = $"Your payment of {payment.Amount:C} has been successfully transferred to your account.",
+                            Type = paidNotificationType,
+                            RelatedEntityType = NotificationEntityTypes.Payment,
+                            RelatedEntityId = paymentId
+                        });
                     }
                     else
                     {
@@ -170,6 +199,16 @@ namespace recycle.Application.Services
                         payment.FailedAt = DateTime.UtcNow;
 
                         _logger.LogError("PayPal payout failed: {Error}", payoutResult.Message);
+
+                        // 🔔 Send notification to admins about payment failure
+                        await _notificationService.SendToRole("Admin", new NotificationDto
+                        {
+                            Title = "Payment Failed",
+                            Message = $"Payment {paymentId} failed to process. Error: {payoutResult.Message}",
+                            Type = NotificationTypes.PaymentFailed,
+                            RelatedEntityType = NotificationEntityTypes.Payment,
+                            RelatedEntityId = paymentId
+                        });
                     }
                 }
                 catch (Exception ex)
@@ -179,19 +218,52 @@ namespace recycle.Application.Services
                     payment.PaymentStatus = PaymentStatuses.Failed;
                     payment.FailureReason = $"PayPal error: {ex.Message}";
                     payment.FailedAt = DateTime.UtcNow;
+
+                    // 🔔 Send notification to admins about payment failure
+                    await _notificationService.SendToRole("Admin", new NotificationDto
+                    {
+                        Title = "Payment Failed",
+                        Message = $"Payment {paymentId} encountered an error: {ex.Message}",
+                        Type = NotificationTypes.PaymentFailed,
+                        RelatedEntityType = NotificationEntityTypes.Payment,
+                        RelatedEntityId = paymentId
+                    });
                 }
             }
             else if (newStatus == PaymentStatuses.Paid)
             {
                 payment.PaidAt = DateTime.UtcNow;
+
+                // 🔔 Send notification to user/driver about payment completion
+                var notificationType = payment.RecipientType == "Driver"
+                    ? NotificationTypes.DriverPaymentPaid
+                    : NotificationTypes.PaymentPaid;
+
+                await _notificationService.SendToUser(payment.RecipientUserID, new NotificationDto
+                {
+                    Title = "Payment Completed",
+                    Message = $"Your payment of {payment.Amount:C} has been successfully transferred to your account.",
+                    Type = notificationType,
+                    RelatedEntityType = NotificationEntityTypes.Payment,
+                    RelatedEntityId = paymentId
+                });
             }
             else if (newStatus == PaymentStatuses.Failed)
             {
                 payment.FailedAt = DateTime.UtcNow;
                 payment.FailureReason = failureReason;
+
+                // 🔔 Send notification to admins about payment failure
+                await _notificationService.SendToRole("Admin", new NotificationDto
+                {
+                    Title = "Payment Failed",
+                    Message = $"Payment {paymentId} has failed. Reason: {failureReason ?? "Unknown"}",
+                    Type = NotificationTypes.PaymentFailed,
+                    RelatedEntityType = NotificationEntityTypes.Payment,
+                    RelatedEntityId = paymentId
+                });
             }
 
-            // FIXED: Use Update() instead of UpdateAsync()
             _unitOfWork.Payments.Update(payment);
             await _unitOfWork.SaveChangesAsync();
 
@@ -231,7 +303,7 @@ namespace recycle.Application.Services
                 RequestId = requestId,
                 Amount = amount,
                 RecipientType = "User",
-                PaymentMethod = PaymentMethods.Wallet, // PayPal
+                PaymentMethod = PaymentMethods.Wallet,
                 AdminNotes = $"Payout requested for {currency.ToUpper()} {amount:F2}"
             };
 
@@ -265,8 +337,7 @@ namespace recycle.Application.Services
                 .Sum(p => p.Amount);
 
             // Calculate withdrawals (for now, assume all payments are earnings)
-            // You may need to add a Type field to Payment entity later
-            var totalWithdrawals = 0m; // Will be implemented when you add payment types
+            var totalWithdrawals = 0m;
 
             var pendingAmount = paymentList
                 .Where(p => p.PaymentStatus == PaymentStatuses.Pending ||
@@ -373,9 +444,22 @@ namespace recycle.Application.Services
             _logger.LogInformation("Payment {PaymentId} marked as completed with transaction {TransactionId}",
                 id, transactionId);
 
+            // 🔔 Send notification to user/driver about payment completion
+            var notificationType = payment.RecipientType == "Driver"
+                ? NotificationTypes.DriverPaymentPaid
+                : NotificationTypes.PaymentPaid;
+
+            await _notificationService.SendToUser(payment.RecipientUserID, new NotificationDto
+            {
+                Title = "Payment Completed",
+                Message = $"Your payment of {payment.Amount:C} has been successfully transferred to your account.",
+                Type = notificationType,
+                RelatedEntityType = NotificationEntityTypes.Payment,
+                RelatedEntityId = id
+            });
+
             return true;
         }
-
 
         #region Helper Methods
 
