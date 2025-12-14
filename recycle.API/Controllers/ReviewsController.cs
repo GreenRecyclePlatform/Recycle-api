@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +10,7 @@ namespace recycle.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize]
+    [Authorize] // ✅ Enabled authorization
     public class ReviewsController : ControllerBase
     {
         private readonly IReviewService _reviewService;
@@ -23,22 +22,30 @@ namespace recycle.API.Controllers
 
         private Guid GetCurrentUserId()
         {
-
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim))
+            {
+                Console.WriteLine("❌ No user ID found in token claims");
                 throw new UnauthorizedAccessException("User ID not found in token");
+            }
+
+            Console.WriteLine($"✅ User ID from token: {userIdClaim}");
             return Guid.Parse(userIdClaim);
         }
 
-
-
+        /// <summary>
+        /// Create a new review
+        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "User")]  
+        [ProducesResponseType(typeof(ApiResponse<ReviewDto>), 200)]
+        [ProducesResponseType(typeof(ApiResponse<object>), 400)]
         public async Task<IActionResult> CreateReview([FromBody] CreateReviewDto dto)
         {
-           var userId = GetCurrentUserId();
             try
             {
+                var userId = GetCurrentUserId();
+                Console.WriteLine($"Creating review for user: {userId}");
+
                 var reviewDto = await _reviewService.CreateReviewAsync(userId, dto);
 
                 return Ok(new ApiResponse<ReviewDto>
@@ -50,6 +57,7 @@ namespace recycle.API.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"❌ Error creating review: {ex.Message}");
                 return BadRequest(new ApiResponse<object>
                 {
                     Success = false,
@@ -57,14 +65,11 @@ namespace recycle.API.Controllers
                 });
             }
         }
-        //    /// <summary>
-        //    /// Update an existing review (within 7 days)
-        //    /// </summary>
-        //    /// <param name="reviewId">Review ID</param>
-        //    /// <param name="dto">Updated review details</param>
-        //    /// <returns>Updated review</returns>
+
+        /// <summary>
+        /// Update an existing review (within 7 days)
+        /// </summary>
         [HttpPut("{reviewId}")]
-        // [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(ApiResponse<ReviewDto>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 400)]
         public async Task<IActionResult> UpdateReview(Guid reviewId, [FromBody] UpdateReviewDto dto)
@@ -89,41 +94,57 @@ namespace recycle.API.Controllers
                     Message = ex.Message
                 });
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error updating review: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "An error occurred while updating the review"
+                });
+            }
         }
 
         /// <summary>
         /// Delete a review
         /// </summary>
-        /// <param name="reviewId">Review ID</param>
         [HttpDelete("{reviewId}")]
-        //[Authorize(Roles = "User")]
         [ProducesResponseType(typeof(ApiResponse<object>), 200)]
         [ProducesResponseType(typeof(ApiResponse<object>), 404)]
         public async Task<IActionResult> DeleteReview(Guid reviewId)
         {
-            var userId =  GetCurrentUserId();
-            var result = await _reviewService.DeleteReviewAsync(userId, reviewId);
+            try
+            {
+                var userId = GetCurrentUserId();
+                var result = await _reviewService.DeleteReviewAsync(userId, reviewId);
 
-            if (!result)
-                return NotFound(new ApiResponse<object>
+                if (!result)
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "Review not found or you don't have permission to delete it"
+                    });
+
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "Review deleted successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error deleting review: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
                 {
                     Success = false,
-                    Message = "Review not found or you don't have permission to delete it"
+                    Message = "An error occurred while deleting the review"
                 });
-
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Message = "Review deleted successfully"
-            });
+            }
         }
 
         /// <summary>
         /// Get all reviews for a specific driver
         /// </summary>
-        /// <param name="driverId">Driver ID</param>
-        /// <param name="page">Page number</param>
-        /// <param name="pageSize">Items per page</param>
         [HttpGet("driver/{driverId}")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(PaginatedResponse<ReviewDto>), 200)]
@@ -132,135 +153,199 @@ namespace recycle.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            var reviews = await _reviewService.GetReviewsForDriverAsync(driverId, page, pageSize);
-
-            return Ok(new PaginatedResponse<ReviewDto>
+            try
             {
-                Success = true,
-                Data = reviews,
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = reviews.Count
-            });
+                var reviews = await _reviewService.GetReviewsForDriverAsync(driverId, page, pageSize);
+
+                return Ok(new PaginatedResponse<ReviewDto>
+                {
+                    Success = true,
+                    Data = reviews,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = reviews.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting driver reviews: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching reviews"
+                });
+            }
         }
 
         /// <summary>
         /// Get driver rating statistics
         /// </summary>
-        /// <param name="driverId">Driver ID</param>
         [HttpGet("driver/{driverId}/stats")]
         [AllowAnonymous]
         [ProducesResponseType(typeof(ApiResponse<DriverRatingDto>), 200)]
         public async Task<IActionResult> GetDriverRatingStats(Guid driverId)
         {
-            var stats = await _reviewService.GetDriverRatingStatsAsync(driverId);
+            try
+            {
+                var stats = await _reviewService.GetDriverRatingStatsAsync(driverId);
 
-            if (stats == null)
-                return NotFound(new ApiResponse<object>
+                if (stats == null)
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "No reviews found for this driver"
+                    });
+
+                return Ok(new ApiResponse<DriverRatingDto>
+                {
+                    Success = true,
+                    Data = stats
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting driver stats: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
                 {
                     Success = false,
-                    Message = "Driver not found"
+                    Message = "An error occurred while fetching statistics"
                 });
-
-            return Ok(new ApiResponse<DriverRatingDto>
-            {
-                Success = true,
-                Data = stats
-            });
+            }
         }
 
         /// <summary>
         /// Get current user's pending reviews (completed pickups without reviews)
         /// </summary>
         [HttpGet("pending")]
-        //[Authorize(Roles = "User")]
         [ProducesResponseType(typeof(ApiResponse<PendingReviewDto[]>), 200)]
         public async Task<IActionResult> GetPendingReviews()
         {
-           
-
-               var userId = GetCurrentUserId();
-            var pendingReviews = await _reviewService.GetPendingReviewsForUserAsync(userId);
-
-            return Ok(new ApiResponse<PendingReviewDto[]>
+            try
             {
-                Success = true,
-                Data = pendingReviews.ToArray(),
-                Message = $"You have {pendingReviews.Count} pending review(s)"
-            });
+                var userId = GetCurrentUserId();
+                Console.WriteLine($"📋 Getting pending reviews for user: {userId}");
+
+                var pendingReviews = await _reviewService.GetPendingReviewsForUserAsync(userId);
+
+                Console.WriteLine($"✅ Found {pendingReviews.Count} pending reviews");
+
+                return Ok(new ApiResponse<List<PendingReviewDto>>
+                {
+                    Success = true,
+                    Data = pendingReviews,
+                    Message = $"You have {pendingReviews.Count} pending review(s)"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error in GetPendingReviews: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = $"An error occurred: {ex.Message}"
+                });
+            }
         }
 
         /// <summary>
         /// Check if user can review a specific request
         /// </summary>
-        /// <param name="requestId">Request ID</param>
         [HttpGet("request/{requestId}/can-review")]
-        [Authorize(Roles = "User")]
         [ProducesResponseType(typeof(CanReviewResponse), 200)]
         public async Task<IActionResult> CanReviewRequest(Guid requestId)
         {
-           
-
-             var userId = GetCurrentUserId();
-            var validation = await _reviewService.CanUserReviewRequestAsync(userId, requestId);
-
-            return Ok(new CanReviewResponse
+            try
             {
-                CanReview = validation.IsValid,
-                Message = validation.ErrorMessage ?? "You can review this pickup"
-            });
+                var userId = GetCurrentUserId();
+                var validation = await _reviewService.CanUserReviewRequestAsync(userId, requestId);
+
+                return Ok(new CanReviewResponse
+                {
+                    CanReview = validation.IsValid,
+                    Message = validation.ErrorMessage ?? "You can review this pickup"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error checking review eligibility: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "An error occurred"
+                });
+            }
         }
 
         /// <summary>
         /// Get current user's review history
         /// </summary>
         [HttpGet("my-reviews")]
-        //[Authorize(Roles = "User")]
         [ProducesResponseType(typeof(PaginatedResponse<ReviewDto>), 200)]
         public async Task<IActionResult> GetMyReviews(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
-            
-
-            var userId = GetCurrentUserId();
-            var reviews = await _reviewService.GetReviewsByUserAsync(userId, page, pageSize);
-
-            return Ok(new PaginatedResponse<ReviewDto>
+            try
             {
-                Success = true,
-                Data = reviews,
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = reviews.Count  
+                var userId = GetCurrentUserId();
+                var reviews = await _reviewService.GetReviewsByUserAsync(userId, page, pageSize);
 
-            });
+                return Ok(new PaginatedResponse<ReviewDto>
+                {
+                    Success = true,
+                    Data = reviews,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = reviews.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting user reviews: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching reviews"
+                });
+            }
         }
 
         /// <summary>
         /// Flag a review as inappropriate (Admin only)
         /// </summary>
-        /// <param name="reviewId">Review ID</param>
-        /// <param name="request">Flag reason</param>
         [HttpPost("{reviewId}/flag")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(ApiResponse<object>), 200)]
         public async Task<IActionResult> FlagReview(Guid reviewId, [FromBody] FlagReviewRequest request)
         {
-            var result = await _reviewService.FlagReviewAsync(reviewId, request.Reason);
+            try
+            {
+                var result = await _reviewService.FlagReviewAsync(reviewId, request.Reason);
 
-            if (!result)
-                return NotFound(new ApiResponse<object>
+                if (!result)
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "Review not found"
+                    });
+
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Message = "Review flagged and hidden successfully"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error flagging review: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
                 {
                     Success = false,
-                    Message = "Review not found"
+                    Message = "An error occurred"
                 });
-
-            return Ok(new ApiResponse<object>
-            {
-                Success = true,
-                Message = "Review flagged and hidden successfully"
-            });
+            }
         }
 
         /// <summary>
@@ -270,20 +355,32 @@ namespace recycle.API.Controllers
         [ProducesResponseType(typeof(ApiResponse<ReviewDto>), 200)]
         public async Task<IActionResult> GetReviewById(Guid reviewId)
         {
-            var review = await _reviewService.GetReviewByIdAsync(reviewId);
+            try
+            {
+                var review = await _reviewService.GetReviewByIdAsync(reviewId);
 
-            if (review == null)
-                return NotFound(new ApiResponse<object>
+                if (review == null)
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "Review not found"
+                    });
+
+                return Ok(new ApiResponse<ReviewDto>
+                {
+                    Success = true,
+                    Data = review
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error getting review: {ex.Message}");
+                return StatusCode(500, new ApiResponse<object>
                 {
                     Success = false,
-                    Message = "Review not found"
+                    Message = "An error occurred"
                 });
-
-            return Ok(new ApiResponse<ReviewDto>
-            {
-                Success = true,
-                Data = review
-            });
+            }
         }
     }
 

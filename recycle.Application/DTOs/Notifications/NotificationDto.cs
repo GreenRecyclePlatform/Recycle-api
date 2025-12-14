@@ -8,7 +8,7 @@
     //public string RelatedEntityType { get; set; }
     public Guid? RelatedEntityId { get; set; }
     //public bool IsRead { get; set; }
-    //public string Priority { get; set; }
+    public string Priority { get; set; }
     //public DateTime CreatedAt { get; set; }
     //public DateTime? ReadAt { get; set; }
     //public string TimeAgo { get; set; }
