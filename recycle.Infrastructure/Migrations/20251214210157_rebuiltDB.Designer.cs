@@ -12,8 +12,8 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251212233654_rebuiltdatabase")]
-    partial class rebuiltdatabase
+    [Migration("20251214210157_rebuiltDB")]
+    partial class rebuiltDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
