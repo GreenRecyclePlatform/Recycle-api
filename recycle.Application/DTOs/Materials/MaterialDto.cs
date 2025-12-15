@@ -23,7 +23,7 @@ namespace recycle.Application.DTOs.Materials
         public DateTime? UpdatedAt { get; set; }
     }
 
-    public class CreateMaterialDto
+   /* public class CreateMaterialDto
     {
         [Required(ErrorMessage = "Name is required")]
         [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
@@ -54,12 +54,17 @@ namespace recycle.Application.DTOs.Materials
         [Range(0.01, double.MaxValue, ErrorMessage = "Price per kg must be greater than 0")]
         public decimal PricePerKg { get; set; }
 
+        // ✅ NEW: Initial stock quantity
+        [Required(ErrorMessage = "Available KG is required")]
+        [Range(0, double.MaxValue, ErrorMessage = "Available KG must be 0 or greater")]
+        public decimal AvailableKg { get; set; } = 0;
+
         [Required(ErrorMessage = "Status is required")]
         [RegularExpression("^(active|inactive)$", ErrorMessage = "Status must be either 'active' or 'inactive'")]
         public string Status { get; set; } = "active";
     }
-
-    public class UpdateMaterialDto
+   */
+  /*  public class UpdateMaterialDto
     {
         [Required(ErrorMessage = "Name is required")]
         [StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
@@ -90,13 +95,14 @@ namespace recycle.Application.DTOs.Materials
         [Range(0.01, double.MaxValue, ErrorMessage = "Price per kg must be greater than 0")]
         public decimal PricePerKg { get; set; }
 
+        // ✅ NEW: Update stock quantity
+        [Required(ErrorMessage = "Available KG is required")]
+        [Range(0, double.MaxValue, ErrorMessage = "Available KG must be 0 or greater")]
+        public decimal AvailableKg { get; set; }
+
         [Required(ErrorMessage = "Status is required")]
         [RegularExpression("^(active|inactive)$", ErrorMessage = "Status must be either 'active' or 'inactive'")]
         public string Status { get; set; } = "active";
-    }
+    }*/
 
-    public class UpdateMaterialImageDto
-    {
-        public IFormFile? Image { get; set; }
-    }
 }
