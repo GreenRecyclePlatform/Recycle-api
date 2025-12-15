@@ -37,7 +37,13 @@ namespace recycle.Application.Interfaces.IRepository
             Task<bool> SaveChangesAsync();
 
 
+
+
         Task<Dictionary<Guid, decimal>> GetAvailableQuantitiesAsync();
+
+        Task<(decimal totalRevenue, int completedOrders, decimal pendingPayments)> GetPaymentStatisticsAsync();
+        Task<IEnumerable<SupplierOrder>> GetRecentPaymentsAsync(int count = 20);
+        Task<IEnumerable<SupplierOrder>> GetAllOrdersAsync();
 
     }
 

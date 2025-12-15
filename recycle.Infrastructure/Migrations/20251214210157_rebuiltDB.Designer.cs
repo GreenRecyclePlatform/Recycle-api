@@ -12,7 +12,7 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251212233654_rebuiltdatabase")]
+   [Migration("20251212233654_rebuiltdatabase")]
     partial class rebuiltdatabase
     {
         /// <inheritdoc />
