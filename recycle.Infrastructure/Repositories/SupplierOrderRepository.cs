@@ -93,14 +93,14 @@ namespace recycle.Infrastructure.Repositories
                 .Where(rm =>
                     rm.PickupRequest != null &&
                     rm.PickupRequest.Status == "Completed" &&
-                    rm.ActualWeight.HasValue &&
-                    rm.ActualWeight.Value > 0
+                    rm.EstimatedWeight!=0 &&
+                    rm.EstimatedWeight> 0
                 )
                 .GroupBy(rm => rm.MaterialId)
                 .Select(g => new
                 {
                     MaterialId = g.Key,
-                    TotalIncoming = g.Sum(rm => rm.ActualWeight!.Value)
+                    TotalIncoming = g.Sum(rm => rm.EstimatedWeight!)
                 })
                 .ToDictionaryAsync(x => x.MaterialId, x => x.TotalIncoming);
 

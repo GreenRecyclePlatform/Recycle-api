@@ -103,7 +103,6 @@
                     RecentPayments = recentPayments.Select(o => new SupplierPaymentDetailDto
                     {
                         OrderId = o.OrderId,
-                        // ✅ استخدمي CompanyName لو موجود، وإلا FirstName + LastName
                         SupplierName = !string.IsNullOrEmpty(o.Supplier?.CompanyName)
                             ? o.Supplier.CompanyName
                             : $"{o.Supplier?.FirstName} {o.Supplier?.LastName}",
