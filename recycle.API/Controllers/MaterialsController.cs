@@ -8,8 +8,7 @@ namespace recycle.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]  // ← Uncomment this when you want to require authentication for all endpoints
-    [AllowAnonymous]  // ← Remove this when you uncomment [Authorize] above
+    [Authorize(Roles = "Admin")] // ✅ Admin-only by default
     public class MaterialsController : ControllerBase
     {
         private readonly IMaterialService _materialService;
@@ -20,23 +19,22 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Get all materials
+        /// Get all materials - PUBLIC ACCESS for price list
         /// </summary>
-        /// <param name="includeInactive">Include inactive materials</param>
+        /// <param name="includeInactive">Include inactive materials (admin only)</param>
         /// <returns>List of materials</returns>
         [HttpGet]
+        [AllowAnonymous] // ✅ Anyone can view materials
         [ProducesResponseType(StatusCodes.Status200OK)]
-        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> GetAll([FromQuery] bool includeInactive = false)
         {
             try
             {
-                // Uncomment below when authorization is enabled
-                // Only admins can see inactive materials
-                //if (includeInactive && !User.IsInRole("Admin"))
-                //{
-                //    includeInactive = false;
-                //}
+                // ✅ Only admins can see inactive materials
+                if (includeInactive && !User.IsInRole("Admin"))
+                {
+                    includeInactive = false;
+                }
 
                 var materials = await _materialService.GetAllMaterialsAsync(includeInactive);
                 return Ok(materials);
@@ -48,11 +46,12 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Get material by ID
+        /// Get material by ID - PUBLIC ACCESS
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <returns>Material details</returns>
         [HttpGet("{id:guid}")]
+        [AllowAnonymous] // ✅ Anyone can view material details
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<MaterialDto>> GetById(Guid id)
@@ -75,14 +74,14 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Search materials by name or description
+        /// Search materials by name or description - PUBLIC ACCESS
         /// </summary>
         /// <param name="searchTerm">Search term</param>
         /// <param name="onlyActive">Only search active materials</param>
         /// <returns>List of matching materials</returns>
         [HttpGet("search")]
+        [AllowAnonymous] // ✅ Anyone can search materials
         [ProducesResponseType(StatusCodes.Status200OK)]
-        //[AllowAnonymous]  // ← Uncomment if you want anyone to access this even when controller requires auth
         public async Task<ActionResult<IEnumerable<MaterialDto>>> Search(
             [FromQuery] string searchTerm,
             [FromQuery] bool onlyActive = true)
@@ -104,7 +103,7 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Create a new material (Admin only when auth is enabled)
+        /// Create a new material - ADMIN ONLY
         /// </summary>
         /// <param name="dto">Material data</param>
         /// <returns>Created material</returns>
@@ -112,7 +111,6 @@ namespace recycle.API.Controllers
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult<MaterialDto>> Create([FromForm] CreateMaterialDto dto)
         {
             try
@@ -136,7 +134,7 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Update an existing material (Admin only when auth is enabled)
+        /// Update an existing material - ADMIN ONLY
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <param name="dto">Material data</param>
@@ -146,7 +144,6 @@ namespace recycle.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult<MaterialDto>> Update(Guid id, [FromForm] UpdateMaterialDto dto)
         {
             try
@@ -170,7 +167,7 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Update material image only
+        /// Update material image only - ADMIN ONLY
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <param name="imageDto">Image file</param>
@@ -179,7 +176,6 @@ namespace recycle.API.Controllers
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult> UpdateMaterialImage(Guid id, [FromForm] UpdateMaterialImageDto imageDto)
         {
             try
@@ -198,14 +194,13 @@ namespace recycle.API.Controllers
         }
 
         /// <summary>
-        /// Delete a material (Admin only when auth is enabled)
+        /// Delete a material - ADMIN ONLY
         /// </summary>
         /// <param name="id">Material ID</param>
         /// <returns>Success status</returns>
         [HttpDelete("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        //[Authorize(Roles = "Admin")]  // ← Uncomment to restrict this to Admin role only
         public async Task<ActionResult> Delete(Guid id)
         {
             try

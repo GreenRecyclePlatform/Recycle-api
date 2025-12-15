@@ -11,7 +11,7 @@ namespace recycle.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [EnableCors("AllowAll")] // ✅ Enable CORS
-    // [Authorize(Roles = "Admin")] // 🔒 Uncomment when you implement authentication
+    [Authorize(Roles = "Admin")] // 🔒 Uncomment when you implement authentication
     public class AdminDashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
