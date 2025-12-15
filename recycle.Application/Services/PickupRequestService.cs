@@ -196,7 +196,7 @@ public class PickupRequestService : IPickupRequestService
         {
             await _notificationService.SendToUser(userId, new NotificationDto
             {
-                Title = "Pickup Request Created ",
+                Title = "Pickup Request Created ✅",
                 Message = "Your pickup request has been successfully created and is waiting for admin approval.",
                 Type = NotificationTypes.RequestCreated,
                 RelatedEntityType = NotificationEntityTypes.PickupRequest,
@@ -215,7 +215,7 @@ public class PickupRequestService : IPickupRequestService
         {
             await _notificationService.SendToRole("Admin", new NotificationDto
             {
-                Title = "New Pickup Request ",
+                Title = "New Pickup Request 📦",
                 Message = $"A new pickup request is waiting for assignment. Total weight: {totalEstimatedWeight}kg, Amount: ${totalAmount:F2}",
                 Type = NotificationTypes.NewRequestPending,
                 RelatedEntityType = NotificationEntityTypes.PickupRequest,
@@ -360,7 +360,7 @@ public class PickupRequestService : IPickupRequestService
                     {
                         await _notificationService.SendToUser(request.UserId, new NotificationDto
                         {
-                            Title = "Pickup Request Approved",
+                            Title = "Pickup Request Approved ✅",
                             Message = "Great news! Your pickup request has been approved and is now pending driver assignment.",
                             Type = NotificationTypes.RequestCreated,
                             RelatedEntityType = NotificationEntityTypes.PickupRequest,
@@ -395,7 +395,7 @@ public class PickupRequestService : IPickupRequestService
 
                 await _notificationService.SendToUser(request.UserId, new NotificationDto
                 {
-                    Title = "Materials Picked Up",
+                    Title = "Materials Picked Up 📦",
                     Message = "Your recyclable materials have been picked up successfully. Processing payment...",
                     Type = NotificationTypes.PickupCompleted,
                     RelatedEntityType = NotificationEntityTypes.PickupRequest,
@@ -410,7 +410,7 @@ public class PickupRequestService : IPickupRequestService
                 // Notify user
                 await _notificationService.SendToUser(request.UserId, new NotificationDto
                 {
-                    Title = "Pickup Completed ",
+                    Title = "Pickup Completed 🎉",
                     Message = "Your pickup has been completed successfully. Payment will be processed soon.",
                     Type = NotificationTypes.PickupCompleted,
                     RelatedEntityType = NotificationEntityTypes.PickupRequest,

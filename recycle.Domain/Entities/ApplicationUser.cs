@@ -34,6 +34,7 @@ namespace recycle.Domain.Entities
         public bool SmsNotifications { get; set; } = false;
         public bool PickupReminders { get; set; } = true;
         public bool MarketingEmails { get; set; } = false;
+        public ICollection<UserAchievement>? Achievements { get; set; }
 
     }
 }

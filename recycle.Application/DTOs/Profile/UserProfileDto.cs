@@ -20,6 +20,8 @@ namespace recycle.Application.DTOs.Profile
 
         public Address? PrimaryAddress { get; set; }
         public ProfileStatsDto Stats { get; set; }
+        public EnvironmentalImpactDto EnvironmentalImpact { get; set; }
         public NotificationPreferencesDto NotificationPreferences { get; set; }
+        public List<AchievementDto> Achievements { get; internal set; }
     }
 }

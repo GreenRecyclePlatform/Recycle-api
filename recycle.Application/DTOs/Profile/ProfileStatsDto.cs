@@ -11,5 +11,6 @@ namespace recycle.Application.DTOs.Profile
         public int TotalRequests { get; set; }
         public int CompletedPickups { get; set; }
         public decimal TotalEarnings { get; set; }
+        public int ImpactScore { get; set; }
     }
 }

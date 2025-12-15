@@ -164,7 +164,36 @@ namespace recycle.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            
+            modelBuilder.Entity("recycle.Domain.Entities.Achievement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RequiredCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Achievement");
+                });
+
             modelBuilder.Entity("recycle.Domain.Entities.Address", b =>
                 {
                     b.Property<Guid>("Id")
@@ -963,7 +992,30 @@ namespace recycle.Infrastructure.Migrations
                     b.ToTable("SupplierOrders");
                 });
 
-           
+            modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AchievementId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UnlockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AchievementId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserAchievement");
+                });
+
             modelBuilder.Entity("recycle.Domain.Entities.recycle.Domain.Entities.SupplierOrderItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1222,7 +1274,25 @@ namespace recycle.Infrastructure.Migrations
 
                     b.Navigation("Supplier");
                 });
-          
+
+            modelBuilder.Entity("recycle.Domain.Entities.UserAchievement", b =>
+                {
+                    b.HasOne("recycle.Domain.Entities.Achievement", "Achievement")
+                        .WithMany()
+                        .HasForeignKey("AchievementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("recycle.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("Achievements")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+
+                    b.Navigation("User");
+                });
 
             modelBuilder.Entity("recycle.Domain.Entities.recycle.Domain.Entities.SupplierOrderItem", b =>
                 {
@@ -1245,6 +1315,7 @@ namespace recycle.Infrastructure.Migrations
 
             modelBuilder.Entity("recycle.Domain.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("Achievements");
 
                     b.Navigation("Addresses");
 
