@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace recycle.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class rebuiltDB : Migration
+    public partial class rebuiltdatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
