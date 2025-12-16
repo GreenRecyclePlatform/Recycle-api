@@ -21,5 +21,6 @@ namespace recycle.Application.Interfaces
         Task<bool> MarkTokenAsUsedAsync(Guid userId);
         Task<bool> UpdatePasswordAsync(Guid userId, string hashedPassword);
 
+    
     }
 }

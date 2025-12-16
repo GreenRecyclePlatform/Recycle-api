@@ -132,8 +132,9 @@ namespace Recycle.Api.Controllers
         public async Task<IActionResult> GetUserPayments(Guid userId)
         {
             var payments = await _paymentService.GetPaymentsAsync(null);
-            var userPayments = payments.Where(p => p.RecipientUserID == userId).ToList();
-
+            //var userPayments = payments.Where(p => p.RecipientUserID == userId).ToList();
+            // ✅ FIXED: Changed RecipientUserID to userId (new DTO property name)
+            var userPayments = payments.Where(p => p.userId == userId).ToList();
             return Ok(userPayments);
         }
 
@@ -148,18 +149,19 @@ namespace Recycle.Api.Controllers
             if (payment == null)
                 return NotFound("Payment not found");
 
-            if (string.IsNullOrEmpty(payment.TransactionReference))
+            //if (string.IsNullOrEmpty(payment.TransactionReference))
+            if (string.IsNullOrEmpty(payment.transactionId))
                 return BadRequest("No PayPal transaction reference found");
 
             try
             {
                 var paypalService = HttpContext.RequestServices.GetRequiredService<IPayPalPayoutService>();
-                var status = await paypalService.GetPayoutStatusAsync(payment.TransactionReference);
+                var status = await paypalService.GetPayoutStatusAsync(payment.transactionId);
 
                 return Ok(new
                 {
                     paymentId = id,
-                    paypalBatchId = payment.TransactionReference,
+                    paypalBatchId = payment.transactionId,
                     paypalStatus = status
                 });
             }

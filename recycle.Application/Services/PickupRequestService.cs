@@ -1,9 +1,13 @@
-﻿using recycle.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using recycle.Application.DTOs;
 using recycle.Application.DTOs.PickupRequest;
 using recycle.Application.DTOs.RequestMaterials;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
+using recycle.Domain.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
+using static System.Collections.Specialized.BitVector32;
 
 namespace recycle.Application.Services;
 
@@ -113,6 +117,23 @@ public class PickupRequestService : IPickupRequestService
 
     public async Task<PickupRequestResponseDto> CreateAsync(Guid userId, CreatePickupRequestDto createDto)
     {
+
+        // ✅ ADD THIS SECTION AT THE VERY BEGINNING (BEFORE address validation)
+        // ========================================================================
+        // Validate PayPal email
+        if (string.IsNullOrWhiteSpace(createDto.PayPalEmail))
+        {
+            throw new InvalidOperationException("PayPal email is required for payment processing.");
+        }
+
+        if (!IsValidEmail(createDto.PayPalEmail))
+        {
+            throw new InvalidOperationException("Invalid PayPal email format.");
+        }
+        // ========================================================================
+
+
+
         // Validate preferred pickup date
         if (createDto.PreferredPickupDate < DateTime.UtcNow.Date)
         {
@@ -130,6 +151,22 @@ public class PickupRequestService : IPickupRequestService
         {
             throw new InvalidOperationException("You can only use your own addresses.");
         }
+
+
+        // ✅ ADD THIS SECTION HERE(AFTER address validation, BEFORE materials)
+    // ========================================================================
+    // Get user and update PayPal email
+    var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        user.PayPalEmail = createDto.PayPalEmail;
+        await _unitOfWork.Users.UpdateAsync(user);
+        // ========================================================================
+
+
 
         // Validate materials exist
         if (createDto.Materials == null || !createDto.Materials.Any())
@@ -300,13 +337,50 @@ public class PickupRequestService : IPickupRequestService
         return result;
     }
 
-    public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
+    //public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
+    //{
+    //    var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
+
+    //    if (existingRequest == null)
+    //    {
+    //        return false;
+    //    }
+
+    //    // Validate status transition
+    //    if (!CanChangeStatus(existingRequest.Status, newStatus))
+    //    {
+    //        throw new InvalidOperationException($"Invalid status transition from '{existingRequest.Status}' to '{newStatus}'.");
+    //    }
+
+    //    var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
+    //    await _unitOfWork.SaveChangesAsync();
+
+    //    return result;
+    //}
+
+    public bool CanChangeStatus(string currentStatus, string newStatus)
     {
-        Console.WriteLine($"🔄 UpdateStatusAsync called - RequestId: {requestId}, NewStatus: {newStatus}");
+        // Define valid status transitions
+        var validTransitions = new Dictionary<string, List<string>>
+        {
+            { "Pending", new List<string> { "Assigned", "Cancelled" } },
+            { "Waiting", new List<string> { "Pending", "Cancelled" } },
+            { "Assigned", new List<string> { "PickedUp", "Cancelled" } },
+            { "PickedUp", new List<string> { "Completed" } },
+            { "Completed", new List<string>() }, // Terminal state
+            { "Cancelled", new List<string>() }  // Terminal state
+        };
 
-        // Get request with full details for notifications
-        var existingRequest = await _pickupRequestRepository.GetByIdWithDetailsAsync(requestId);
+        return validTransitions.ContainsKey(currentStatus) &&
+               validTransitions[currentStatus].Contains(newStatus);
+    }
 
+
+    // Add this method to your PickupRequestService.cs
+
+public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
+    {
+        var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
         if (existingRequest == null)
         {
             Console.WriteLine($"❌ Request not found: {requestId}");
@@ -324,150 +398,103 @@ public class PickupRequestService : IPickupRequestService
 
         // Update status in database
         var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
+
+        // ✅ NEW: Automatically create payment request when pickup is completed
+        if (newStatus == "Completed" && result)
+        {
+            await CreateAutomaticPaymentRequest(existingRequest);
+        }
+
         await _unitOfWork.SaveChangesAsync();
-
-        Console.WriteLine($"💾 Status updated in database");
-
-        // 🔔 Send notifications based on status change
-        try
-        {
-            await SendStatusChangeNotifications(existingRequest, oldStatus, newStatus);
-            Console.WriteLine($"✅ Notifications sent for status change");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Failed to send notifications: {ex.Message}");
-        }
-
         return result;
     }
 
-    /// <summary>
-    /// Send appropriate notifications based on status change
-    /// </summary>
-    private async Task SendStatusChangeNotifications(PickupRequest request, string oldStatus, string newStatus)
+    // ✅ NEW METHOD: Create payment request automatically
+    private async Task CreateAutomaticPaymentRequest(PickupRequest pickupRequest)
     {
-        Console.WriteLine($"📤 SendStatusChangeNotifications - Old: {oldStatus}, New: {newStatus}");
-
-        switch (newStatus)
+        try
         {
-            case "Pending": // ✅ Admin approved the request (from Waiting)
-                if (oldStatus == "Waiting")
-                {
-                    Console.WriteLine($"📤 Sending approval notification to user {request.UserId}");
+            // Get user with PayPal email
+            var user = await _unitOfWork.Users.GetByIdAsync(pickupRequest.UserId);
+            //if (user == null)
+            //{
+            //    _logger.LogError("User {UserId} not found for pickup request {RequestId}",
+            //        pickupRequest.UserId, pickupRequest.RequestId);
+            //    return;
+            //}
 
-                    try
-                    {
-                        await _notificationService.SendToUser(request.UserId, new NotificationDto
-                        {
-                            Title = "Pickup Request Approved",
-                            Message = "Great news! Your pickup request has been approved and is now pending driver assignment.",
-                            Type = NotificationTypes.RequestCreated,
-                            RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                            RelatedEntityId = request.RequestId,
-                            Priority = "High"
-                        });
-                        Console.WriteLine($"✅ Approval notification sent to user");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"❌ Failed to send approval notification: {ex.Message}");
-                    }
-                }
-                break;
+            // Check if payment already exists for this request
+            var existingPayment = await _unitOfWork.Payments.GetQueryable()
+                .FirstOrDefaultAsync(p => p.RequestId == pickupRequest.RequestId);
 
-            case "Assigned": // Driver assigned
-                Console.WriteLine($"📤 Sending driver assigned notification");
+            //if (existingPayment != null)
+            //{
+            //    _logger.LogInformation("Payment already exists for request {RequestId}",
+            //        pickupRequest.RequestId);
+            //    return;
+            //}
 
-                await _notificationService.SendToUser(request.UserId, new NotificationDto
-                {
-                    Title = "Driver Assigned 🚗",
-                    Message = "A driver has been assigned to your pickup request. They will contact you soon.",
-                    Type = NotificationTypes.DriverAssigned,
-                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                    RelatedEntityId = request.RequestId,
-                    Priority = "High"
-                });
-                break;
+            // Get PayPal email from user (you added this field to ApplicationUser)
+            var paypalEmail = user.PayPalEmail ?? user.Email;
 
-            case "PickedUp": // Driver picked up materials
-                Console.WriteLine($"📤 Sending pickup notification");
+            //if (string.IsNullOrWhiteSpace(paypalEmail))
+            //{
+            //    _logger.LogWarning("No PayPal email found for user {UserId}", user.Id);
+            //    // You might want to notify admin here
+            //    return;
+            //}
 
-                await _notificationService.SendToUser(request.UserId, new NotificationDto
-                {
-                    Title = "Materials Picked Up",
-                    Message = "Your recyclable materials have been picked up successfully. Processing payment...",
-                    Type = NotificationTypes.PickupCompleted,
-                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                    RelatedEntityId = request.RequestId,
-                    Priority = "Normal"
-                });
-                break;
+            // Create payment record
+            var payment = new Payment
+            {
+                ID = Guid.NewGuid(),
+                RequestId = pickupRequest.RequestId,
+                RecipientUserID = pickupRequest.UserId,
+                RecipientType = "User",
+                Amount = pickupRequest.TotalAmount, // Use actual calculated amount
+                PaymentMethod = paypalEmail, // Store PayPal email here
+                PaymentStatus = PaymentStatuses.Pending,
+                CreatedAt = DateTime.UtcNow,
+                AdminNotes = $"Auto-generated payment for completed pickup request"
+            };
 
-            case "Completed": // Pickup completed and verified
-                Console.WriteLine($"📤 Sending completion notifications");
+            await _unitOfWork.Payments.AddAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
 
-                // Notify user
-                await _notificationService.SendToUser(request.UserId, new NotificationDto
-                {
-                    Title = "Pickup Completed",
-                    Message = "Your pickup has been completed successfully. Payment will be processed soon.",
-                    Type = NotificationTypes.PickupCompleted,
-                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                    RelatedEntityId = request.RequestId,
-                    Priority = "Normal"
-                });
-
-                // Notify admin
-                await _notificationService.SendToRole("Admin", new NotificationDto
-                {
-                    Title = "Pickup Ready for Review",
-                    Message = $"A pickup has been completed and is ready for review. Amount: ${request.TotalAmount:F2}",
-                    Type = NotificationTypes.PickupReadyForReview,
-                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                    RelatedEntityId = request.RequestId,
-                    Priority = "Normal"
-                });
-                break;
-
-            case "Cancelled": // Request cancelled
-                Console.WriteLine($"📤 Sending cancellation notification");
-
-                await _notificationService.SendToUser(request.UserId, new NotificationDto
-                {
-                    Title = "Request Cancelled",
-                    Message = oldStatus == "Waiting"
-                        ? "Your pickup request has been rejected by admin."
-                        : "Your pickup request has been cancelled.",
-                    Type = NotificationTypes.RequestCancelled,
-                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
-                    RelatedEntityId = request.RequestId,
-                    Priority = "Normal"
-                });
-                break;
-
-            default:
-                Console.WriteLine($"⚠️ No notification configured for status: {newStatus}");
-                break;
+            //_logger.LogInformation(
+            //    "Payment {PaymentId} created automatically for completed pickup request {RequestId}, Amount: {Amount}",
+            //    payment.ID, pickupRequest.RequestId, payment.Amount);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message.ToString());
+            //_logger.LogError(ex,
+            //    "Error creating automatic payment for pickup request {RequestId}",
+            //    pickupRequest.RequestId);
+            // Don't throw - we don't want to fail the status update if payment creation fails
         }
     }
 
-    public bool CanChangeStatus(string currentStatus, string newStatus)
-    {
-        // Define valid status transitions
-        var validTransitions = new Dictionary<string, List<string>>
-        {
-            { "Waiting", new List<string> { "Pending", "Cancelled" } },
-            { "Pending", new List<string> { "Assigned", "Cancelled" } },
-            { "Assigned", new List<string> { "PickedUp", "Pending", "Cancelled" } },
-            { "PickedUp", new List<string> { "Completed" } },
-            { "Completed", new List<string>() },
-            { "Cancelled", new List<string>() }
-        };
 
-        return validTransitions.ContainsKey(currentStatus) &&
-               validTransitions[currentStatus].Contains(newStatus);
+    // ✅ ADD THIS METHOD AT THE END OF THE CLASS (after all methods)
+    // ========================================================================
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
+    // ========================================================================
+
+
 
     // Manual mapping method
     private PickupRequestResponseDto MapToResponseDto(PickupRequest request)

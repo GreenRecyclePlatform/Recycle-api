@@ -93,6 +93,115 @@ namespace recycle.Application.Services
         /// <summary>
         /// Update payment status - When admin approves, money is sent via PayPal
         /// </summary>
+        /* public async Task<bool> UpdatePaymentStatusAsync(
+         //    Guid paymentId,
+         //    string newStatus,
+         //    Guid adminId,
+         //    string? adminNotes = null,
+         //    string? failureReason = null)
+         //{
+         //    var payment = await _unitOfWork.Payments.GetByIdAsync(paymentId);
+         //    if (payment == null)
+         //    {
+         //        _logger.LogWarning("Payment {PaymentId} not found", paymentId);
+         //        return false;
+         //    }
+
+         //    // Get user email for PayPal
+         //    var user = await _unitOfWork.Users.GetByIdAsync(payment.RecipientUserID);
+         //    if (user == null)
+         //    {
+         //        _logger.LogError("Recipient user {UserId} not found for payment {PaymentId}",
+         //            payment.RecipientUserID, paymentId);
+         //        return false;
+         //    }
+
+         //    // Validate user has email
+         //    if (string.IsNullOrWhiteSpace(user.Email))
+         //    {
+         //        _logger.LogError("User {UserId} has no email address for PayPal payout", user.Id);
+         //        payment.PaymentStatus = PaymentStatuses.Failed;
+         //        payment.FailureReason = "User email address is required for PayPal payouts";
+         //        payment.FailedAt = DateTime.UtcNow;
+         //        _unitOfWork.Payments.Update(payment);
+         //        await _unitOfWork.SaveChangesAsync();
+         //        return false;
+         //    }
+
+         //    // Update basic fields
+         //    payment.PaymentStatus = newStatus;
+         //    if (adminId != Guid.Empty)
+         //        payment.ApprovedByAdminID = adminId;
+         //    if (!string.IsNullOrWhiteSpace(adminNotes))
+         //        payment.AdminNotes = adminNotes;
+
+         //    // Handle status-specific logic
+         //    //if (newStatus == PaymentStatuses.Approved)
+         //    //{
+         //    //    payment.ApprovedAt = DateTime.UtcNow;
+
+         //    //    try
+         //    //    {
+         //    //        _logger.LogInformation("Sending PayPal payout for payment {PaymentId} to {Email}",
+         //    //            paymentId, user.Email);
+
+         //    //        // Send money via PayPal
+         //    //        var payoutResult = await _payPalService.SendPayoutAsync(
+         //    //            recipientEmail: user.Email!,
+         //    //            amount: payment.Amount,
+         //    //            currency: "EUR", // Change to "EGP" if PayPal supports it
+         //    //            note: $"Payment for recyclable materials - Request #{payment.RequestId}"
+         //    //        );
+
+         //    //        if (payoutResult.Success)
+         //    //        {
+         //    //            // PayPal payout succeeded
+         //    //            payment.TransactionReference = payoutResult.PayoutBatchId;
+         //    //            payment.PaymentStatus = PaymentStatuses.Paid;
+         //    //            payment.PaidAt = DateTime.UtcNow;
+
+         //    //            _logger.LogInformation("PayPal payout successful. BatchId: {BatchId}",
+         //    //                payoutResult.PayoutBatchId);
+         //    //        }
+         //    //        else
+         //    //        {
+         //    //            // PayPal payout failed
+         //    //            payment.PaymentStatus = PaymentStatuses.Failed;
+         //    //            payment.FailureReason = payoutResult.Message;
+         //    //            payment.FailedAt = DateTime.UtcNow;
+
+         //    //            _logger.LogError("PayPal payout failed: {Error}", payoutResult.Message);
+         //    //        }
+         //    //    }
+         //    //    catch (Exception ex)
+         //    //    {
+         //    //        _logger.LogError(ex, "Error sending PayPal payout for payment {PaymentId}", paymentId);
+
+         //    //        payment.PaymentStatus = PaymentStatuses.Failed;
+         //    //        payment.FailureReason = $"PayPal error: {ex.Message}";
+         //    //        payment.FailedAt = DateTime.UtcNow;
+         //    //    }
+         //    //}
+
+         //    else if (newStatus == PaymentStatuses.Paid)
+         //    {
+         //        payment.PaidAt = DateTime.UtcNow;
+         //    }
+         //    else if (newStatus == PaymentStatuses.Failed)
+         //    {
+         //        payment.FailedAt = DateTime.UtcNow;
+         //        payment.FailureReason = failureReason;
+         //    }
+
+         //    // FIXED: Use Update() instead of UpdateAsync()
+         //    _unitOfWork.Payments.Update(payment);
+         //    await _unitOfWork.SaveChangesAsync();
+
+         //    return true;
+         //}*/
+        /// <summary>
+        /// Update payment status - When admin approves, money is sent via PayPal
+        /// </summary>
         public async Task<bool> UpdatePaymentStatusAsync(
             Guid paymentId,
             string newStatus,
@@ -116,12 +225,12 @@ namespace recycle.Application.Services
                 return false;
             }
 
-            // Validate user has email
-            if (string.IsNullOrWhiteSpace(user.Email))
+            // ✅ MODIFIED: Validate PayPal email instead of regular email
+            if (string.IsNullOrWhiteSpace(user.PayPalEmail))
             {
-                _logger.LogError("User {UserId} has no email address for PayPal payout", user.Id);
+                _logger.LogError("User {UserId} has no PayPal email address configured", user.Id);
                 payment.PaymentStatus = PaymentStatuses.Failed;
-                payment.FailureReason = "User email address is required for PayPal payouts";
+                payment.FailureReason = "User PayPal email address is required for PayPal payouts";
                 payment.FailedAt = DateTime.UtcNow;
                 _unitOfWork.Payments.Update(payment);
                 await _unitOfWork.SaveChangesAsync();
@@ -132,6 +241,7 @@ namespace recycle.Application.Services
             payment.PaymentStatus = newStatus;
             if (adminId != Guid.Empty)
                 payment.ApprovedByAdminID = adminId;
+
             if (!string.IsNullOrWhiteSpace(adminNotes))
                 payment.AdminNotes = adminNotes;
 
@@ -142,12 +252,13 @@ namespace recycle.Application.Services
 
                 try
                 {
-                    _logger.LogInformation("Sending PayPal payout for payment {PaymentId} to {Email}",
-                        paymentId, user.Email);
+                    // ✅ MODIFIED: Log with PayPal email
+                    _logger.LogInformation("Sending PayPal payout for payment {PaymentId} to {PayPalEmail}",
+                        paymentId, user.PayPalEmail);
 
-                    // Send money via PayPal
+                    // ✅ MODIFIED: Use PayPalEmail instead of Email
                     var payoutResult = await _payPalService.SendPayoutAsync(
-                        recipientEmail: user.Email!,
+                        recipientEmail: user.PayPalEmail,  // ✅ Changed from user.Email to user.PayPalEmail
                         amount: payment.Amount,
                         currency: "EUR",
                         note: $"Payment for recyclable materials - Request #{payment.RequestId}"
@@ -270,6 +381,7 @@ namespace recycle.Application.Services
             return true;
         }
 
+
         /// <summary>
         /// Request a payout for a completed pickup (creates payment record)
         /// </summary>
@@ -291,10 +403,12 @@ namespace recycle.Application.Services
             }
 
             // Validate email exists (required for PayPal)
-            if (string.IsNullOrWhiteSpace(user.Email))
+            if (string.IsNullOrWhiteSpace(user.PayPalEmail))
             {
                 throw new InvalidOperationException("User must have a valid email for PayPal payouts");
             }
+
+            //==========================================
 
             // Create payment record
             var createDto = new CreatePaymentDto
@@ -473,21 +587,51 @@ namespace recycle.Application.Services
 
             return new PaymentDto
             {
-                ID = payment.ID,
-                RequestId = payment.RequestId,
-                RecipientUserID = payment.RecipientUserID,
-                RecipientType = payment.RecipientType,
-                Amount = payment.Amount,
-                PaymentMethod = payment.PaymentMethod,
-                TransactionReference = payment.TransactionReference,
-                PaymentStatus = payment.PaymentStatus,
-                ApprovedByAdminID = payment.ApprovedByAdminID,
-                ApprovedAt = payment.ApprovedAt,
-                PaidAt = payment.PaidAt,
-                FailedAt = payment.FailedAt,
-                CreatedAt = payment.CreatedAt,
-                AdminNotes = payment.AdminNotes,
-                FailureReason = payment.FailureReason
+                // ✅ Map backend ID to frontend paymentId
+                paymentId = payment.ID,
+
+                // ✅ Map backend RecipientUserID to frontend userId
+                userId = payment.RecipientUserID,
+
+                // Get user name if available
+                userName = payment.RecipientUser != null
+            ? $"{payment.RecipientUser.FirstName} {payment.RecipientUser.LastName}"
+            : "Unknown",
+
+                // ✅ Map backend RequestId to frontend pickupRequestId
+                pickupRequestId = payment.RequestId,
+
+                amount = payment.Amount,
+
+                // ✅ Set type based on RecipientType or default to "Earning"
+                type = "Earning",  // You can make this dynamic if needed
+
+                // ✅ Map backend PaymentStatus to frontend status
+                status = payment.PaymentStatus,
+
+                // ✅ Map backend PaymentMethod to frontend paymentMethod
+                paymentMethod = payment.PaymentMethod,
+
+                // ✅ Map backend TransactionReference to frontend transactionId
+                transactionId = payment.TransactionReference,
+
+                // Build description
+                description = $"Payment for pickup request {payment.RequestId}",
+
+                createdAt = payment.CreatedAt,
+
+                // ✅ Map backend ApprovedAt to frontend processedAt
+                processedAt = payment.ApprovedAt != default(DateTime)
+            ? payment.ApprovedAt
+            : null,
+
+                // ✅ Map backend PaidAt to frontend completedAt
+                completedAt = payment.PaidAt != default(DateTime)
+            ? payment.PaidAt
+            : null,
+
+                // ✅ Map backend FailureReason to frontend failureReason
+                failureReason = payment.FailureReason
             };
         }
 
