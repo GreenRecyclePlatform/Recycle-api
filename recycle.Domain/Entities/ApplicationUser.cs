@@ -14,6 +14,10 @@ namespace recycle.Domain.Entities
         public DateTime DateOfBirth { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // ✅ ADD THIS LINE
 
+
+        // NEW: PayPal email for payments
+        public string? PayPalEmail { get; set; }
+
         public string? StripeAccountId { get; set; }
         public string? CompanyName { get; set; }
 

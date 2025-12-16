@@ -17,11 +17,12 @@ namespace recycle.Application.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUnitOfWork _unitOfWork;
-
-        public ProfileService(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork)
+        private readonly IUserRepository _userRepository;
+        public ProfileService(UserManager<ApplicationUser> userManager, IUserRepository userRepository , IUnitOfWork unitOfWork)
         {
             _userManager = userManager;
             _unitOfWork = unitOfWork;
+            _userRepository = userRepository;
         }
 
         public async Task<UserProfileDto> GetProfileAsync(Guid userId)
@@ -65,6 +66,7 @@ namespace recycle.Application.Services
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
+                PayPalEmail = user.PayPalEmail, // ✅ ADD THIS
                 DateOfBirth = user.DateOfBirth,
                 CreatedAt = user.CreatedAt,
                 PrimaryAddress = primaryAddress != null ? new Address
@@ -243,5 +245,39 @@ namespace recycle.Application.Services
 
             return dto;
         }
+
+
+
+        //========================================================
+        // Add this method to your ProfileService.cs
+
+        public async Task<bool> UpdatePayPalEmailAsync(Guid userId, string payPalEmail)
+        {
+            try
+            {
+                // Get user from repository
+                var user = await _userRepository.GetByIdAsync(userId);
+
+                if (user == null)
+                {
+                    return false;
+                }
+
+                // Update PayPal email
+                user.PayPalEmail = payPalEmail;
+
+                // Use the inherited UpdateAsync from IRepository<ApplicationUser>
+                // Since IUserRepository inherits from IRepository<ApplicationUser>,
+                // you can call UpdateAsync directly on _userRepository
+                await _userRepository.UpdateAsync(user);
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
     }
 }

@@ -6,6 +6,10 @@ public class CreatePickupRequestDto
     public DateTime PreferredPickupDate { get; set; }
     public string? Notes { get; set; }
     public List<RequestMaterialItemDto> Materials { get; set; } = new();
+
+    // NEW: PayPal email for payment processing
+    public string PayPalEmail { get; set; } = string.Empty;
+
 }
 
 public class RequestMaterialItemDto

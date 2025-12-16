@@ -14,6 +14,8 @@ namespace recycle.Application.Interfaces
         Task<UserProfileDto> UpdateProfileAsync(Guid userId, UpdateProfileDto dto);
         Task<Address> UpdateAddressAsync(Guid userId, UpdateAddressDto dto);
         Task<NotificationPreferencesDto> UpdateNotificationPreferencesAsync(Guid userId, NotificationPreferencesDto dto);
+        Task<bool> UpdatePayPalEmailAsync(Guid userId, string payPalEmail);//added new 
+
 
     }
 }

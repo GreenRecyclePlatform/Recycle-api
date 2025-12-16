@@ -1,10 +1,13 @@
 ﻿using Azure;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application;
 using recycle.Application.DTOs;
+using recycle.Application.DTOs.Profile;
 using recycle.Application.Interfaces;
 using recycle.Application.Services;
 using recycle.Domain.Entities;
@@ -23,7 +26,7 @@ namespace recycle.API.Controllers
         private readonly IValidator<RegisterationRequest> _registerValidator;
         private readonly IValidator<LoginRequest> _loginValidator;
         private readonly IEmailService _emailService;
-       
+
 
         public UsersController(IUserRepository userRepository, IAuthService authService, ITokenService tokenService, IValidator<RegisterationRequest> registerValidator,
             IValidator<LoginRequest> loginValidator, IEmailService emailService)
@@ -40,7 +43,7 @@ namespace recycle.API.Controllers
         [HttpPost("email")]
         public async Task<IActionResult> sendEmail()
         {
-            await _emailService.SendEmail("mohammed.mechengineer.70@gmail.com", "trysendingemail","emailworking");
+            await _emailService.SendEmail("mohammed.mechengineer.70@gmail.com", "trysendingemail", "emailworking");
             return Ok("work correct");
 
         }
@@ -72,10 +75,10 @@ namespace recycle.API.Controllers
         [HttpPost("reset-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ResetPassword( ResetPasswordRequest resetRequest )
+        public async Task<IActionResult> ResetPassword(ResetPasswordRequest resetRequest)
         {
-           
-            var result = await _authService.ResetPasswordAsync(resetRequest.Token,resetRequest.newPassword);
+
+            var result = await _authService.ResetPasswordAsync(resetRequest.Token, resetRequest.newPassword);
             if (!result)
             {
                 return BadRequest("Error while resetting password. The token may be invalid or expired.");
@@ -103,7 +106,7 @@ namespace recycle.API.Controllers
             }
 
 
-           
+
             var user = await _authService.Register(model);
             if (user == null)
             {
@@ -112,7 +115,7 @@ namespace recycle.API.Controllers
             }
 
 
-            return Ok(new {message = $"Welcome {model.FirstName}", userId = user.Id.ToString() });
+            return Ok(new { message = $"Welcome {model.FirstName}", userId = user.Id.ToString() });
         }
 
 
@@ -133,7 +136,7 @@ namespace recycle.API.Controllers
 
             if (Tokens == null || string.IsNullOrEmpty(Tokens.AccessToken))
             {
-                if(!string.IsNullOrEmpty(model.Email))
+                if (!string.IsNullOrEmpty(model.Email))
                 {
                     return BadRequest("Email or password is incorrect");
                 }
@@ -146,7 +149,7 @@ namespace recycle.API.Controllers
 
             SetRefreshTokenInCookie(Tokens.RefreshToken);
 
-            return Ok(new loginResponse{ AccessToken = Tokens.AccessToken });
+            return Ok(new loginResponse { AccessToken = Tokens.AccessToken });
         }
 
         [HttpPost("Refresh")]
@@ -157,7 +160,7 @@ namespace recycle.API.Controllers
             if (ModelState.IsValid)
             {
                 var refreshToken = Request.Cookies["refreshToken"];
-               
+
                 var tokens = await _tokenService.RefreshAccessToken(refreshToken);
 
                 if (tokens == null || string.IsNullOrEmpty(tokens.AccessToken))
@@ -182,7 +185,7 @@ namespace recycle.API.Controllers
             if (ModelState.IsValid)
             {
                 var refreshToken = Request.Cookies["refreshToken"];
-               
+
                 var result = await _tokenService.RevokeRefreshToken(refreshToken);
                 if (!result)
                 {
@@ -198,6 +201,9 @@ namespace recycle.API.Controllers
             }
         }
 
+
+        //==================================================================================================================
+  
         private void SetRefreshTokenInCookie(string refreshToken)
         {
             var cookieOptions = new CookieOptions
@@ -221,7 +227,12 @@ namespace recycle.API.Controllers
             Response.Cookies.Append("refreshToken", "", cookieOptions);
         }
 
+
+        
+
+
     }
+
     public class ResetPasswordRequest
     {
         public string Token { get; set; }

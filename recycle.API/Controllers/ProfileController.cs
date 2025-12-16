@@ -94,6 +94,33 @@ namespace recycle.API.Controllers
             }
         }
 
+
+
+        /// <summary>
+        /// PUT: api/Profile/paypal-email
+        /// </summary>
+        [HttpPut("paypal-email")]
+        public async Task<IActionResult> UpdatePayPalEmail([FromBody] UpdatePayPalEmailDto dto)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var success = await _profileService.UpdatePayPalEmailAsync(userId, dto.PayPalEmail);
+
+                if (!success)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                return Ok(new { message = "PayPal email updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
         private Guid GetCurrentUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

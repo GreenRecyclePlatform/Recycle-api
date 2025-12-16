@@ -17,7 +17,7 @@ namespace recycle.Application.DTOs.Profile
         public string PhoneNumber { get; set; }
         public DateTime DateOfBirth { get; set; }
         public DateTime CreatedAt { get; set; }
-
+        public string? PayPalEmail { get; set; } //  Added THIS
         public Address? PrimaryAddress { get; set; }
         public ProfileStatsDto Stats { get; set; }
         public EnvironmentalImpactDto EnvironmentalImpact { get; set; }

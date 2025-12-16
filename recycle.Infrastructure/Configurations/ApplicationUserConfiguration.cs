@@ -22,7 +22,10 @@ namespace recycle.Infrastructure.Configurations
             builder.Property(u => u.DateOfBirth)
                 .IsRequired()
                 .HasColumnType("date");
-            
+            //Update ApplicationUserConfiguration
+            builder.Property(u => u.PayPalEmail)
+            .HasMaxLength(256);
+
         }
     }
 }

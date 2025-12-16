@@ -18,18 +18,6 @@ public class PickupRequestConfiguration : IEntityTypeConfiguration<PickupRequest
         builder.Property(pr => pr.AddressId)
             .IsRequired();
 
-        //builder.Property(pr => pr.PickupAddress)
-            //.IsRequired()
-            //.HasMaxLength(500);
-
-        //builder.Property(pr => pr.City)
-            //.IsRequired()
-            //.HasMaxLength(100);
-
-        //builder.Property(pr => pr.PostalCode)
-            //.IsRequired()
-            //.HasMaxLength(20);
-
         builder.Property(pr => pr.PreferredPickupDate)
             .IsRequired();
 

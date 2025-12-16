@@ -1,9 +1,13 @@
-﻿using recycle.Application.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using recycle.Application.DTOs;
 using recycle.Application.DTOs.PickupRequest;
 using recycle.Application.DTOs.RequestMaterials;
 using recycle.Application.Interfaces;
 using recycle.Application.Interfaces.IRepository;
 using recycle.Domain.Entities;
+using recycle.Domain.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
+using static System.Collections.Specialized.BitVector32;
 
 namespace recycle.Application.Services;
 
@@ -110,6 +114,23 @@ public class PickupRequestService : IPickupRequestService
 
     public async Task<PickupRequestResponseDto> CreateAsync(Guid userId, CreatePickupRequestDto createDto)
     {
+
+        // ✅ ADD THIS SECTION AT THE VERY BEGINNING (BEFORE address validation)
+        // ========================================================================
+        // Validate PayPal email
+        if (string.IsNullOrWhiteSpace(createDto.PayPalEmail))
+        {
+            throw new InvalidOperationException("PayPal email is required for payment processing.");
+        }
+
+        if (!IsValidEmail(createDto.PayPalEmail))
+        {
+            throw new InvalidOperationException("Invalid PayPal email format.");
+        }
+        // ========================================================================
+
+
+
         // Validate preferred pickup date
         if (createDto.PreferredPickupDate < DateTime.UtcNow.Date)
         {
@@ -127,6 +148,22 @@ public class PickupRequestService : IPickupRequestService
         {
             throw new InvalidOperationException("You can only use your own addresses.");
         }
+
+
+        // ✅ ADD THIS SECTION HERE(AFTER address validation, BEFORE materials)
+    // ========================================================================
+    // Get user and update PayPal email
+    var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        user.PayPalEmail = createDto.PayPalEmail;
+        await _unitOfWork.Users.UpdateAsync(user);
+        // ========================================================================
+
+
 
         // Validate materials exist
         if (createDto.Materials == null || !createDto.Materials.Any())
@@ -257,26 +294,26 @@ public class PickupRequestService : IPickupRequestService
         return result;
     }
 
-    public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
-    {
-        var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
+    //public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
+    //{
+    //    var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
 
-        if (existingRequest == null)
-        {
-            return false;
-        }
+    //    if (existingRequest == null)
+    //    {
+    //        return false;
+    //    }
 
-        // Validate status transition
-        if (!CanChangeStatus(existingRequest.Status, newStatus))
-        {
-            throw new InvalidOperationException($"Invalid status transition from '{existingRequest.Status}' to '{newStatus}'.");
-        }
+    //    // Validate status transition
+    //    if (!CanChangeStatus(existingRequest.Status, newStatus))
+    //    {
+    //        throw new InvalidOperationException($"Invalid status transition from '{existingRequest.Status}' to '{newStatus}'.");
+    //    }
 
-        var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
-        await _unitOfWork.SaveChangesAsync();
+    //    var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
+    //    await _unitOfWork.SaveChangesAsync();
 
-        return result;
-    }
+    //    return result;
+    //}
 
     public bool CanChangeStatus(string currentStatus, string newStatus)
     {
@@ -294,6 +331,122 @@ public class PickupRequestService : IPickupRequestService
         return validTransitions.ContainsKey(currentStatus) &&
                validTransitions[currentStatus].Contains(newStatus);
     }
+
+
+    // Add this method to your PickupRequestService.cs
+
+public async Task<bool> UpdateStatusAsync(Guid requestId, string newStatus)
+    {
+        var existingRequest = await _pickupRequestRepository.GetByIdAsync(requestId);
+        if (existingRequest == null)
+        {
+            return false;
+        }
+
+        // Validate status transition
+        if (!CanChangeStatus(existingRequest.Status, newStatus))
+        {
+            throw new InvalidOperationException($"Invalid status transition from '{existingRequest.Status}' to '{newStatus}'.");
+        }
+
+        var result = await _pickupRequestRepository.UpdateStatusAsync(requestId, newStatus);
+
+        // ✅ NEW: Automatically create payment request when pickup is completed
+        if (newStatus == "Completed" && result)
+        {
+            await CreateAutomaticPaymentRequest(existingRequest);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        return result;
+    }
+
+    // ✅ NEW METHOD: Create payment request automatically
+    private async Task CreateAutomaticPaymentRequest(PickupRequest pickupRequest)
+    {
+        try
+        {
+            // Get user with PayPal email
+            var user = await _unitOfWork.Users.GetByIdAsync(pickupRequest.UserId);
+            //if (user == null)
+            //{
+            //    _logger.LogError("User {UserId} not found for pickup request {RequestId}",
+            //        pickupRequest.UserId, pickupRequest.RequestId);
+            //    return;
+            //}
+
+            // Check if payment already exists for this request
+            var existingPayment = await _unitOfWork.Payments.GetQueryable()
+                .FirstOrDefaultAsync(p => p.RequestId == pickupRequest.RequestId);
+
+            //if (existingPayment != null)
+            //{
+            //    _logger.LogInformation("Payment already exists for request {RequestId}",
+            //        pickupRequest.RequestId);
+            //    return;
+            //}
+
+            // Get PayPal email from user (you added this field to ApplicationUser)
+            var paypalEmail = user.PayPalEmail ?? user.Email;
+
+            //if (string.IsNullOrWhiteSpace(paypalEmail))
+            //{
+            //    _logger.LogWarning("No PayPal email found for user {UserId}", user.Id);
+            //    // You might want to notify admin here
+            //    return;
+            //}
+
+            // Create payment record
+            var payment = new Payment
+            {
+                ID = Guid.NewGuid(),
+                RequestId = pickupRequest.RequestId,
+                RecipientUserID = pickupRequest.UserId,
+                RecipientType = "User",
+                Amount = pickupRequest.TotalAmount, // Use actual calculated amount
+                PaymentMethod = paypalEmail, // Store PayPal email here
+                PaymentStatus = PaymentStatuses.Pending,
+                CreatedAt = DateTime.UtcNow,
+                AdminNotes = $"Auto-generated payment for completed pickup request"
+            };
+
+            await _unitOfWork.Payments.AddAsync(payment);
+            await _unitOfWork.SaveChangesAsync();
+
+            //_logger.LogInformation(
+            //    "Payment {PaymentId} created automatically for completed pickup request {RequestId}, Amount: {Amount}",
+            //    payment.ID, pickupRequest.RequestId, payment.Amount);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message.ToString());
+            //_logger.LogError(ex,
+            //    "Error creating automatic payment for pickup request {RequestId}",
+            //    pickupRequest.RequestId);
+            // Don't throw - we don't want to fail the status update if payment creation fails
+        }
+    }
+
+
+    // ✅ ADD THIS METHOD AT THE END OF THE CLASS (after all methods)
+    // ========================================================================
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    // ========================================================================
+
+
 
     // Manual mapping method
     private PickupRequestResponseDto MapToResponseDto(PickupRequest request)
