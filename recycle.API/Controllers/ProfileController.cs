@@ -150,8 +150,16 @@ namespace recycle.API.Controllers
             }
         }
 
-
         private Guid GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new UnauthorizedAccessException("User not authenticated");
+
+            return Guid.Parse(userIdClaim);
+        }
+
         /// <summary>
         /// ✅ Helper method to extract user ID from JWT token claims
         /// Works with your existing token structure
