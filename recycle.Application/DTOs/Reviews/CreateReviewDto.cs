@@ -12,8 +12,9 @@ namespace recycle.Application.DTOs.Reviews
     {
         [Required(ErrorMessage = "RequestId is required")]
         public Guid RequestId { get; set; }
-        [Required(ErrorMessage = "DriverId is required")]
-        public Guid DriverId { get; set; }
+      
+        //[Required(ErrorMessage = "DriverId is required")]
+        ////public Guid DriverId { get; set; }
 
         [Required(ErrorMessage = "Rating is required")]
         [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5 stars")]

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace recycle.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class rebuildDB : Migration
+    public partial class rebuiltdatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -615,11 +615,6 @@ namespace recycle.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
-
-            migrationBuilder.InsertData(
-                table: "AspNetRoles",
-                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
-                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), null, "Supplier", "SUPPLIER" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Addresses_UserId",

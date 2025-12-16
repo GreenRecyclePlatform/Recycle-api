@@ -33,7 +33,6 @@ namespace recycle.Infrastructure
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
         public DbSet<Setting> Settings { get; set; }
 
-
         public DbSet<SupplierOrder> SupplierOrders { get; set; }
 
         public DbSet<SupplierOrderItem> SupplierOrderItems { get; set; }

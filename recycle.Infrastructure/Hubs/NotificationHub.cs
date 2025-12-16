@@ -1,70 +1,72 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using recycle.Application.Interfaces;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace recycle.Infrastructure.Hubs
 {
+    [Authorize]
     public class NotificationHub : Hub
     {
-        private readonly INotificationRepository _notificationRepository;
-        private readonly INotificationHubService _notificationHubService;
-
-        public NotificationHub(INotificationRepository notificationRepository,INotificationHubService notificationHubService)
-        {
-            _notificationRepository = notificationRepository;
-            _notificationHubService = notificationHubService;
-        }
-       
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = Context.UserIdentifier;
+            var userRoles = Context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
+            Console.WriteLine($"✅ User {userId} connected to NotificationHub");
+            Console.WriteLine($"👤 User roles: {string.Join(", ", userRoles ?? new List<string>())}");
 
-
-
-            if (!string.IsNullOrEmpty(userId))
+            // Add user to role-based groups
+            if (userRoles != null)
             {
-                var isAdmin = Context.User?.IsInRole("Admin") ?? false;
-                if (isAdmin)
+                foreach (var role in userRoles)
                 {
-                    await Groups.AddToGroupAsync(Context.ConnectionId, "Admin");
+                    await Groups.AddToGroupAsync(Context.ConnectionId, role);
+                    Console.WriteLine($"➕ Added user {userId} to group: {role}");
                 }
-                else
-                {
-                    await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
-                }
-                    await _notificationHubService.SendPendingNotification(Guid.Parse(userId));
-
-                var count = await _notificationRepository.GetUnreadCountAsync(Guid.Parse(userId));
-                await Clients.Caller.SendAsync("ReceiveUnreadCount", count);
-
-               
             }
 
             await base.OnConnectedAsync();
         }
 
-        //private async Task SendPendingNotifications(Guid userId)
-        //{
-        //    var pendingNotifications = await _notificationRepository.GetAll(
-        //        filter: n => n.UserId == userId && !n.IsRead);
-
-        //    // Here you would typically send the pending notifications to the user.
-
-        //    foreach (var notification in pendingNotifications)
-        //    {
-        //        await Clients.Group($"User_{userId}")
-        //                .SendAsync("ReceivePendingNotification", notification);
-        //    };
-        //}
-
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
-                      
+            var userId = Context.UserIdentifier;
+            var userRoles = Context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+
+            Console.WriteLine($"❌ User {userId} disconnected from NotificationHub");
+
+            // Remove user from role-based groups
+            if (userRoles != null)
+            {
+                foreach (var role in userRoles)
+                {
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, role);
+                    Console.WriteLine($"➖ Removed user {userId} from group: {role}");
+                }
+            }
+
             await base.OnDisconnectedAsync(exception);
+        }
+
+        // Optional: Method to manually join a group
+        public async Task JoinGroup(string groupName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            Console.WriteLine($"➕ User {Context.UserIdentifier} joined group: {groupName}");
+        }
+
+        // Optional: Method to manually leave a group
+        public async Task LeaveGroup(string groupName)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+            Console.WriteLine($"➖ User {Context.UserIdentifier} left group: {groupName}");
+        }
+
+        // Optional: Test method to verify connection
+        public async Task Ping()
+        {
+            await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
+            Console.WriteLine($"🏓 Ping received from user {Context.UserIdentifier}");
         }
     }
 }

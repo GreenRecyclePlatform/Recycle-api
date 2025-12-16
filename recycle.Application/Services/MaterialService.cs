@@ -58,10 +58,6 @@ namespace recycle.Application.Services
             if (dto.SellingPrice <= dto.BuyingPrice)
                 throw new InvalidOperationException("Selling price must be greater than buying price");
 
-            // ❌ REMOVED: Name uniqueness check
-            // if (!await _repository.IsNameUniqueAsync(dto.Name))
-            //     throw new InvalidOperationException($"Material with name '{dto.Name}' already exists");
-
             var material = new Material
             {
                 Id = Guid.NewGuid(),
@@ -118,11 +114,7 @@ namespace recycle.Application.Services
             if (dto.SellingPrice <= dto.BuyingPrice)
                 throw new InvalidOperationException("Selling price must be greater than buying price");
 
-            // ❌ REMOVED: Name uniqueness check
-            // if (!await _repository.IsNameUniqueAsync(dto.Name, id))
-            //     throw new InvalidOperationException($"Another material with name '{dto.Name}' already exists");
-
-            // Update all other data
+            // Update all data
             material.Name = dto.Name;
             material.Description = dto.Description;
             material.Unit = dto.Unit;
@@ -146,7 +138,6 @@ namespace recycle.Application.Services
 
             if (imageDto.Image != null)
             {
-                // Delete old image if exists
                 if (!string.IsNullOrEmpty(material.ImageLocalPath))
                 {
                     var oldFilePathDirectory = Path.Combine(Directory.GetCurrentDirectory(), material.ImageLocalPath);

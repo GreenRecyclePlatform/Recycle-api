@@ -13,17 +13,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-
 namespace recycle.Application.Services
 {
-
     public class DriverAssignmentService : IDriverAssignmentService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationHubService _notificationService;
 
-        public DriverAssignmentService(IUnitOfWork unitOfWork)
+        public DriverAssignmentService(IUnitOfWork unitOfWork, INotificationHubService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         //1 - Assign Driver
@@ -78,6 +78,29 @@ namespace recycle.Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
+            // 🔔 Send notification to user
+            await _notificationService.SendToUser(request.UserId, new NotificationDto
+            {
+                Title = "Driver Assigned",
+                Message = $"A driver has been assigned to your pickup request.",
+                Type = NotificationTypes.DriverAssigned,
+                RelatedEntityType = NotificationEntityTypes.DriverAssignment,
+                RelatedEntityId = assignment.AssignmentId
+            });
+
+            // 🔔 Send notification to driver
+            if (driverProfile.User != null)
+            {
+                await _notificationService.SendToUser(driverProfile.UserId, new NotificationDto
+                {
+                    Title = "New Assignment",
+                    Message = "You have been assigned a new pickup request.",
+                    Type = NotificationTypes.NewAssignment,
+                    RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                    RelatedEntityId = dto.RequestId
+                });
+            }
+
             // 7. Return response (reload with includes)
             var savedAssignment = await _unitOfWork.DriverAssignments.GetByIdAsync(assignment.AssignmentId);
             return MapToResponseDto(savedAssignment);
@@ -116,6 +139,16 @@ namespace recycle.Application.Services
                 {
                     request.Status = "PickedUp";
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
+
+                    // 🔔 Send notification to user - driver is on the way
+                    await _notificationService.SendToUser(request.UserId, new NotificationDto
+                    {
+                        Title = "Driver En Route",
+                        Message = "Your driver is on the way to your pickup location.",
+                        Type = NotificationTypes.DriverEnRoute,
+                        RelatedEntityType = NotificationEntityTypes.DriverAssignment,
+                        RelatedEntityId = assignmentId
+                    });
                 }
             }
             else if (action == DriverAction.Reject)
@@ -133,6 +166,16 @@ namespace recycle.Application.Services
                 {
                     request.Status = "Pending";
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
+
+                    // 🔔 Send notification to admins about rejection
+                    await _notificationService.SendToRole("Admin", new NotificationDto
+                    {
+                        Title = "Driver Rejected Assignment",
+                        Message = $"Driver rejected pickup request assignment. Reason: {notes ?? "No reason provided"}",
+                        Type = NotificationTypes.DriverRejectedAssignment,
+                        RelatedEntityType = NotificationEntityTypes.DriverAssignment,
+                        RelatedEntityId = assignmentId
+                    });
                 }
             }
 
@@ -180,6 +223,26 @@ namespace recycle.Application.Services
                     request.Status = "Completed";
                     request.CompletedAt = DateTime.UtcNow;
                     await _unitOfWork.PickupRequests.UpdateAsync(request);
+
+                    // 🔔 Send notification to user about pickup completion
+                    await _notificationService.SendToUser(request.UserId, new NotificationDto
+                    {
+                        Title = "Pickup Completed",
+                        Message = "Your pickup has been completed successfully. Please leave a review!",
+                        Type = NotificationTypes.PickupCompleted,
+                        RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                        RelatedEntityId = request.RequestId
+                    });
+
+                    // 🔔 Send notification to admins for review
+                    await _notificationService.SendToRole("Admin", new NotificationDto
+                    {
+                        Title = "Pickup Ready for Review",
+                        Message = "A pickup has been completed and is ready for payment approval.",
+                        Type = NotificationTypes.PickupReadyForReview,
+                        RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                        RelatedEntityId = request.RequestId
+                    });
                 }
 
                 // ✅ Update driver's total trips using DriverProfile
@@ -204,6 +267,12 @@ namespace recycle.Application.Services
             if (currentAssignment == null)
                 throw new Exception("Assignment not found");
 
+            // Get old driver profile
+            var oldDriverProfile = await _unitOfWork.DriverProfiles.GetAsync(
+                filter: dp => dp.Id == currentAssignment.DriverId,
+                includes: query => query.Include(dp => dp.User)
+            );
+
             //  Validate new driver by DriverProfile ID
             var newDriverProfile = await _unitOfWork.DriverProfiles.GetAsync(
                 filter: dp => dp.Id == newDriverId,
@@ -220,6 +289,19 @@ namespace recycle.Application.Services
             currentAssignment.IsActive = false;
             currentAssignment.DriverNotes = $"Reassigned: {reason}";
             await _unitOfWork.DriverAssignments.UpdateAsync(currentAssignment);
+
+            // 🔔 Send notification to old driver about cancellation
+            if (oldDriverProfile != null)
+            {
+                await _notificationService.SendToUser(oldDriverProfile.UserId, new NotificationDto
+                {
+                    Title = "Assignment Cancelled",
+                    Message = $"Your assignment has been cancelled and reassigned. Reason: {reason ?? "Administrative decision"}",
+                    Type = NotificationTypes.AssignmentCancelled,
+                    RelatedEntityType = NotificationEntityTypes.DriverAssignment,
+                    RelatedEntityId = assignmentId
+                });
+            }
 
             // ✅ Create new assignment with DriverProfile ID
             var newAssignment = new DriverAssignment
@@ -245,7 +327,27 @@ namespace recycle.Application.Services
             {
                 request.Status = "Assigned";
                 await _unitOfWork.PickupRequests.UpdateAsync(request);
+
+                // 🔔 Send notification to user about driver change
+                await _notificationService.SendToUser(request.UserId, new NotificationDto
+                {
+                    Title = "Driver Changed",
+                    Message = "Your pickup request has been assigned to a new driver.",
+                    Type = NotificationTypes.DriverAssigned,
+                    RelatedEntityType = NotificationEntityTypes.DriverAssignment,
+                    RelatedEntityId = newAssignment.AssignmentId
+                });
             }
+
+            // 🔔 Send notification to new driver
+            await _notificationService.SendToUser(newDriverProfile.UserId, new NotificationDto
+            {
+                Title = "New Assignment",
+                Message = "You have been assigned a new pickup request.",
+                Type = NotificationTypes.NewAssignment,
+                RelatedEntityType = NotificationEntityTypes.PickupRequest,
+                RelatedEntityId = currentAssignment.RequestId
+            });
 
             await _unitOfWork.SaveChangesAsync();
 

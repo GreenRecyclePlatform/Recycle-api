@@ -12,8 +12,8 @@ using recycle.Infrastructure;
 namespace recycle.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251210204224_rebuildDB")]
-    partial class rebuildDB
+   [Migration("20251212233654_rebuiltdatabase")]
+    partial class rebuiltdatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,14 +51,6 @@ namespace recycle.Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            Name = "Supplier",
-                            NormalizedName = "SUPPLIER"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
