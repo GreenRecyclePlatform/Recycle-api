@@ -14,7 +14,7 @@ namespace recycle.Domain.Entities
         public Guid RequestId { get; set; }
         public Guid DriverId { get; set; }
         public Guid AssignedByAdminId { get; set; }
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
         public AssignmentStatus Status { get; set; }
         public string? DriverNotes { get; set; }
         public DateTime? AcceptedAt { get; set; }
