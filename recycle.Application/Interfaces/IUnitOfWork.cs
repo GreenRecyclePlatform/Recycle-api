@@ -1,14 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using recycle.Application.Interfaces.IRepository;
+using recycle.Domain.Entities;
 using System.Threading.Tasks;
 
 namespace recycle.Application.Interfaces
 {
     public interface IUnitOfWork
     {
-        //add repository interfaces here
+        IReviewRepository Reviews { get; }
+        INotificationRepository Notifications { get; }
+        IUserRepository Users { get; }
+        IRepository<Address> Addresses { get; }
+        IRepository<DriverProfile> DriverProfiles { get; }
+        IPaymentRepository Payments { get; }
+        IRepository<PickupRequest> PickupRequests { get; }
+        IDriverAssignmentRepository DriverAssignments { get; }
 
 
         Task SaveChangesAsync();

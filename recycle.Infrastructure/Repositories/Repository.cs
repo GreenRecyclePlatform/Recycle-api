@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using recycle.Application.Interfaces;
+using recycle.Application.Interfaces.IRepository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,10 @@ namespace recycle.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
         private readonly DbSet<T> dbSet;
+
+        //public async Task<T> GetByIdAsync(int id);
+        //public async Task<int> CountAsync(Expression<Func<T, bool>>? filter = null);
+        //public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
         public Repository(AppDbContext context)
         {
             _context = context;
@@ -45,7 +50,7 @@ namespace recycle.Infrastructure.Repositories
 
         public async Task RemoveAsync(T entity)
         {
-           
+
             dbSet.Remove(entity);
             await Task.CompletedTask;
         }
@@ -91,5 +96,42 @@ namespace recycle.Infrastructure.Repositories
             dbSet.Update(entity);
             await Task.CompletedTask;
         }
+
+        //===========================
+
+        public async Task<T> GetByIdAsync(Guid id)
+        {
+            return await dbSet.FindAsync(id);
+        }
+
+
+        public async Task<T> GetByIdAsync(
+    Guid id,
+    Func<IQueryable<T>, IQueryable<T>>? includes = null)
+        {
+            IQueryable<T> query = dbSet;
+
+            if (includes != null)
+            {
+                query = includes(query);
+            }
+
+            return await query.FirstOrDefaultAsync(e =>
+                EF.Property<Guid>(e, "Id") == id);
+        }
+
+
+        public async Task<int> CountAsync(Expression<Func<T, bool>> filter = null)
+        {
+            return filter == null
+                ? await dbSet.CountAsync()
+                : await dbSet.CountAsync(filter);
+        }
+
+        public async Task<bool> AnyAsync(Expression<Func<T, bool>> filter)
+        {
+            return await dbSet.AnyAsync(filter);
+        }
+
     }
 }
