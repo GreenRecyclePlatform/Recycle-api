@@ -168,7 +168,7 @@ namespace recycle.API.Controllers
                     return BadRequest("Invalid token");
                 }
                 SetRefreshTokenInCookie(tokens.RefreshToken);
-                return Ok(tokens.AccessToken);
+                return Ok(new loginResponse { AccessToken = tokens.AccessToken });
             }
             else
             {
