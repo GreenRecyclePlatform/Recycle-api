@@ -40,14 +40,6 @@ namespace recycle.API.Controllers
             _emailService = emailService;
         }
 
-        [HttpPost("email")]
-        public async Task<IActionResult> sendEmail()
-        {
-            await _emailService.SendEmail("mohammed.mechengineer.70@gmail.com", "trysendingemail", "emailworking");
-            return Ok("work correct");
-
-        }
-
 
         [HttpPost("forgot-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
