@@ -86,7 +86,6 @@ namespace recycle.Application.Services
                 if (item.Quantity <= 0)
                     throw new Exception("Quantity must be greater than zero");
 
-                // ✅ جيب الكمية المتاحة
                 var availableQty = availableQuantities.ContainsKey(material.Id)
                     ? availableQuantities[material.Id]
                     : 0;

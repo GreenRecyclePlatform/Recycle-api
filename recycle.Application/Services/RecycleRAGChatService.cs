@@ -8,10 +8,7 @@ using System.Text.Json;
 
 namespace recycle.Application.Services
 {
-    /// <summary>
-    /// خدمة الذكاء الاصطناعي لمشروع إعادة التدوير
-    /// تستخدم Fireworks AI مع RAG
-    /// </summary>
+   
     public class RecycleRAGChatService
     {
         private readonly HttpClient _httpClient;
@@ -31,9 +28,7 @@ namespace recycle.Application.Services
             _logger = logger;
         }
 
-        /// <summary>
-        /// معالجة سؤال المستخدم والحصول على رد من الـ AI
-        /// </summary>
+       
         public async Task<ChatResponseDto> GetChatResponse(string userMessage, Guid? userId = null)
         {
             try
@@ -41,13 +36,13 @@ namespace recycle.Application.Services
                 // 1. البحث في قاعدة المعرفة
                 var relevantInfo = await _knowledgeService.SearchRelevantInfo(userMessage);
 
-                // 2. بناء الـ Context من المعلومات المسترجعة
+                // 2. Context من المعلومات المسترجعة
                 var context = BuildContext(relevantInfo);
 
-                // 3. بناء الـ System Prompt
+                // 3.ceate System Prompt
                 var systemPrompt = BuildSystemPrompt(context);
 
-                // 4. إرسال الطلب لـ Fireworks AI
+                // 4. send req to Fireworks AI
                 var aiResponse = await CallFireworksAPI(systemPrompt, userMessage);
 
                 return new ChatResponseDto
@@ -71,9 +66,6 @@ namespace recycle.Application.Services
             }
         }
 
-        /// <summary>
-        /// بناء السياق من المعلومات المسترجعة
-        /// </summary>
         private string BuildContext(List<KnowledgeItem> items)
         {
             if (!items.Any())
@@ -133,7 +125,6 @@ namespace recycle.Application.Services
             {
                 var apiKey = _configuration["Fireworks:ApiKey"];
 
-                // ✅ Logging مفصل
                 _logger.LogInformation("=== Fireworks API Call Started ===");
                 _logger.LogInformation($"API Key configured: {!string.IsNullOrEmpty(apiKey)}");
 

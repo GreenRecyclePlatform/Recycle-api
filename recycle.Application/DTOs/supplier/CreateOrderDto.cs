@@ -20,7 +20,6 @@ namespace recycle.Application.DTOs.supplier
         public Guid MaterialId { get; set; }
 
         [Required(ErrorMessage = "Quantity is required")]
-       // [Range(0.1, 10000, ErrorMessage = "Quantity must be between 0.1 and 10000 kg")]
         public decimal Quantity { get; set; }
     }
 }

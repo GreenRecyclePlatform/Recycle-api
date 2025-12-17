@@ -15,7 +15,7 @@ namespace recycle.Application.DTOs.supplier
         public decimal TotalAmount { get; set; }
         public string PaymentStatus { get; set; } = string.Empty; // Pending/Completed/Failed
         public string? StripePaymentIntentId { get; set; }
-        public DateTime? PaidAt { get; set; }
+        public DateTime? PaidAt { get; set; } 
         public DateTime CreatedAt { get; set; }
 
         public List<OrderItemResponseDto> Items { get; set; } = new();

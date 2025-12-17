@@ -75,7 +75,7 @@ namespace recycle.Application.Services
                 LastName = user.LastName,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
-                PayPalEmail = user.PayPalEmail, // ✅ ADD THIS
+                PayPalEmail = user.PayPalEmail, 
                 DateOfBirth = user.DateOfBirth,
                 CreatedAt = user.CreatedAt,
                 PrimaryAddress = primaryAddress != null ? new Address

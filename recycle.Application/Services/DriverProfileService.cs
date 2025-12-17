@@ -23,7 +23,6 @@ namespace recycle.Application.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        // ✅✅✅ Method جديدة: جيب Driver Profile بالـ User ID ✅✅✅
         public async Task<DriverProfileResponseDto> GetDriverProfileByUserId(Guid userId)
         {
             var driverProfile = await _unitOfWork.DriverProfiles.GetAsync(
@@ -65,7 +64,6 @@ namespace recycle.Application.Services
             return result;
         }
 
-        // ✅ Method موجودة: جيب Driver Profile بالـ Profile ID (للاستخدام الداخلي)
         public async Task<DriverProfileResponseDto> GetDriverProfileById(Guid id)
         {
             var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(
@@ -263,7 +261,6 @@ namespace recycle.Application.Services
             return true;
         }
 
-        // ✅ Update Driver Profile بالـ Driver Profile ID
         public async Task<DriverProfileResponseDto> UpdateDriverProfile(Guid driverProfileId, UpdateDriverProfileDto updateDto)
         {
             var driverProfile = await _unitOfWork.DriverProfiles.GetByIdAsync(

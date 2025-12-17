@@ -1,5 +1,4 @@
-﻿// recycle.API/Controllers/ProfileController.cs - FIXED VERSION
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using recycle.Application.DTOs.Notifications;
 using recycle.Application.DTOs.Profile;
@@ -22,16 +21,12 @@ namespace recycle.API.Controllers
             _profileService = profileService;
         }
 
-        /// <summary>
-        /// ✅ FIXED: Get current user's profile with better user ID extraction
-        /// GET /api/profile
-        /// </summary>
+       
         [HttpGet]
         public async Task<IActionResult> GetProfile()
         {
             try
             {
-                // ✅ Try multiple claim types to find user ID
                 var userId = GetUserIdFromToken();
 
                 if (userId == Guid.Empty)
@@ -52,9 +47,6 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// PUT: api/Profile
-        /// </summary>
         [HttpPut]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
@@ -76,9 +68,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// PUT: api/Profile/address
-        /// </summary>
+      
         [HttpPut("address")]
         public async Task<IActionResult> UpdateAddress([FromBody] UpdateAddressDto dto)
         {
@@ -100,9 +90,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// PUT: api/Profile/notifications
-        /// </summary>
+       
         [HttpPut("notifications")]
         public async Task<IActionResult> UpdateNotificationPreferences([FromBody] NotificationPreferencesDto dto)
         {
@@ -126,9 +114,6 @@ namespace recycle.API.Controllers
 
 
 
-        /// <summary>
-        /// PUT: api/Profile/paypal-email
-        /// </summary>
         [HttpPut("paypal-email")]
         public async Task<IActionResult> UpdatePayPalEmail([FromBody] UpdatePayPalEmailDto dto)
         {
@@ -160,15 +145,11 @@ namespace recycle.API.Controllers
             return Guid.Parse(userIdClaim);
         }
 
-        /// <summary>
-        /// ✅ Helper method to extract user ID from JWT token claims
-        /// Works with your existing token structure
-        /// </summary>
         private Guid GetUserIdFromToken()
         {
-            // Try different possible claim types that YOUR TokenService already generates
-            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value  // ✅ Your token has this
-                ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value            // ✅ Your token has this too
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value  
+                ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value 
+                
                 ?? User.FindFirst("uid")?.Value
                 ?? User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
 
