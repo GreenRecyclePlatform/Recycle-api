@@ -12,6 +12,6 @@
         public int ratingCount { get; set; } = 0;
         public bool IsAvailable { get; set; }
         public int TotalTrips { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }

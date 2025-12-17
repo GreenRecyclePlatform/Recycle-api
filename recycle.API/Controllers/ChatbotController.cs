@@ -79,9 +79,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// الحصول على جميع المعلومات المتاحة في قاعدة المعرفة
-        /// </summary>
+       
         [HttpGet("knowledge")]
         [ProducesResponseType(typeof(List<KnowledgeItem>), 200)]
         public IActionResult GetKnowledge()
@@ -110,9 +108,7 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// أسئلة سريعة جاهزة للمستخدمين
-        /// </summary>
+       
         [HttpGet("quick-questions")]
         [ProducesResponseType(typeof(List<QuickQuestionDto>), 200)]
         public IActionResult GetQuickQuestions()
@@ -166,9 +162,7 @@ namespace recycle.API.Controllers
             return Ok(questions);
         }
 
-        /// <summary>
-        /// فحص صحة الخدمة
-        /// </summary>
+      
         [HttpGet("health")]
         [ProducesResponseType(200)]
         public IActionResult HealthCheck()

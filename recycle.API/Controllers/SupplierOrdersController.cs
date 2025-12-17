@@ -26,10 +26,6 @@ namespace recycle.API.Controllers
             return Guid.Parse(userIdClaim);
         }
 
-        /// <summary>
-        /// GET: api/supplierorders/available-materials
-        /// جلب المواد المتاحة للشراء
-        /// </summary>
         [HttpGet("available-materials")]
         [AllowAnonymous] 
         public async Task<IActionResult> GetAvailableMaterials()
@@ -65,10 +61,6 @@ namespace recycle.API.Controllers
             }
         }
 
-        /// <summary>
-        /// POST: api/supplierorders/{orderId}/create-payment-intent
-        ///  PaymentIntent للدفع
-        /// </summary>
         [HttpPost("{orderId}/create-payment-intent")]
         public async Task<IActionResult> CreatePaymentIntent(Guid orderId)
         {

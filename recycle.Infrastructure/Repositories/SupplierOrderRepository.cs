@@ -13,9 +13,7 @@ namespace recycle.Infrastructure.Repositories
             _context = context;
         }
 
-        /// <summary>
-        /// إنشاء Order جديد مع الـ Items
-        /// </summary>
+       
         public async Task<SupplierOrder> CreateOrderAsync(SupplierOrder order)
         {
             await _context.SupplierOrders.AddAsync(order);
@@ -25,9 +23,7 @@ namespace recycle.Infrastructure.Repositories
                    ?? throw new Exception("Failed to retrieve created order");
         }
 
-        /// <summary>
-        /// جلب Order بالـ ID مع كل التفاصيل
-        /// </summary>
+        
         public async Task<SupplierOrder?> GetOrderByIdAsync(Guid orderId)
         {
             return await _context.SupplierOrders
@@ -37,9 +33,6 @@ namespace recycle.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
-        /// <summary>
-        /// جلب كل Orders لـ Supplier معين
-        /// </summary>
         public async Task<IEnumerable<SupplierOrder>> GetOrdersBySupplierIdAsync(Guid supplierId)
         {
             return await _context.SupplierOrders
@@ -50,9 +43,6 @@ namespace recycle.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// تحديث حالة الدفع بعد نجاح Stripe
-        /// </summary>
         public async Task<bool> UpdatePaymentStatusAsync(
             Guid orderId,
             string status,
@@ -76,9 +66,6 @@ namespace recycle.Infrastructure.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
-        /// <summary>
-        /// حفظ التغييرات
-        /// </summary>
         public async Task<bool> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync() > 0;
@@ -116,7 +103,7 @@ namespace recycle.Infrastructure.Repositories
                 })
                 .ToDictionaryAsync(x => x.MaterialId, x => x.TotalSold);
 
-            // 3️⃣ حساب Available = Incoming - Sold
+            // 3 Available = Incoming - Sold
             var result = new Dictionary<Guid, decimal>();
 
             foreach (var incoming in incomingQuantities)
@@ -127,7 +114,6 @@ namespace recycle.Infrastructure.Repositories
 
                 var available = incoming.Value - sold;
 
-                // ✅ نضيف فقط المواد اللي عندها كمية متاحة
                 if (available > 0)
                 {
                     result[incoming.Key] = available;

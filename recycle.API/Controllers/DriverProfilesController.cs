@@ -34,7 +34,6 @@ namespace recycle.API.Controllers
             return Ok(driverProfiles);
         }
 
-        // ✅✅✅ معدل: دلوقتي بيدور بالـ User ID ✅✅✅
         [HttpGet("{userId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -90,20 +89,17 @@ namespace recycle.API.Controllers
             return NoContent();
         }
 
-        // ✅✅✅ معدل: بيستقبل User ID ويحوله لـ Profile ID جوا ✅✅✅
         [HttpPut("{userId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Authorize(Roles = "Driver")]
         public async Task<IActionResult> UpdateDriverProfile(Guid userId, [FromBody] UpdateDriverProfileDto updateDto)
         {
-            // 1. جيب الـ Driver Profile الأول بالـ User ID
             var driverProfile = await _driverProfileService.GetDriverProfileByUserId(userId);
 
             if (driverProfile == null)
                 return NotFound(new { message = "Driver profile not found for this user" });
 
-            // 2. اعمل Update بالـ Driver Profile ID
             var result = await _driverProfileService.UpdateDriverProfile(driverProfile.Id, updateDto);
 
             if (result == null)

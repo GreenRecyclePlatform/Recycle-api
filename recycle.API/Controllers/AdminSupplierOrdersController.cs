@@ -29,7 +29,6 @@
                 var result = orders.Select(o => new
                 {
                     o.OrderId,
-                    // ✅ استخدمي CompanyName لو موجود، وإلا FirstName + LastName
                     SupplierName = !string.IsNullOrEmpty(o.Supplier?.CompanyName)
                         ? o.Supplier.CompanyName
                         : $"{o.Supplier?.FirstName} {o.Supplier?.LastName}",
@@ -63,7 +62,6 @@
                 var result = new
                 {
                     order.OrderId,
-                    // ✅ استخدمي CompanyName لو موجود، وإلا FirstName + LastName
                     SupplierName = !string.IsNullOrEmpty(order.Supplier?.CompanyName)
                         ? order.Supplier.CompanyName
                         : $"{order.Supplier?.FirstName} {order.Supplier?.LastName}",

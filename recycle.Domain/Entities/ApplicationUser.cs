@@ -12,7 +12,7 @@ namespace recycle.Domain.Entities
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;  // ✅ ADD THIS LINE
+        public DateTime CreatedAt { get; set; } = DateTime.Now;  
 
 
         // NEW: PayPal email for payments
