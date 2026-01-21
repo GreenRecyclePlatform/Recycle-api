@@ -3,7 +3,7 @@
 A comprehensive recycling marketplace platform that connects users with recyclable materials to drivers and suppliers, featuring automated payment processing through PayPal and Stripe.
 
 [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat&logo=dotnet)](https://dotnet.microsoft.com/)
-[![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-8.0-512BD4?style=flat&logo=dotnet)](https://docs.microsoft.com/en-us/aspnet/core/)
+[![ASP.NET Core](https://img.shields.io/badge/ASP.NET_Core-9.0-512BD4?style=flat&logo=dotnet)](https://docs.microsoft.com/en-us/aspnet/core/)
 [![SQL Server](https://img.shields.io/badge/SQL_Server-2022-CC2927?style=flat&logo=microsoft-sql-server)](https://www.microsoft.com/en-us/sql-server)
 [![PayPal](https://img.shields.io/badge/PayPal-API-00457C?style=flat&logo=paypal)](https://developer.paypal.com/)
 [![Stripe](https://img.shields.io/badge/Stripe-API-008CDD?style=flat&logo=stripe)](https://stripe.com/)
