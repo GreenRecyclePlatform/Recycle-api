@@ -1,4 +1,4 @@
-# 🌱 Recycle Platform - Backend API
+# 🌱 RecycleHub Platform - Backend API
 
 A comprehensive recycling marketplace platform that connects users with recyclable materials to drivers and suppliers, featuring automated payment processing through PayPal and Stripe.
 
